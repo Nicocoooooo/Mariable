@@ -1,0 +1,29 @@
+# Fichiers et dossiers Flutter/Dart spécifiques
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+.DS_Store
+*.iml
+*.log
+.idea/
+.vscode/
+
+# Fichiers générés Android
+android/app/debug
+android/app/profile
+android/app/release
+android/*.jks
+android/key.properties
+
+# Fichiers générés iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/ephemeral/
+
+# Fichiers de configuration contenant des secrets
+.env
+lib/config/secrets.dart
