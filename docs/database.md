@@ -82,3 +82,54 @@ capacite_hebergement INTEGER
 exclusivite BOOLEAN NOT NULL
 feu_artifice BOOLEAN NOT NULL
 equipements_inclus JSONB NOT NULL
+
+TRAITEURS
+
+id UUID PRIMARY KEY
+presta_id UUID REFERENCES presta(id)
+type_cuisine JSONB NOT NULL
+max_invites INTEGER
+equipements_inclus BOOLEAN NOT NULL
+details_equipements JSONB
+personnel_inclus BOOLEAN NOT NULL
+installation_incluse BOOLEAN NOT NULL
+type_degustation VARCHAR(50)
+
+PHOTOGRAPHES
+
+id UUID PRIMARY KEY
+presta_id UUID REFERENCES presta(id)
+style JSONB NOT NULL
+options_duree JSONB NOT NULL
+type_livraison JSONB NOT NULL
+drone BOOLEAN NOT NULL
+limite_deplacement INTEGER
+
+Tables intermédiaires
+RESERVATIONS
+
+id UUID PRIMARY KEY
+utilisateur_id UUID REFERENCES auth.users(id)
+presta_id UUID REFERENCES presta(id)
+tarif_id UUID REFERENCES tarifs(id)
+date_evenement TIMESTAMP WITH TIME ZONE NOT NULL
+nombre_invites INTEGER NOT NULL
+prix_total DECIMAL(10,2) NOT NULL
+montant_acompte DECIMAL(10,2) NOT NULL
+statut VARCHAR(20) CHECK (statut IN ('en_attente', 'confirme', 'annule'))
+
+CONVERSATIONS et MESSAGES
+
+-- CONVERSATIONS
+id UUID PRIMARY KEY
+created_at TIMESTAMP WITH TIME ZONE
+
+-- MESSAGES
+id UUID PRIMARY KEY
+conversation_id UUID REFERENCES conversations(id)
+expediteur_id UUID REFERENCES auth.users(id)
+destinataire_id UUID REFERENCES auth.users(id)
+contenu TEXT NOT NULL
+lu BOOLEAN NOT NULL DEFAULT false
+message_ia BOOLEAN NOT NULL DEFAULT false
+
