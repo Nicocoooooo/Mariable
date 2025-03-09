@@ -1,48 +1,114 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
+// Import des écrans
+import 'Home/HomeScreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialiser Supabase - à remplacer par vos clés
+ 
+  // Initialiser Supabase
   await Supabase.initialize(
-    url: 'VOTRE_URL_SUPABASE',
-    anonKey: 'VOTRE_CLE_ANONYME_SUPABASE',
+    url: 'https://wrdychfyhctekddzysen.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZHljaGZ5aGN0ZWtkZHp5c2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg1OTgwNDQsImV4cCI6MjA1NDE3NDA0NH0.8GVSqkqq0se3BhXO47hgZkaI4zUF5cmKPQso11jdWSk',
   );
-
+ 
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    // Création d'un TextTheme de base avec Lato
+    final TextTheme latoTextTheme = GoogleFonts.latoTextTheme();
+    
+    // Création d'un TextTheme personnalisé avec Playfair Display pour les titres
+    final TextTheme customTextTheme = latoTextTheme.copyWith(
+      // Utiliser Playfair Display pour les titres principaux
+      displayLarge: GoogleFonts.playfairDisplay(
+        fontWeight: FontWeight.bold,
+        color: const Color(0xFF2B2B2B),
+      ),
+      displayMedium: GoogleFonts.playfairDisplay(
+        fontWeight: FontWeight.bold, 
+        color: const Color(0xFF2B2B2B),
+      ),
+      displaySmall: GoogleFonts.playfairDisplay(
+        fontWeight: FontWeight.bold,
+        color: const Color(0xFF2B2B2B),
+      ),
+      headlineLarge: GoogleFonts.playfairDisplay(
+        fontWeight: FontWeight.bold,
+        color: const Color(0xFF2B2B2B), 
+      ),
+      headlineMedium: GoogleFonts.playfairDisplay(
+        fontWeight: FontWeight.bold,
+        color: const Color(0xFF2B2B2B),
+      ),
+      // Text styles spécifiques pour les titrages
+      titleLarge: GoogleFonts.playfairDisplay(
+        fontWeight: FontWeight.bold,
+        color: const Color(0xFF2B2B2B),
+      ),
+    );
+    
+    return MaterialApp.router(
       title: 'Mariable',
       theme: ThemeData(
+        // Couleurs selon la DA
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF3CB371), // Vert moyen
-          primary: const Color(0xFF1A4D2E), // Vert foncé
-          secondary: const Color(0xFFF5EFE6), // Beige clair
-          tertiary: const Color(0xFFAB886D), // Brun clair
+          seedColor: const Color(0xFF524B46), // Couleur accent
+          primary: const Color(0xFF524B46), // Couleur accent comme primaire
+          secondary: const Color(0xFFFFF3E4), // Beige
+          surface: Colors.white,
+          onSurface: const Color(0xFF2B2B2B), // Gris texte
         ),
+        // Typographie avec Playfair Display pour les titres
+        textTheme: customTextTheme,
+        // Autres customisations
         useMaterial3: true,
-        fontFamily: 'Montserrat', // À remplacer par votre police préférée
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF524B46),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+        ),
+        // Style des cartes
+        cardTheme: CardTheme(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        // Style des champs de formulaire
+        inputDecorationTheme: InputDecorationTheme(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+        ),
       ),
-      home: const HomePage(),
+      debugShowCheckedModeBanner: false, // Supprime le bandeau "Debug"
+      routerConfig: _router,
     );
   }
 }
 
-class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Mariable')),
-      body: const Center(child: Text('Bienvenue sur Mariable')),
-    );
-  }
-}
+// Configuration du routeur
+final GoRouter _router = GoRouter(
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const HomePage(),
+    ),
+    // Vous pourrez ajouter d'autres routes plus tard
+  ],
+);

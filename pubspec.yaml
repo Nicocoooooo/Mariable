@@ -1,39 +1,38 @@
 name: mariable
 description: Plateforme de réservation de prestataires de mariage inspirée d'Airbnb
-
 publish_to: 'none'
-
 version: 1.0.0+1
-
 environment:
   sdk: ">=2.19.0 <3.0.0"
-
 dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.5
-  
+ 
   # État et Navigation
   flutter_bloc: ^8.1.3
   go_router: ^10.0.0
-  
+ 
   # Base de données et API
   supabase_flutter: ^1.10.25
   dio: ^5.3.2
-  
+ 
   # Interface utilisateur
   flutter_hooks: ^0.20.1
   google_fonts: ^5.1.0
   cached_network_image: ^3.2.3
   flutter_svg: ^2.0.7
-  
+
+  # Vidéo
+  video_player: ^2.7.2
+ 
   # Formulaires et validation
   form_builder_validators: ^11.1.2
   flutter_form_builder: ^9.1.1
-  
+ 
   # Localisation et internationalisation
   intl: ^0.19.0
-  
+ 
   # Utilitaires
   equatable: ^2.0.5
   uuid: ^3.0.7
@@ -55,8 +54,9 @@ flutter:
   
   assets:
     - assets/images/
-    - assets/icons/
+    - assets/videos/
     
+   
   # fonts:
   #   - family: CustomFont
   #     fonts:
