@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
 
 class PrestaireDetailScreen extends StatefulWidget {
   final Map<String, dynamic> prestataire;
@@ -14,14 +15,13 @@ class PrestaireDetailScreen extends StatefulWidget {
 }
 
 class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
-  bool _isFavorite = false;
-  bool _isReservePressed = false;
   final ScrollController _scrollController = ScrollController();
-  bool _showAppBarBackground = false;
+  bool _isScrolled = false;
 
   @override
   void initState() {
     super.initState();
+    // Écouter le scroll pour changer l'apparence de l'AppBar
     _scrollController.addListener(_onScroll);
   }
 
@@ -33,468 +33,666 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   }
 
   void _onScroll() {
-    // Change AppBar background color when scrolling down
-    if (_scrollController.offset > 180 && !_showAppBarBackground) {
-      setState(() => _showAppBarBackground = true);
-    } else if (_scrollController.offset <= 180 && _showAppBarBackground) {
-      setState(() => _showAppBarBackground = false);
+    // Changer l'état si on scrolle plus bas que l'image
+    final imageHeight = MediaQuery.of(context).size.height * 0.6;
+    if (_scrollController.offset > imageHeight - kToolbarHeight && !_isScrolled) {
+      setState(() {
+        _isScrolled = true;
+      });
+    } else if (_scrollController.offset < imageHeight - kToolbarHeight && _isScrolled) {
+      setState(() {
+        _isScrolled = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Couleurs selon la charte graphique
-    const Color accentColor = Color(0xFF524B46);
-    const Color grisTexte = Color(0xFF2B2B2B);
-    const Color beige = Color(0xFFFFF3E4);
+    // Extraire les données du prestataire
+    final String nom = widget.prestataire['nom_entreprise'] ?? 'Sans nom';
+    final String region = widget.prestataire['region'] ?? '';
+    final String adresse = widget.prestataire['adresse'] ?? '';
+    final String location = (region.isNotEmpty && adresse.isNotEmpty) 
+        ? '$region, France' 
+        : (region.isNotEmpty ? '$region, France' : 'France');
+    final String description = widget.prestataire['description'] ?? 'Aucune description disponible';
+    final int? capaciteMax = widget.prestataire.containsKey('lieux') && 
+                            widget.prestataire['lieux'] is List && 
+                            widget.prestataire['lieux'].isNotEmpty && 
+                            widget.prestataire['lieux'][0].containsKey('capacite_max') 
+                              ? widget.prestataire['lieux'][0]['capacite_max'] 
+                              : null;
+    final double? prixBase = widget.prestataire['prix_base'] != null 
+        ? (widget.prestataire['prix_base'] is double 
+            ? widget.prestataire['prix_base'] 
+            : double.tryParse(widget.prestataire['prix_base'].toString()))
+        : null;
+    final double? rating = widget.prestataire['note_moyenne'] != null 
+        ? (widget.prestataire['note_moyenne'] is double 
+            ? widget.prestataire['note_moyenne'] 
+            : double.tryParse(widget.prestataire['note_moyenne'].toString()))
+        : null;
+    final bool isFavorite = false; // À implémenter avec la gestion des favoris
     
-    // Extraire les informations du prestataire en vérifiant qu'elles existent
-    final Map<String, dynamic> prestataire = widget.prestataire;
-    
-    // Utiliser des valeurs par défaut sécurisées pour éviter les erreurs
-    final String nom = prestataire.containsKey('nom_entreprise') ? prestataire['nom_entreprise'] ?? 'Sans nom' : 'Sans nom';
-    final String region = prestataire.containsKey('region') ? prestataire['region'] ?? '' : '';
-    final String description = prestataire.containsKey('description') ? prestataire['description'] ?? 'Aucune description disponible' : 'Aucune description disponible';
-    
-    // Gestion sécurisée des valeurs numériques
-    double? prix;
-    if (prestataire.containsKey('prix_base') && prestataire['prix_base'] != null) {
-      if (prestataire['prix_base'] is double) {
-        prix = prestataire['prix_base'];
-      } else if (prestataire['prix_base'] is int) {
-        prix = prestataire['prix_base'].toDouble();
-      } else {
-        try {
-          prix = double.tryParse(prestataire['prix_base'].toString());
-        } catch (_) {
-          prix = 12500.0; // Valeur par défaut
+    // URL de l'image (à remplacer par la vraie source)
+    final String imageUrl = widget.prestataire['photo_url'] ?? 
+        'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+
+    // Équipements (pour les lieux)
+    List<Map<String, dynamic>> equipements = [];
+    if (widget.prestataire.containsKey('lieux') && 
+        widget.prestataire['lieux'] is List && 
+        widget.prestataire['lieux'].isNotEmpty) {
+      final lieux = widget.prestataire['lieux'][0];
+      if (lieux['hebergement'] == true) {
+        equipements.add({
+          'nom': 'Hébergement',
+          'icon': Icons.hotel,
+          'details': lieux['capacite_hebergement'] != null ? 
+              '${lieux['capacite_hebergement']} personnes' : 'Disponible'
+        });
+      }
+      if (lieux['espace_exterieur'] == true) {
+        equipements.add({
+          'nom': 'Espace extérieur',
+          'icon': Icons.park,
+          'details': 'Disponible'
+        });
+      }
+      if (lieux['parking'] == true) {
+        equipements.add({
+          'nom': 'Parking',
+          'icon': Icons.local_parking,
+          'details': 'Disponible'
+        });
+      }
+      if (lieux['piscine'] == true) {
+        equipements.add({
+          'nom': 'Piscine',
+          'icon': Icons.pool,
+          'details': 'Disponible'
+        });
+      }
+    }
+
+    // Formules/Packages (à partir de tarifs)
+    List<Map<String, dynamic>> formules = [];
+    if (widget.prestataire.containsKey('tarifs') && 
+        widget.prestataire['tarifs'] is List) {
+      for (var tarif in widget.prestataire['tarifs']) {
+        if (tarif is Map) {
+          formules.add({
+            'nom': tarif['nom_formule'] ?? 'Formule standard',
+            'prix': tarif['prix_base'] ?? 0.0,
+            'description': tarif['description'] ?? 'Aucune description disponible',
+          });
         }
       }
-    } else {
-      prix = 12500.0; // Valeur par défaut
     }
-    
-    final String? photoUrl = prestataire.containsKey('photo_url') ? prestataire['photo_url'] : null;
-    
-    // Gestion sécurisée des valeurs entières
-    int? capacite;
-    if (prestataire.containsKey('capacite_max') && prestataire['capacite_max'] != null) {
-      if (prestataire['capacite_max'] is int) {
-        capacite = prestataire['capacite_max'];
-      } else {
-        try {
-          capacite = int.tryParse(prestataire['capacite_max'].toString());
-        } catch (_) {
-          capacite = 250; // Valeur par défaut
-        }
-      }
-    } else {
-      capacite = 250; // Valeur par défaut
+    // Ajouter une formule par défaut si aucune n'est disponible
+    if (formules.isEmpty && prixBase != null) {
+      formules.add({
+        'nom': 'Formule standard',
+        'prix': prixBase,
+        'description': 'Prestation de base',
+      });
     }
-    
+
+    // Avis (à remplacer par les vrais avis)
+    List<Map<String, dynamic>> avis = [
+      {
+        'auteur': 'Sophie & Thomas',
+        'date': 'Juillet 2023',
+        'commentaire': 'Un lieu magnifique pour notre mariage ! L\'équipe était très professionnelle et attentionnée.',
+        'note': 5.0,
+      },
+      {
+        'auteur': 'Marie & Jean',
+        'date': 'Septembre 2023',
+        'commentaire': 'Cadre exceptionnel, mais quelques petits soucis d\'organisation.',
+        'note': 4.0,
+      },
+    ];
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: _showAppBarBackground 
-            ? accentColor
-            : Colors.transparent,
-        elevation: 0,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF524B46),
-            shape: BoxShape.circle,
+        backgroundColor: _isScrolled ? Colors.white : Colors.transparent,
+        elevation: _isScrolled ? 4 : 0,
+        leading: IconButton(
+          icon: CircleAvatar(
+            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
+            child: Icon(
+              Icons.arrow_back,
+              color: _isScrolled ? Colors.black : Colors.white,
+            ),
           ),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-          ),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          // Bouton de partage
-          Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF524B46),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.share, color: Colors.white),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Partage en cours...')),
-                );
-              },
-            ),
-          ),
-          // Bouton favori
-          Container(
-            margin: const EdgeInsets.only(right: 16, top: 8, bottom: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF524B46),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: Icon(
-                _isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: Colors.white,
+          IconButton(
+            icon: CircleAvatar(
+              backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
+              child: Icon(
+                Icons.share,
+                color: _isScrolled ? Colors.black : Colors.white,
               ),
-              onPressed: () {
-                setState(() {
-                  _isFavorite = !_isFavorite;
-                });
-              },
             ),
+            onPressed: () {
+              // Ajouter la fonctionnalité de partage
+            },
           ),
+          IconButton(
+            icon: CircleAvatar(
+              backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
+              child: Icon(
+                isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: _isScrolled ? (isFavorite ? Colors.red : Colors.black) : Colors.white,
+              ),
+            ),
+            onPressed: () {
+              // Ajouter/retirer des favoris
+              setState(() {
+                // isFavorite = !isFavorite;
+              });
+            },
+          ),
+          const SizedBox(width: 8),
         ],
+        title: _isScrolled ? Text(
+          nom,
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ) : null,
+        systemOverlayStyle: _isScrolled 
+            ? SystemUiOverlayStyle.dark 
+            : SystemUiOverlayStyle.light,
       ),
-      body: Stack(
-        children: [
-          // Contenu défilable
-          CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // Image principale en tête
-              SliverToBoxAdapter(
-                child: Stack(
-                  children: [
-                    // Image de fond
-                    Container(
-                      height: MediaQuery.of(context).size.height * 0.6,
-                      width: double.infinity,
-                      child: photoUrl != null
-                          ? CachedNetworkImage(
-                              imageUrl: photoUrl,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                color: Colors.grey[300],
-                                child: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                color: Colors.grey[300],
-                                child: const Icon(Icons.business, size: 80, color: Colors.grey),
-                              ),
-                            )
-                          : Container(
-                              color: Colors.grey[300],
-                              child: const Icon(Icons.business, size: 80, color: Colors.grey),
-                            ),
-                    ),
-                    
-                    // Dégradé pour la lisibilité du texte
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.7),
-                            ],
-                            stops: const [0.6, 1.0],
-                          ),
-                        ),
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          // Image principale avec informations superposées
+          SliverToBoxAdapter(
+            child: Stack(
+              children: [
+                // Image principale
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  width: double.infinity,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey[300],
+                      child: const Center(
+                        child: CircularProgressIndicator(),
                       ),
                     ),
-                    
-                    // Titre et informations superposés en bas de l'image
-                    Positioned(
-                      left: 20,
-                      right: 20,
-                      bottom: 20,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            nom,
-                            style: const TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.error),
+                    ),
+                  ),
+                ),
+                
+                // Dégradé pour assurer la lisibilité des textes
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.3),
+                          Colors.black.withOpacity(0.6),
+                        ],
+                        stops: const [0.5, 0.8, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+                
+                // Informations principales
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Nom du lieu
+                        Text(
+                          nom,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                blurRadius: 5,
+                                color: Colors.black,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                        ),
+                        
+                        // Localisation
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.place,
                               color: Colors.white,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              location,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 3,
+                                    color: Colors.black,
+                                    offset: Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        const SizedBox(height: 12),
+                        
+                        // Capacité
+                        if (capaciteMax != null)
+                          Text(
+                            '$capaciteMax invités',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
                               shadows: [
                                 Shadow(
-                                  offset: Offset(0, 2),
-                                  blurRadius: 4,
-                                  color: Colors.black54,
+                                  blurRadius: 3,
+                                  color: Colors.black,
+                                  offset: Offset(0, 1),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 8),
+                        
+                        const SizedBox(height: 8),
+                        
+                        // Étoiles
+                        if (rating != null)
                           Row(
                             children: [
-                              const Icon(
-                                Icons.location_on,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  region + ', France',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    shadows: [
-                                      Shadow(
-                                        offset: Offset(0, 1),
-                                        blurRadius: 2,
-                                        color: Colors.black54,
-                                      ),
-                                    ],
-                                  ),
+                              for (int i = 1; i <= 5; i++)
+                                Icon(
+                                  i <= rating ? Icons.star : 
+                                  (i - 0.5 <= rating ? Icons.star_half : Icons.star_border),
+                                  color: Colors.amber,
+                                  size: 24,
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Row(
-                                children: List.generate(
-                                  5,
-                                  (index) => const Icon(
-                                    Icons.star,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                "$capacite invités",
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  shadows: [
-                                    Shadow(
-                                      offset: Offset(0, 1),
-                                      blurRadius: 2,
-                                      color: Colors.black54,
+                              if (rating > 0)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Text(
+                                    rating.toStringAsFixed(1),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      shadows: [
+                                        Shadow(
+                                          blurRadius: 3,
+                                          color: Colors.black,
+                                          offset: Offset(0, 1),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  "À partir de ${prix != null ? prix.round() : 0} €",
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
                                   ),
                                 ),
-                              ),
                             ],
                           ),
-                        ],
+                        
+                        const SizedBox(height: 12),
+                        
+                        // Prix
+                        if (prixBase != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'À partir de ${prixBase.round()} €',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        
+                        const SizedBox(height: 12),
+                        
+                        // Description
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            description,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Description complète (visible uniquement en scrollant)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Description',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2B2B2B),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[800],
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Équipements et caractéristiques
+          if (equipements.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Équipements et services',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2B2B2B),
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: equipements.map((equip) => _buildFeatureItem(
+                        icon: equip['icon'],
+                        title: equip['nom'],
+                        subtitle: equip['details'],
+                      )).toList(),
                     ),
                   ],
                 ),
               ),
-              
-              // Sections détaillées
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Section Description
-                      const Text(
-                        "Description",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: grisTexte,
-                        ),
+            ),
+          
+          // Formules/Packages
+          if (formules.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Nos formules',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2B2B2B),
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        description,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: grisTexte.withOpacity(0.8),
-                          height: 1.5,
-                        ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...formules.map((formule) => _buildPackageItem(
+                      title: formule['nom'],
+                      price: formule['prix'],
+                      description: formule['description'],
+                    )).toList(),
+                  ],
+                ),
+              ),
+            ),
+          
+          // Avis
+          if (avis.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Avis',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2B2B2B),
                       ),
-                      const SizedBox(height: 24),
-                      
-                      // Ajoutez d'autres sections pour les détails, équipements, etc.
-                      const Text(
-                        "Ce que ce lieu propose",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: grisTexte,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Équipements (simplifiés pour l'exemple)
-                      _buildFeatureItem(Icons.kitchen, "Cuisine équipée"),
-                      _buildFeatureItem(Icons.accessibility_new, "Vestiaire"),
-                      _buildFeatureItem(Icons.lightbulb_outline, "Service de décoration"),
-                      _buildFeatureItem(Icons.security, "Système de sécurité"),
-                      _buildFeatureItem(Icons.music_note, "Système de sonorisation"),
-                      _buildFeatureItem(Icons.ac_unit, "Climatisation"),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Bouton Afficher tous les équipements
-                      OutlinedButton(
-                        onPressed: () {},
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: grisTexte,
-                          side: BorderSide(color: grisTexte.withOpacity(0.5)),
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Container(
-                          width: double.infinity,
-                          alignment: Alignment.center,
-                          child: const Text("Afficher tous les équipements"),
-                        ),
-                      ),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Section Formules
-                      const Text(
-                        "Formules",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: grisTexte,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Formule Classique
-                      _buildPackageItem(
-                        "Formule Classique",
-                        "Formule complète incluant toutes les prestations de base",
-                        5000,
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Formule Premium
-                      _buildPackageItem(
-                        "Formule Premium",
-                        "Inclut la formule classique avec des services additionnels premium",
-                        7500,
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Formule Luxe
-                      _buildPackageItem(
-                        "Formule Luxe",
-                        "Expérience complète avec tous les services haut de gamme inclus",
-                        12000,
-                      ),
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Section Avis
-                      Row(
-                        children: [
-                          const Text(
-                            "Avis",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: grisTexte,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Row(
-                            children: List.generate(
-                              5,
-                              (index) => const Icon(
-                                Icons.star,
-                                color: Colors.amber,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            "4.5 • 2 avis",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: grisTexte.withOpacity(0.8),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      
-                      // Premier avis
-                      _buildReviewItem(
-                        "Sophie Dupont",
-                        "janvier 2025",
-                        5.0,
-                        "Un lieu magnifique et un service impeccable. Notre mariage était parfait !",
-                      ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Deuxième avis
-                      _buildReviewItem(
-                        "Thomas Martin",
-                        "décembre 2024",
-                        4.0,
-                        "Très beau lieu, équipe professionnelle. Seul bémol : le parking un peu limité.",
-                      ),
-                      
-                      // Espace pour le bouton fixe en bas
-                      const SizedBox(height: 80),
-                    ],
+                    ),
+                    const SizedBox(height: 16),
+                    ...avis.map((review) => _buildReviewItem(
+                      author: review['auteur'],
+                      date: review['date'],
+                      rating: review['note'],
+                      comment: review['commentaire'],
+                    )).toList(),
+                  ],
+                ),
+              ),
+            ),
+          
+          // Espace pour ne pas que le bouton cache du contenu
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 80),
+          ),
+        ],
+      ),
+      
+      // Bouton Réserver fixe en bas
+      bottomSheet: Container(
+        width: double.infinity,
+        height: 70,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: ElevatedButton(
+          onPressed: () {
+            // Action de réservation
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF524B46),
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          child: const Text(
+            'Réserver',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  // Widget pour afficher un équipement/caractéristique
+  Widget _buildFeatureItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.45 - 28,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: const Color(0xFF524B46)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
               ),
             ],
           ),
-          
-          // Bouton Réserver fixe en bas
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: GestureDetector(
-              onTapDown: (_) => setState(() => _isReservePressed = true),
-              onTapUp: (_) => setState(() => _isReservePressed = false),
-              onTapCancel: () => setState(() => _isReservePressed = false),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                transform: Matrix4.identity()..scale(_isReservePressed ? 0.98 : 1.0),
-                child: Container(
-                  color: const Color(0xFF524B46),
-                  height: 60,
-                  alignment: Alignment.center,
-                  child: const Text(
-                    "Réserver",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Widget pour afficher une formule/package
+  Widget _buildPackageItem({
+    required String title,
+    required double price,
+    required String description,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.grey.withOpacity(0.3),
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3E4),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(8),
+                topRight: Radius.circular(8),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Color(0xFF2B2B2B),
                   ),
+                ),
+                Text(
+                  '${price.round()} €',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Color(0xFF524B46),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              description,
+              style: TextStyle(
+                color: Colors.grey[800],
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: OutlinedButton(
+              onPressed: () {
+                // Action pour en savoir plus ou ajouter au devis
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF524B46)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text(
+                'Choisir cette formule',
+                style: TextStyle(
+                  color: Color(0xFF524B46),
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -504,35 +702,21 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     );
   }
   
-  Widget _buildFeatureItem(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Row(
-        children: [
-          Icon(icon, size: 24, color: const Color(0xFF2B2B2B)),
-          const SizedBox(width: 16),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Color(0xFF2B2B2B),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildPackageItem(String title, String description, double price) {
+  // Widget pour afficher un avis
+  Widget _buildReviewItem({
+    required String author,
+    required String date,
+    required double rating,
+    required String comment,
+  }) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E4).withOpacity(0.3),
-        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFFFF3E4),
-          width: 1,
+          color: Colors.grey.withOpacity(0.3),
         ),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -541,107 +725,44 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                title,
+                author,
                 style: const TextStyle(
-                  fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2B2B2B),
+                  fontSize: 16,
                 ),
               ),
-                                    Text(
-                "${price.round()} €",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF524B46),
+              Text(
+                date,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            description,
-            style: TextStyle(
-              fontSize: 14,
-              color: const Color(0xFF2B2B2B).withOpacity(0.7),
-            ),
+          Row(
+            children: [
+              for (int i = 1; i <= 5; i++)
+                Icon(
+                  i <= rating ? Icons.star : 
+                  (i - 0.5 <= rating ? Icons.star_half : Icons.star_border),
+                  color: Colors.amber,
+                  size: 16,
+                ),
+            ],
           ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF524B46),
-              side: const BorderSide(color: Color(0xFF524B46)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+          const SizedBox(height: 8),
+          Text(
+            comment,
+            style: TextStyle(
+              color: Colors.grey[800],
+              fontSize: 14,
+              height: 1.5,
             ),
-            child: const Text("Choisir cette formule"),
           ),
         ],
       ),
-    );
-  }
-  
-  Widget _buildReviewItem(String name, String date, double rating, String comment) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            CircleAvatar(
-              backgroundColor: const Color(0xFFFFF3E4),
-              child: Text(
-                name[0],
-                style: const TextStyle(
-                  color: Color(0xFF524B46),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Color(0xFF2B2B2B),
-                  ),
-                ),
-                Text(
-                  date,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: const Color(0xFF2B2B2B).withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: List.generate(5, (index) {
-            return Icon(
-              Icons.star,
-              size: 16,
-              color: index < rating ? Colors.amber : Colors.grey[300],
-            );
-          }),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          comment,
-          style: TextStyle(
-            fontSize: 14,
-            color: const Color(0xFF2B2B2B).withOpacity(0.9),
-            height: 1.4,
-          ),
-        ),
-      ],
     );
   }
 }
