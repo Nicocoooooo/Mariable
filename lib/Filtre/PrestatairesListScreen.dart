@@ -3,6 +3,7 @@ import '../Filtre/data/repositories/presta_repository.dart';
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/Widgets/prestataire_card.dart';
 import '../utils/logger.dart';
+import '../DetailsScreen/PrestaireDetailScreen.dart';
 
 class PrestatairesListScreen extends StatefulWidget {
   final PrestaTypeModel prestaType;
@@ -488,16 +489,15 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
   
   // Naviguer vers les détails d'un prestataire
   void _navigateToDetails(Map<String, dynamic> prestataire) {
-    // Implémenter la navigation vers les détails
-    print('Naviguer vers les détails du prestataire: ${prestataire['nom_entreprise']}');
-    // Pour l'instant, simplement afficher un message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Voir les détails de ${prestataire['nom_entreprise']}'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
-  }
+      Navigator.push(
+        context, 
+        MaterialPageRoute(
+          builder: (context) => PrestaireDetailScreen(
+            prestataire: prestataire,
+          ),
+        ),
+      );
+    }
   
   // Basculer l'état favori d'un prestataire
   void _toggleFavorite(Map<String, dynamic> prestataire) {
