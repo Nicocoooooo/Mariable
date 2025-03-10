@@ -17,7 +17,6 @@ class LieuRepository {
           .map((item) => LieuTypeModel.fromMap(item))
           .toList();
     } catch (e) {
-      // You might want to log the error or handle it differently based on your needs
       rethrow;
     }
   }
@@ -25,14 +24,40 @@ class LieuRepository {
   /// Fetch lieux by type
   Future<List<Map<String, dynamic>>> getLieuxByType(int typeId) async {
     try {
+      // Joint presta et lieux pour obtenir toutes les infos nécessaires
       final response = await _client
-          .from('lieux')
-          .select('*')
-          .eq('type_lieu', typeId)
-          .eq('actif', true)
-          .order('note_moyenne', ascending: false);
+          .from('presta')
+          .select('''
+            id, 
+            nom_entreprise, 
+            description, 
+            region, 
+            adresse, 
+            note_moyenne, 
+            verifie, 
+            actif,
+            lieux!inner(
+              id, 
+              capacite_max, 
+              espace_exterieur, 
+              parking, 
+              hebergement, 
+              capacite_hebergement,
+              exclusivite, 
+              feu_artifice
+            ),
+            tarifs(
+              id,
+              nom_formule,
+              prix_base,
+              description
+            )
+          ''')
+          .eq('lieux_type_id', typeId)
+          .eq('actif', true);
 
-      return List<Map<String, dynamic>>.from(response);
+      // Transformer les données pour correspondre à la structure attendue
+      return _transformLieuxResponse(response);
     } catch (e) {
       rethrow;
     }
@@ -47,32 +72,80 @@ class LieuRepository {
     double? maxPrice,
   }) async {
     try {
-      var request = _client.from('lieux').select('*').eq('actif', true);
+      var request = _client
+          .from('presta')
+          .select('''
+            id, 
+            nom_entreprise, 
+            description, 
+            region, 
+            adresse, 
+            note_moyenne, 
+            verifie, 
+            actif,
+            lieux!inner(
+              id, 
+              capacite_max, 
+              espace_exterieur, 
+              parking, 
+              hebergement, 
+              capacite_hebergement,
+              exclusivite, 
+              feu_artifice
+            ),
+            tarifs(
+              id,
+              nom_formule,
+              prix_base,
+              description
+            )
+          ''')
+          .eq('actif', true);
 
       if (query != null && query.isNotEmpty) {
-        request = request.ilike('nom', '%$query%');
+        request = request.ilike('nom_entreprise', '%$query%');
       }
 
       if (typeId != null) {
-        request = request.eq('type_lieu', typeId);
+        request = request.eq('lieux_type_id', typeId);
       }
 
       if (region != null && region.isNotEmpty) {
         request = request.eq('region', region);
       }
 
-      if (minPrice != null) {
-        request = request.gte('prix_base', minPrice);
-      }
-
-      if (maxPrice != null) {
-        request = request.lte('prix_base', maxPrice);
-      }
-
       final response = await request.order('note_moyenne', ascending: false);
-      return List<Map<String, dynamic>>.from(response);
+      
+      // Transformer les données pour correspondre à la structure attendue
+      return _transformLieuxResponse(response);
     } catch (e) {
       rethrow;
     }
+  }
+
+  // Transforme la réponse Supabase en format attendu par l'UI
+  List<Map<String, dynamic>> _transformLieuxResponse(List<dynamic> response) {
+    return response.map<Map<String, dynamic>>((item) {
+      // Extraire le prix de base à partir des tarifs si disponible
+      double? prixBase;
+      if (item['tarifs'] != null && item['tarifs'].isNotEmpty) {
+        prixBase = item['tarifs'][0]['prix_base'];
+      }
+
+      // Créer un nouvel objet avec la structure attendue par l'UI
+      return {
+        'id': item['id'],
+        'nom_entreprise': item['nom_entreprise'] ?? 'Sans nom',
+        'description': item['description'] ?? 'Aucune description',
+        'region': item['region'] ?? 'Non spécifié',
+        'adresse': item['adresse'] ?? '',
+        'note_moyenne': item['note_moyenne'] ?? 0.0,
+        'prix_base': prixBase ?? 0.0,
+        'type_presta': 1, // ID du type "Lieu"
+        'type_lieu': item['lieux_type_id'], 
+        'photo_url': null, // À ajouter si les URLs des photos sont dans la base de données
+        // Ajouter d'autres champs si nécessaire
+      };
+    }).toList();
   }
 }

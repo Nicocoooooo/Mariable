@@ -14,7 +14,7 @@ dependencies:
   go_router: ^10.0.0
  
   # Base de données et API
-  supabase_flutter: ^1.10.25
+  supabase_flutter: ^2.8.4
   dio: ^5.3.2
  
   # Interface utilisateur
@@ -29,6 +29,8 @@ dependencies:
   # Formulaires et validation
   form_builder_validators: ^11.1.2
   flutter_form_builder: ^9.1.1
+
+  sign_in_with_apple: ^6.1.4
  
   # Localisation et internationalisation
   intl: ^0.19.0
@@ -39,6 +41,9 @@ dependencies:
   path_provider: ^2.1.1
   shared_preferences: ^2.2.1
   logger: ^1.4.0
+
+  http: ^1.1.0
+
 
 dev_dependencies:
   flutter_test:

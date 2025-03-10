@@ -23,9 +23,9 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     // Couleurs selon la DA
-    final Color grisTexte = const Color(0xFF2B2B2B);
-    final Color accentColor = const Color(0xFF524B46);
-    final Color beige = const Color(0xFFFFF3E4);
+    const Color grisTexte = Color(0xFF2B2B2B);
+    const Color accentColor = Color(0xFF524B46);
+    const Color beige = Color(0xFFFFF3E4);
     
     return Scaffold(
       body: Stack(

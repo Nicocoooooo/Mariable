@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'utils/logger.dart';
+import 'utils/supabase_test.dart';
 // Import des écrans
 import 'Home/HomeScreen.dart';
 
@@ -9,10 +11,34 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
  
   // Initialiser Supabase
-  await Supabase.initialize(
-    url: 'https://wrdychfyhctekddzysen.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZHljaGZ5aGN0ZWtkZHp5c2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg1OTgwNDQsImV4cCI6MjA1NDE3NDA0NH0.8GVSqkqq0se3BhXO47hgZkaI4zUF5cmKPQso11jdWSk',
-  );
+  AppLogger.info('Initializing Supabase...');
+  try {
+    await Supabase.initialize(
+      url: 'https://wrdychfyhctekddzysen.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZHljaGZ5aGN0ZWtkZHp5c2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg1OTgwNDQsImV4cCI6MjA1NDE3NDA0NH0.8GVSqkqq0se3BhXO47hgZkaI4zUF5cmKPQso11jdWSk',
+    );
+    AppLogger.info('Supabase initialized successfully');
+    
+    // Tester la connexion à Supabase
+    final isConnected = await SupabaseTest.testConnection();
+    if (isConnected) {
+      AppLogger.info('Supabase connection test successful');
+      
+      // Tester l'accès aux tables
+      final tableResults = await SupabaseTest.testTables();
+      tableResults.forEach((table, isAccessible) {
+        if (isAccessible) {
+          AppLogger.info('Table $table is accessible');
+        } else {
+          AppLogger.warning('Table $table is not accessible');
+        }
+      });
+    } else {
+      AppLogger.warning('Supabase connection test failed');
+    }
+  } catch (e) {
+    AppLogger.error('Failed to initialize Supabase', e);
+  }
  
   runApp(const MyApp());
 }

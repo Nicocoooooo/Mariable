@@ -11,15 +11,13 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       // Schéma de couleurs basé sur la DA
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: accentColor,
         secondary: beige,
         surface: backgroundColor,
-        background: backgroundColor,
         onPrimary: Colors.white,
         onSecondary: textColor,
         onSurface: textColor,
-        onBackground: textColor,
       ),
       
       // Polices personnalisées
@@ -125,15 +123,14 @@ class AppTheme {
   // Thème sombre - conservé mais adapté à la DA
   static ThemeData get darkTheme {
     return ThemeData(
-      colorScheme: ColorScheme.dark(
+      colorScheme: const ColorScheme.dark(
         primary: beige,
         secondary: accentColor,
         surface: textColor,
-        background: const Color(0xFF121212),
+        background: Color(0xFF121212),
         onPrimary: textColor,
         onSecondary: Colors.white,
         onSurface: Colors.white,
-        onBackground: Colors.white,
       ),
       
       textTheme: TextTheme(

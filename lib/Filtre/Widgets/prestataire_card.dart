@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PrestaireCard extends StatelessWidget {
   final Map<String, dynamic> prestataire;
@@ -16,210 +17,241 @@ class PrestaireCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Utiliser les couleurs du thème de l'application
-    final Color accentColor = Theme.of(context).colorScheme.primary; // #524B46
-    final Color grisTexte = Theme.of(context).colorScheme.onSurface; // #2B2B2B
-    final Color beige = Theme.of(context).colorScheme.secondary; // #FFF3E4
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Card(
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        elevation: 2,
-        child: InkWell(
-          onTap: onTap,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Image
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    prestataire['photo_url'] != null
-                        ? Image.network(
-                            prestataire['photo_url'],
+    // Couleurs selon la palette définie
+    final Color grisTexte = const Color(0xFF2B2B2B);
+    final Color accentColor = const Color(0xFF524B46);
+    final Color beige = const Color(0xFFFFF3E4);
+    
+    // Adapter les données du prestataire
+    final String nom = prestataire['nom_entreprise'] ?? 'Sans nom';
+    final String description = prestataire['description'] ?? 'Aucune description disponible';
+    final String region = prestataire['region'] ?? 'Non spécifié';
+    final double? rating = prestataire['note_moyenne'] != null 
+        ? (prestataire['note_moyenne'] is double 
+            ? prestataire['note_moyenne'] 
+            : double.tryParse(prestataire['note_moyenne'].toString()))
+        : null;
+    final double? prix = prestataire['prix_base'] != null 
+        ? (prestataire['prix_base'] is double 
+            ? prestataire['prix_base'] 
+            : double.tryParse(prestataire['prix_base'].toString()))
+        : null;
+    final String? photoUrl = prestataire['photo_url'];
+    
+    // Capacité (pour les lieux)
+    final String? capacite = prestataire['capacite_max'] != null 
+        ? '${prestataire['capacite_max']} invités' 
+        : null;
+    
+    // Caractéristiques/équipements (peut être personnalisé selon le type de prestataire)
+    List<String> caracteristiques = [];
+    if (prestataire['hebergement'] == true) caracteristiques.add('Hébergement');
+    if (prestataire['espace_exterieur'] == true) caracteristiques.add('Espace extérieur');
+    if (prestataire['parking'] == true) caracteristiques.add('Parking');
+    
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image avec bouton favori
+            Stack(
+              children: [
+                // Image principale
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: AspectRatio(
+                    aspectRatio: 4/3,
+                    child: photoUrl != null
+                        ? CachedNetworkImage(
+                            imageUrl: photoUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) {
-                              return Container(
-                                color: beige.withOpacity(0.3),
+                            placeholder: (context, url) => Container(
+                              color: beige.withOpacity(0.3),
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              color: beige.withOpacity(0.3),
+                              child: Center(
                                 child: Icon(
                                   Icons.business,
-                                  size: 48,
-                                  color: accentColor.withOpacity(0.5),
+                                  size: 40,
+                                  color: accentColor.withOpacity(0.6),
                                 ),
-                              );
-                            },
+                              ),
+                            ),
                           )
                         : Container(
                             color: beige.withOpacity(0.3),
-                            child: Icon(
-                              Icons.business,
-                              size: 48,
-                              color: accentColor.withOpacity(0.5),
-                            ),
-                          ),
-                    // Bouton favori
-                    if (onFavoriteToggle != null)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Material(
-                          color: Colors.white.withOpacity(0.8),
-                          shape: const CircleBorder(),
-                          child: InkWell(
-                            onTap: onFavoriteToggle,
-                            customBorder: const CircleBorder(),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
+                            child: Center(
                               child: Icon(
-                                isFavorite ? Icons.favorite : Icons.favorite_border,
-                                color: isFavorite ? Colors.red : grisTexte.withOpacity(0.6),
-                                size: 20,
+                                Icons.business,
+                                size: 40,
+                                color: accentColor.withOpacity(0.6),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
-              ),
-              
-              // Contenu
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Nom et note
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            prestataire['nom_entreprise'] ?? 'Sans nom',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: grisTexte,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (prestataire['note_moyenne'] != null)
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.star,
-                                size: 16,
-                                color: Colors.amber,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${prestataire['note_moyenne'].toStringAsFixed(1)}',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: grisTexte,
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    // Région
-                    if (prestataire['region'] != null)
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            size: 16,
-                            color: grisTexte.withOpacity(0.6),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            prestataire['region'],
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: grisTexte.withOpacity(0.8),
-                            ),
+                
+                // Bouton favori
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: GestureDetector(
+                    onTap: onFavoriteToggle,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                    
-                    const SizedBox(height: 12),
-                    
-                    // Description
-                    if (prestataire['description'] != null)
-                      Text(
-                        prestataire['description'],
+                      child: Center(
+                        child: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : grisTexte.withOpacity(0.7),
+                          size: 18,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            // Informations du prestataire
+            Padding(
+              padding: const EdgeInsets.only(top: 12, left: 2, right: 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Première ligne: Nom et notation
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          nom,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color(0xFF2B2B2B),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (rating != null)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.star,
+                              size: 16,
+                              color: Colors.amber,
+                            ),
+                            const SizedBox(width: 2),
+                            Text(
+                              rating.toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF2B2B2B),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                  
+                  // Deuxième ligne: Lieu
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: grisTexte.withOpacity(0.7),
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          region,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: grisTexte.withOpacity(0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Troisième ligne: Caractéristiques
+                  if (caracteristiques.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        caracteristiques.join(' • '),
                         style: TextStyle(
                           fontSize: 14,
                           color: grisTexte.withOpacity(0.7),
                         ),
-                        maxLines: 3,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Indicateur de prix
-                    if (prestataire['prix_base'] != null)
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.euro,
-                            size: 16,
-                            color: grisTexte.withOpacity(0.7),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'À partir de ${prestataire['prix_base'].toStringAsFixed(0)} €',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: grisTexte.withOpacity(0.8),
-                            ),
-                          ),
-                        ],
+                    ),
+                  
+                  // Quatrième ligne: Description
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: grisTexte.withOpacity(0.8),
                       ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Bouton
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: onTap,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: accentColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Voir les détails',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  
+                  // Dernière ligne: Prix
+                  if (prix != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: RichText(
+                        text: TextSpan(
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: grisTexte,
                           ),
+                          children: [
+                            const TextSpan(
+                              text: 'À partir de ',
+                              style: TextStyle(fontWeight: FontWeight.normal),
+                            ),
+                            TextSpan(
+                              text: '${prix.toInt()} €',
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
