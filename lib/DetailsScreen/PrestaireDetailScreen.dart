@@ -414,31 +414,11 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
           ),
           
           // Description complète (visible uniquement en scrollant)
+          // Caractéristiques et services
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Description',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2B2B2B),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[800],
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
+              child: _buildFeaturesAndServices(),
             ),
           ),
           
@@ -724,7 +704,224 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     );
   }
   
-    Widget _buildFeatureRow(IconData icon, String text) {
+// Méthode pour afficher les caractéristiques et services
+Widget _buildFeaturesAndServices() {
+  // Variables pour les caractéristiques principales et services
+  final Map<String, IconData> features = {};
+  final Map<String, IconData> services = {};
+  
+  // Récupérer les données de lieux depuis le prestataire déjà chargé
+  if (widget.prestataire.containsKey('lieux') && 
+      widget.prestataire['lieux'] is List && 
+      widget.prestataire['lieux'].isNotEmpty) {
+    
+    final lieux = widget.prestataire['lieux'][0];
+    
+    // Parcourir toutes les propriétés du lieu et ajouter celles qui sont true
+    if (lieux is Map<String, dynamic>) {
+      lieux.forEach((key, value) {
+        // Vérifier si la valeur est un booléen et est true
+        if (value is bool && value == true) {
+          // Déterminer si c'est une caractéristique ou un service
+          switch (key) {
+            // Caractéristiques principales
+            case 'piscine':
+              features['Piscine à débordement'] = Icons.pool;
+              break;
+            case 'espace_exterieur':
+              features['Espace extérieur'] = Icons.landscape;
+              break;
+            case 'jardin':
+              features['Jardin méditerranéen'] = Icons.park;
+              break;
+            case 'parc':
+              features['Parc'] = Icons.nature;
+              break;
+            case 'terrasse':
+              features['Terrasse'] = Icons.deck;
+              break;
+            case 'espace_ceremonie':
+              features['Espace cérémonie'] = Icons.celebration;
+              break;
+            case 'salle_reception':
+              features['Salle de réception'] = Icons.room_service;
+              break;
+            case 'espace_cocktail':
+              features['Espace cocktail'] = Icons.local_bar;
+              break;
+            case 'lieu_seance_photo':
+              features['Lieu de séance photo'] = Icons.photo_camera;
+              break;
+            case 'espace_enfants':
+              features['Espace enfants'] = Icons.child_care;
+              break;
+            case 'espace_lacher_lanternes':
+              features['Espace lanternes'] = Icons.light;
+              break;
+            case 'acces_bateau_helicoptere':
+              features['Accès bateau/hélicoptère'] = Icons.flight;
+              break;
+            
+            // Services inclus
+            case 'parking':
+              services['Parking privé'] = Icons.local_parking;
+              break;
+            case 'hebergement':
+              services['Hébergement'] = Icons.hotel;
+              break;
+            case 'climatisation':
+              services['Climatisation'] = Icons.ac_unit;
+              break;
+            case 'wifi':
+              services['WiFi haut débit'] = Icons.wifi;
+              break;
+            case 'tables_fournies':
+              services['Tables fournies'] = Icons.table_bar;
+              break;
+            case 'chaises_fournies':
+              services['Chaises fournies'] = Icons.event_seat;
+              break;
+            case 'nappes_fournies':
+              services['Nappes fournies'] = Icons.table_restaurant;
+              break;
+            case 'vaisselle_fournie':
+              services['Vaisselle fournie'] = Icons.restaurant;
+              break;
+            case 'sonorisation':
+              services['Sonorisation'] = Icons.surround_sound;
+              break;
+            case 'eclairage':
+              services['Éclairage'] = Icons.lightbulb;
+              break;
+            case 'coordinateur_sur_place':
+              services['Personnel sur place'] = Icons.people;
+              break;
+            case 'vestiaire':
+              services['Vestiaire'] = Icons.checkroom;
+              break;
+            case 'voiturier':
+              services['Voiturier'] = Icons.directions_car;
+              break;
+            // Autres propriétés peuvent être ajoutées ici
+          }
+        }
+      });
+    }
+  } else {
+    // Si pas de données, ajouter quelques valeurs par défaut pour le développement
+    // Vous pourrez supprimer cette partie en production
+    features['Piscine à débordement'] = Icons.pool;
+    features['Plage à distance de marche'] = Icons.beach_access;
+    features['Vue sur la mer et la nature'] = Icons.landscape;
+    features['Climatisation'] = Icons.ac_unit;
+    features['Salle de fitness'] = Icons.fitness_center;
+    features['Salle de massage'] = Icons.spa;
+    features['Barbecue'] = Icons.outdoor_grill;
+    features['Jardin méditerranéen'] = Icons.park;
+    
+    services['Personnel sur place'] = Icons.people;
+    services['Ménage quotidien'] = Icons.cleaning_services;
+    services['Parking privé'] = Icons.local_parking;
+    services['WiFi haut débit'] = Icons.wifi;
+  }
+  
+  // Retourner la structure UI
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Caractéristiques principales
+      if (features.isNotEmpty) ...[
+        const Text(
+          'Caractéristiques principales',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2B2B2B),
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        // Afficher les caractéristiques 
+        ...features.entries.take(8).map((entry) => 
+          _buildFeatureRow(entry.value, entry.key)
+        ).toList(),
+        
+        // Bouton "Voir plus" si plus de 8 caractéristiques
+        if (features.length > 8)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: OutlinedButton(
+              onPressed: () {
+                _showAllFeatures(features, 'Caractéristiques principales');
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF1A4D2E)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              child: const Text(
+                'Voir toutes les caractéristiques',
+                style: TextStyle(
+                  color: Color(0xFF1A4D2E),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+      ],
+      
+      const SizedBox(height: 32),
+      
+      // Services inclus
+      if (services.isNotEmpty) ...[
+        const Text(
+          'Services inclus',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2B2B2B),
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        // Afficher les services
+        ...services.entries.take(8).map((entry) => 
+          _buildFeatureRow(entry.value, entry.key)
+        ).toList(),
+        
+        // Bouton "Voir plus" si plus de 8 services
+        if (services.length > 8)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: OutlinedButton(
+              onPressed: () {
+                _showAllFeatures(services, 'Services inclus');
+              },
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF1A4D2E)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              child: const Text(
+                'Voir tous les services inclus',
+                style: TextStyle(
+                  color: Color(0xFF1A4D2E),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+      ],
+    ],
+  );
+}
+
+  // Méthode pour créer une ligne de caractéristique
+  Widget _buildFeatureRow(IconData icon, String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -742,6 +939,57 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // Méthode pour afficher toutes les caractéristiques/services dans un modal
+  void _showAllFeatures(Map<String, dynamic> features, String title) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Titre avec bouton fermer
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2B2B2B),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              
+              // Liste de toutes les caractéristiques/services
+              Expanded(
+                child: ListView(
+                  children: features.entries.map((entry) => 
+                    _buildFeatureRow(entry.value, entry.key)
+                  ).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
