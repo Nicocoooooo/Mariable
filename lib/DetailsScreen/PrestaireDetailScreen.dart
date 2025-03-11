@@ -219,20 +219,20 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
               children: [
                 // Image principale
                 SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.6,
-                  width: double.infinity,
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(
-                      color: Colors.grey[300],
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
+                  height: MediaQuery.of(context).size.height,
+                width: double.infinity,
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: Colors.grey[300],
+                    child: const Center(
+                      child: CircularProgressIndicator(),
                     ),
-                    errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.error),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.error),
                     ),
                   ),
                 ),
@@ -257,26 +257,29 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
                 
                 // Informations principales
                 Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Nom du lieu
-                        Text(
-                          nom,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            shadows: [
-                              Shadow(
-                                blurRadius: 5,
-                                color: Colors.black,
-                                offset: Offset(0, 2),
+                // Changez ces valeurs pour remonter les éléments
+                bottom: MediaQuery.of(context).size.height * 0.15, // Position plus haute 
+                // ou utilisez un positionnement depuis le haut
+                // top: MediaQuery.of(context).size.height * 0.5, // Essayez différentes valeurs
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Nom du lieu
+                      Text(
+                        nom,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32, 
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              blurRadius: 5,
+                              color: Colors.black,
+                              offset: Offset(0, 2),
                               ),
                             ],
                           ),
@@ -307,78 +310,77 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 8),
+                                                
+                        // Première section d'étoiles améliorée
+                        Row(
+                          children: [
+                            for (int i = 1; i <= 5; i++)
+                              Icon(
+                                i <= (rating ?? 0) ? Icons.star : 
+                                (i - 0.5 <= (rating ?? 0) ? Icons.star_half : Icons.star_border),
+                                color: Colors.amber,
+                                size: 24,
+                              ),
+                            if (rating != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Text(
+                                  rating.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(
+                                        blurRadius: 3,
+                                        color: Colors.black,
+                                        offset: Offset(0, 1),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                         
                         const SizedBox(height: 12),
                         
                         // Capacité
                         if (capaciteMax != null)
-                          Text(
-                            '$capaciteMax invités',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              shadows: [
-                                Shadow(
-                                  blurRadius: 3,
-                                  color: Colors.black,
-                                  offset: Offset(0, 1),
+                        Text(
+                          '$capaciteMax invités',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                blurRadius: 3,
+                                color: Colors.black,
+                                offset: Offset(0, 1),
                                 ),
                               ],
                             ),
                           ),
                         
-                        const SizedBox(height: 8),
-                        
-                        // Étoiles
-                        if (rating != null)
-                          Row(
-                            children: [
-                              for (int i = 1; i <= 5; i++)
-                                Icon(
-                                  i <= rating ? Icons.star : 
-                                  (i - 0.5 <= rating ? Icons.star_half : Icons.star_border),
-                                  color: Colors.amber,
-                                  size: 24,
-                                ),
-                              if (rating > 0)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8.0),
-                                  child: Text(
-                                    rating.toStringAsFixed(1),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      shadows: [
-                                        Shadow(
-                                          blurRadius: 3,
-                                          color: Colors.black,
-                                          offset: Offset(0, 1),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
                         
                         const SizedBox(height: 12),
                         
                         // Prix
                         if (prixBase != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.5),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              'À partir de ${prixBase.round()} €',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6), // Un peu plus opaque
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'À partir de ${prixBase.round()} €',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
@@ -441,35 +443,55 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
           ),
           
           // Équipements et caractéristiques
-          if (equipements.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Équipements et services',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2B2B2B),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      children: equipements.map((equip) => _buildFeatureItem(
-                        icon: equip['icon'],
-                        title: equip['nom'],
-                        subtitle: equip['details'],
-                      )).toList(),
-                    ),
-                  ],
+          SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Titre "Caractéristiques principales"
+                const Text(
+                  'Caractéristiques principales',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2B2B2B),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 16),
+                
+                // Liste des caractéristiques
+                _buildFeatureRow(Icons.pool, 'Piscine à débordement'),
+                _buildFeatureRow(Icons.beach_access, 'Plage à distance de marche'),
+                _buildFeatureRow(Icons.landscape, 'Vue sur la mer et la nature'),
+                _buildFeatureRow(Icons.ac_unit, 'Climatisation'),
+                _buildFeatureRow(Icons.fitness_center, 'Salle de fitness'),
+                _buildFeatureRow(Icons.spa, 'Salle de massage'),
+                _buildFeatureRow(Icons.outdoor_grill, 'Barbecue'),
+                _buildFeatureRow(Icons.park, 'Jardin méditerranéen'),
+                
+                const SizedBox(height: 24),
+                
+                // Titre "Services inclus"
+                const Text(
+                  'Services inclus',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2B2B2B),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Liste des services inclus
+                _buildFeatureRow(Icons.people, 'Personnel sur place'),
+                _buildFeatureRow(Icons.cleaning_services, 'Ménage quotidien'),
+                _buildFeatureRow(Icons.local_parking, 'Parking privé'),
+                _buildFeatureRow(Icons.wifi, 'WiFi haut débit'),
+              ],
             ),
+          ),
+        ),
           
           // Formules/Packages
           if (formules.isNotEmpty)
@@ -702,6 +724,27 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     );
   }
   
+    Widget _buildFeatureRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF524B46), size: 28),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Color(0xFF2B2B2B),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Widget pour afficher un avis
   Widget _buildReviewItem({
     required String author,
