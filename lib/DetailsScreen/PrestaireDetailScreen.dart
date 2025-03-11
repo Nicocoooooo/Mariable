@@ -703,136 +703,36 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
       ),
     );
   }
-  
-// Méthode pour afficher les caractéristiques et services
 Widget _buildFeaturesAndServices() {
   // Variables pour les caractéristiques principales et services
   final Map<String, IconData> features = {};
   final Map<String, IconData> services = {};
   
-  // Récupérer les données de lieux depuis le prestataire déjà chargé
+  // Récupérer les données de lieux depuis le prestataire
   if (widget.prestataire.containsKey('lieux') && 
       widget.prestataire['lieux'] is List && 
       widget.prestataire['lieux'].isNotEmpty) {
     
     final lieux = widget.prestataire['lieux'][0];
     
-    // Parcourir toutes les propriétés du lieu et ajouter celles qui sont true
+    // Parcourir les propriétés du lieu et ajouter celles qui sont true
     if (lieux is Map<String, dynamic>) {
       lieux.forEach((key, value) {
-        // Vérifier si la valeur est un booléen et est true
         if (value is bool && value == true) {
-          // Déterminer si c'est une caractéristique ou un service
-          switch (key) {
-            // Caractéristiques principales
-            case 'piscine':
-              features['Piscine à débordement'] = Icons.pool;
-              break;
-            case 'espace_exterieur':
-              features['Espace extérieur'] = Icons.landscape;
-              break;
-            case 'jardin':
-              features['Jardin méditerranéen'] = Icons.park;
-              break;
-            case 'parc':
-              features['Parc'] = Icons.nature;
-              break;
-            case 'terrasse':
-              features['Terrasse'] = Icons.deck;
-              break;
-            case 'espace_ceremonie':
-              features['Espace cérémonie'] = Icons.celebration;
-              break;
-            case 'salle_reception':
-              features['Salle de réception'] = Icons.room_service;
-              break;
-            case 'espace_cocktail':
-              features['Espace cocktail'] = Icons.local_bar;
-              break;
-            case 'lieu_seance_photo':
-              features['Lieu de séance photo'] = Icons.photo_camera;
-              break;
-            case 'espace_enfants':
-              features['Espace enfants'] = Icons.child_care;
-              break;
-            case 'espace_lacher_lanternes':
-              features['Espace lanternes'] = Icons.light;
-              break;
-            case 'acces_bateau_helicoptere':
-              features['Accès bateau/hélicoptère'] = Icons.flight;
-              break;
-            
-            // Services inclus
-            case 'parking':
-              services['Parking privé'] = Icons.local_parking;
-              break;
-            case 'hebergement':
-              services['Hébergement'] = Icons.hotel;
-              break;
-            case 'climatisation':
-              services['Climatisation'] = Icons.ac_unit;
-              break;
-            case 'wifi':
-              services['WiFi haut débit'] = Icons.wifi;
-              break;
-            case 'tables_fournies':
-              services['Tables fournies'] = Icons.table_bar;
-              break;
-            case 'chaises_fournies':
-              services['Chaises fournies'] = Icons.event_seat;
-              break;
-            case 'nappes_fournies':
-              services['Nappes fournies'] = Icons.table_restaurant;
-              break;
-            case 'vaisselle_fournie':
-              services['Vaisselle fournie'] = Icons.restaurant;
-              break;
-            case 'sonorisation':
-              services['Sonorisation'] = Icons.surround_sound;
-              break;
-            case 'eclairage':
-              services['Éclairage'] = Icons.lightbulb;
-              break;
-            case 'coordinateur_sur_place':
-              services['Personnel sur place'] = Icons.people;
-              break;
-            case 'vestiaire':
-              services['Vestiaire'] = Icons.checkroom;
-              break;
-            case 'voiturier':
-              services['Voiturier'] = Icons.directions_car;
-              break;
-            // Autres propriétés peuvent être ajoutées ici
-          }
+          _addFeatureOrService(key, features, services);
         }
       });
     }
-  } else {
-    // Si pas de données, ajouter quelques valeurs par défaut pour le développement
-    // Vous pourrez supprimer cette partie en production
-    features['Piscine à débordement'] = Icons.pool;
-    features['Plage à distance de marche'] = Icons.beach_access;
-    features['Vue sur la mer et la nature'] = Icons.landscape;
-    features['Climatisation'] = Icons.ac_unit;
-    features['Salle de fitness'] = Icons.fitness_center;
-    features['Salle de massage'] = Icons.spa;
-    features['Barbecue'] = Icons.outdoor_grill;
-    features['Jardin méditerranéen'] = Icons.park;
-    
-    services['Personnel sur place'] = Icons.people;
-    services['Ménage quotidien'] = Icons.cleaning_services;
-    services['Parking privé'] = Icons.local_parking;
-    services['WiFi haut débit'] = Icons.wifi;
   }
   
   // Retourner la structure UI
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      // Caractéristiques principales
+      // Caractéristiques principales (si non vides)
       if (features.isNotEmpty) ...[
         const Text(
-          'Caractéristiques principales',
+          'Key features',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -841,31 +741,34 @@ Widget _buildFeaturesAndServices() {
         ),
         const SizedBox(height: 16),
         
-        // Afficher les caractéristiques 
+        // Afficher les 8 premières caractéristiques seulement
         ...features.entries.take(8).map((entry) => 
-          _buildFeatureRow(entry.value, entry.key)
+          _buildFeatureItem(icon: entry.value, text: entry.key)
         ).toList(),
         
         // Bouton "Voir plus" si plus de 8 caractéristiques
         if (features.length > 8)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: OutlinedButton(
-              onPressed: () {
-                _showAllFeatures(features, 'Caractéristiques principales');
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF1A4D2E)),
-                shape: RoundedRectangleBorder(
+            child: InkWell(
+              onTap: () => _showAllFeatures(features, 'See the rooms and amenities (${features.length})'),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[400]!),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              child: const Text(
-                'Voir toutes les caractéristiques',
-                style: TextStyle(
-                  color: Color(0xFF1A4D2E),
-                  fontWeight: FontWeight.bold,
+                width: double.infinity,
+                child: Center(
+                  child: Text(
+                    'See the rooms and amenities (${features.length})',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1A4D2E),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -874,10 +777,10 @@ Widget _buildFeaturesAndServices() {
       
       const SizedBox(height: 32),
       
-      // Services inclus
+      // Services inclus (si non vides)
       if (services.isNotEmpty) ...[
         const Text(
-          'Services inclus',
+          'Included services',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -886,31 +789,34 @@ Widget _buildFeaturesAndServices() {
         ),
         const SizedBox(height: 16),
         
-        // Afficher les services
+        // Afficher les 8 premiers services
         ...services.entries.take(8).map((entry) => 
-          _buildFeatureRow(entry.value, entry.key)
+          _buildFeatureItem(icon: entry.value, text: entry.key)
         ).toList(),
         
         // Bouton "Voir plus" si plus de 8 services
         if (services.length > 8)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: OutlinedButton(
-              onPressed: () {
-                _showAllFeatures(services, 'Services inclus');
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF1A4D2E)),
-                shape: RoundedRectangleBorder(
+            child: InkWell(
+              onTap: () => _showAllFeatures(services, 'See all services (${services.length})'),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[400]!),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              child: const Text(
-                'Voir tous les services inclus',
-                style: TextStyle(
-                  color: Color(0xFF1A4D2E),
-                  fontWeight: FontWeight.bold,
+                width: double.infinity,
+                child: Center(
+                  child: Text(
+                    'See all services (${services.length})',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1A4D2E),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -918,6 +824,193 @@ Widget _buildFeaturesAndServices() {
       ],
     ],
   );
+}
+
+// Widget pour afficher un item de caractéristique unique, plus proche du design d'Airbnb
+Widget _buildFeatureItem({required IconData icon, required String text}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 24),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          margin: const EdgeInsets.only(right: 16),
+          child: Icon(icon, size: 24, color: Colors.black87),
+        ),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.normal,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// Méthode pour afficher toutes les caractéristiques dans une nouvelle vue
+void _showAllFeatures(Map<String, IconData> features, String title) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (context) {
+      return DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          return Column(
+            children: [
+              // Header avec titre et bouton fermer
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 16, 0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      title.split(' (')[0], // Prendre uniquement la partie nom sans le nombre
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Liste des caractéristiques
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(24),
+                  children: features.entries.map((entry) => 
+                    _buildFeatureItem(icon: entry.value, text: entry.key)
+                  ).toList(),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+// Fonction pour classer les propriétés dans features ou services
+void _addFeatureOrService(String key, Map<String, IconData> features, Map<String, IconData> services) {
+  switch (key) {
+    // Caractéristiques principales
+    case 'piscine':
+      features['Overflowing swimming pool'] = Icons.pool;
+      break;
+    case 'plage_proximite':
+      features['Beach within walking distance'] = Icons.beach_access;
+      break;
+    case 'vue_mer':
+      features['Sea, nature view'] = Icons.landscape;
+      break;
+    case 'espace_exterieur':
+      features['Outdoor area'] = Icons.landscape;
+      break;
+    case 'jardin':
+      features['Mediterranean garden'] = Icons.park;
+      break;
+    case 'parc':
+      features['Park'] = Icons.nature;
+      break;
+    case 'terrasse':
+      features['Terrace'] = Icons.deck;
+      break;
+    case 'espace_ceremonie':
+      features['Ceremony space'] = Icons.celebration;
+      break;
+    case 'salle_reception':
+      features['Reception hall'] = Icons.room_service;
+      break;
+    case 'espace_cocktail':
+      features['Cocktail area'] = Icons.local_bar;
+      break;
+    case 'lieu_seance_photo':
+      features['Photo shooting location'] = Icons.photo_camera;
+      break;
+    case 'espace_enfants':
+      features['Kids area'] = Icons.child_care;
+      break;
+    case 'espace_lacher_lanternes':
+      features['Lantern release area'] = Icons.light;
+      break;
+    case 'acces_bateau_helicoptere':
+      features['Boat/helicopter access'] = Icons.flight;
+      break;
+    case 'salle_fitness':
+      features['Fitness room'] = Icons.fitness_center;
+      break;
+    case 'salle_massage':
+      features['Massage room'] = Icons.spa;
+      break;
+    case 'barbecue':
+      features['Barbecue'] = Icons.outdoor_grill;
+      break;
+    case 'climatisation':
+      features['Air conditioning'] = Icons.ac_unit;
+      break;
+    
+    // Services inclus
+    case 'parking':
+      services['Private parking'] = Icons.local_parking;
+      break;
+    case 'hebergement':
+      services['Accommodation'] = Icons.hotel;
+      break;
+    case 'wifi':
+      services['High-speed WiFi'] = Icons.wifi;
+      break;
+    case 'tables_fournies':
+      services['Tables provided'] = Icons.table_bar;
+      break;
+    case 'chaises_fournies':
+      services['Chairs provided'] = Icons.event_seat;
+      break;
+    case 'nappes_fournies':
+      services['Tablecloths provided'] = Icons.table_restaurant;
+      break;
+    case 'vaisselle_fournie':
+      services['Dishware provided'] = Icons.restaurant;
+      break;
+    case 'sonorisation':
+      services['Sound system'] = Icons.surround_sound;
+      break;
+    case 'eclairage':
+      services['Lighting'] = Icons.lightbulb;
+      break;
+    case 'coordinateur_sur_place':
+      services['Staff at home'] = Icons.people;
+      break;
+    case 'vestiaire':
+      services['Cloakroom'] = Icons.checkroom;
+      break;
+    case 'voiturier':
+      services['Valet service'] = Icons.directions_car;
+      break;
+    case 'menage_quotidien':
+      services['Daily cleaning'] = Icons.cleaning_services;
+      break;
+  }
 }
 
   // Méthode pour créer une ligne de caractéristique
@@ -992,6 +1085,32 @@ Widget _buildFeaturesAndServices() {
       },
     );
   }
+
+Widget _buildFeatureItem({required IconData icon, required String text}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 24),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          margin: const EdgeInsets.only(right: 16),
+          child: Icon(icon, size: 24, color: Colors.black87),
+        ),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   // Widget pour afficher un avis
   Widget _buildReviewItem({
