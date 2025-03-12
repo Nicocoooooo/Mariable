@@ -569,56 +569,64 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     );
   }
 
-  // Fonction principale pour construire les caractéristiques et services
+// Fonction principale pour construire les caractéristiques et services
 Widget _buildFeaturesAndServices() {
   // Variables pour les caractéristiques principales et services
   final Map<String, IconData> features = {};
   final Map<String, IconData> services = {};
   
-  print("Données prestataire: ${widget.prestataire}"); // Ajout de debug
+  // Ajouter quelques logs pour déboguer
+  print("Données prestataire pour caractéristiques: ${widget.prestataire}");
   
-  // Récupérer les données de lieux depuis le prestataire
-  if (widget.prestataire.containsKey('lieux') && 
-      widget.prestataire['lieux'] is List && 
-      widget.prestataire['lieux'].isNotEmpty) {
+  // Vérifier si le prestataire a des données de lieux
+  if (widget.prestataire.containsKey('lieux')) {
+    var lieuxData = widget.prestataire['lieux'];
     
-    final lieux = widget.prestataire['lieux'][0];
-    print("Données lieux: $lieux"); // Ajout de debug
-    
-    // Parcourir les propriétés du lieu et ajouter celles qui sont true
-    if (lieux is Map<String, dynamic>) {
-      lieux.forEach((key, value) {
-        print("Propriété $key: $value"); // Ajout de debug
-        if (value is bool && value == true) {
+    // Si c'est une liste, extraire le premier élément
+    if (lieuxData is List && lieuxData.isNotEmpty) {
+      final lieu = lieuxData[0];
+      print("Données de lieu trouvées: $lieu");
+      
+      // Parcourir les propriétés du lieu
+      if (lieu is Map<String, dynamic>) {
+        lieu.forEach((key, value) {
+          print("Traitement propriété: $key = $value");
+          // Ajouter à features ou services uniquement si la valeur est true
+          if (value == true) {
+            _addFeatureOrService(key, features, services);
+          }
+        });
+      } 
+    } 
+    // Si c'est directement un objet Map
+    else if (lieuxData is Map<String, dynamic>) {
+      print("Données de lieu (objet direct): $lieuxData");
+      lieuxData.forEach((key, value) {
+        print("Traitement propriété: $key = $value");
+        if (value == true) {
           _addFeatureOrService(key, features, services);
         }
       });
     }
+  } else {
+    print("Aucune donnée de lieux trouvée dans le prestataire");
   }
   
-  // Si aucune donnée n'est trouvée, ajouter des caractéristiques de démonstration
-  if (features.isEmpty) {
-    // Ajouter quelques caractéristiques de démonstration pour s'assurer que la section s'affiche
-    features['Overflowing swimming pool'] = Icons.pool;
-    features['Beach within walking distance'] = Icons.beach_access;
-    features['Sea, nature view'] = Icons.landscape;
-    features['Air conditioning'] = Icons.ac_unit;
-    features['Fitness room'] = Icons.fitness_center;
-    features['Massage room'] = Icons.spa;
-    features['Barbecue'] = Icons.outdoor_grill;
-    features['Mediterranean garden'] = Icons.park;
+  // Si aucune caractéristique n'est trouvée, ajouter quelques exemples par défaut
+  if (features.isEmpty && services.isEmpty) {
+    print("Aucune caractéristique ou service trouvé, ajout de valeurs par défaut");
+    
+    // Ajouter quelques caractéristiques par défaut
+    features['Espace extérieur'] = Icons.terrain;
+    features['Parking disponible'] = Icons.local_parking;
+    
+    // Ajouter quelques services par défaut
+    services['WiFi gratuit'] = Icons.wifi;
+    services['Sonorisation incluse'] = Icons.music_note;
   }
   
-  if (services.isEmpty) {
-    // Ajouter quelques services de démonstration
-    services['Staff at home'] = Icons.people;
-    services['Daily cleaning'] = Icons.cleaning_services;
-    services['Private parking'] = Icons.local_parking;
-    services['High-speed WiFi'] = Icons.wifi;
-  }
-  
-  print("Features générées: ${features.length}"); // Ajout de debug
-  print("Services générés: ${services.length}"); // Ajout de debug
+  print("Caractéristiques trouvées: ${features.length}");
+  print("Services trouvés: ${services.length}");
   
   // Retourner la structure UI
   return Column(
@@ -627,7 +635,7 @@ Widget _buildFeaturesAndServices() {
       // Caractéristiques principales (si non vides)
       if (features.isNotEmpty) ...[
         const Text(
-          'Key features',
+          'Caractéristiques',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -636,38 +644,10 @@ Widget _buildFeaturesAndServices() {
         ),
         const SizedBox(height: 16),
         
-        // Afficher les 8 premières caractéristiques seulement
-        ...features.entries.take(8).map((entry) => 
+        // Afficher toutes les caractéristiques
+        ...features.entries.map((entry) => 
           _buildFeatureItem(icon: entry.value, text: entry.key)
         ).toList(),
-        
-        // Bouton "Voir plus" si plus de 8 caractéristiques
-        if (features.length > 8)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: InkWell(
-              onTap: () => _showAllFeatures(features, 'See the rooms and amenities (${features.length})'),
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[400]!),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                width: double.infinity,
-                child: Center(
-                  child: Text(
-                    'See the rooms and amenities (${features.length})',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1A4D2E),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
       ],
       
       const SizedBox(height: 32),
@@ -675,7 +655,7 @@ Widget _buildFeaturesAndServices() {
       // Services inclus (si non vides)
       if (services.isNotEmpty) ...[
         const Text(
-          'Included services',
+          'Services inclus',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -684,70 +664,48 @@ Widget _buildFeaturesAndServices() {
         ),
         const SizedBox(height: 16),
         
-        // Afficher les 8 premiers services
-        ...services.entries.take(8).map((entry) => 
+        // Afficher tous les services
+        ...services.entries.map((entry) => 
           _buildFeatureItem(icon: entry.value, text: entry.key)
         ).toList(),
-        
-        // Bouton "Voir plus" si plus de 8 services
-        if (services.length > 8)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: InkWell(
-              onTap: () => _showAllFeatures(services, 'See all services (${services.length})'),
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[400]!),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                width: double.infinity,
-                child: Center(
-                  child: Text(
-                    'See all services (${services.length})',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1A4D2E),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
       ],
     ],
   );
 }
 
-  // Widget pour afficher un item de caractéristique (style Airbnb)
-  Widget _buildFeatureItem({required IconData icon, required String text}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            margin: const EdgeInsets.only(right: 16),
-            child: Icon(icon, size: 24, color: Colors.black87),
+// Widget pour afficher un item de caractéristique (style Airbnb)
+Widget _buildFeatureItem({required IconData icon, required String text}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          margin: const EdgeInsets.only(right: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF5F5F5),
+            borderRadius: BorderRadius.circular(16),
           ),
-          Expanded(
+          child: Icon(icon, size: 18, color: const Color(0xFF1A4D2E)),
+        ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
             child: Text(
               text,
               style: const TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.normal,
-                color: Colors.black87,
+                color: Color(0xFF2B2B2B),
               ),
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   // Méthode pour afficher toutes les caractéristiques dans une nouvelle vue
   void _showAllFeatures(Map<String, IconData> features, String title) {
@@ -806,107 +764,122 @@ Widget _buildFeaturesAndServices() {
     );
   }
 
-  // Fonction pour classer les propriétés dans features ou services
-  void _addFeatureOrService(String key, Map<String, IconData> features, Map<String, IconData> services) {
-    switch (key) {
-      // Caractéristiques principales
-      case 'piscine':
-        features['Overflowing swimming pool'] = Icons.pool;
-        break;
-      case 'plage_proximite':
-        features['Beach within walking distance'] = Icons.beach_access;
-        break;
-      case 'vue_mer':
-        features['Sea, nature view'] = Icons.landscape;
-        break;
-      case 'espace_exterieur':
-        features['Outdoor area'] = Icons.landscape;
-        break;
-      case 'jardin':
-        features['Mediterranean garden'] = Icons.park;
-        break;
-      case 'parc':
-        features['Park'] = Icons.nature;
-        break;
-      case 'terrasse':
-        features['Terrace'] = Icons.deck;
-        break;
-      case 'espace_ceremonie':
-        features['Ceremony space'] = Icons.celebration;
-        break;
-      case 'salle_reception':
-        features['Reception hall'] = Icons.room_service;
-        break;
-      case 'espace_cocktail':
-        features['Cocktail area'] = Icons.local_bar;
-        break;
-      case 'lieu_seance_photo':
-        features['Photo shooting location'] = Icons.photo_camera;
-        break;
-      case 'espace_enfants':
-        features['Kids area'] = Icons.child_care;
-        break;
-      case 'espace_lacher_lanternes':
-        features['Lantern release area'] = Icons.light;
-        break;
-      case 'acces_bateau_helicoptere':
-        features['Boat/helicopter access'] = Icons.flight;
-        break;
-      case 'salle_fitness':
-        features['Fitness room'] = Icons.fitness_center;
-        break;
-      case 'salle_massage':
-        features['Massage room'] = Icons.spa;
-        break;
-      case 'barbecue':
-        features['Barbecue'] = Icons.outdoor_grill;
-        break;
-      case 'climatisation':
-        features['Air conditioning'] = Icons.ac_unit;
-        break;
-      
-      // Services inclus
-      case 'parking':
-        services['Private parking'] = Icons.local_parking;
-        break;
-      case 'hebergement':
-        services['Accommodation'] = Icons.hotel;
-        break;
-      case 'wifi':
-        services['High-speed WiFi'] = Icons.wifi;
-        break;
-      case 'tables_fournies':
-        services['Tables provided'] = Icons.table_bar;
-        break;
-      case 'chaises_fournies':
-        services['Chairs provided'] = Icons.event_seat;
-        break;
-      case 'nappes_fournies':
-        services['Tablecloths provided'] = Icons.table_restaurant;
-        break;
-      case 'vaisselle_fournie':
-        services['Dishware provided'] = Icons.restaurant;
-        break;
-      case 'sonorisation':
-        services['Sound system'] = Icons.surround_sound;
-        break;
-      case 'eclairage':
-        services['Lighting'] = Icons.lightbulb;
-        break;
-      case 'coordinateur_sur_place':
-        services['Staff at home'] = Icons.people;
-        break;
-      case 'vestiaire':
-        services['Cloakroom'] = Icons.checkroom;
-        break;
-      case 'voiturier':
-        services['Valet service'] = Icons.directions_car;
-        break;
-      case 'menage_quotidien':
-        services['Daily cleaning'] = Icons.cleaning_services;
-        break;
-    }
+// Fonction pour classer les propriétés dans features ou services
+void _addFeatureOrService(String key, Map<String, IconData> features, Map<String, IconData> services) {
+  print("Classification de la propriété: $key");
+  
+  // Table complète de correspondance basée sur le schéma Supabase
+  switch (key) {
+    // CARACTERISTIQUES DU LIEU
+    case 'espace_exterieur':
+      features['Espace extérieur'] = Icons.terrain;
+      break;
+    case 'piscine':
+      features['Piscine'] = Icons.pool;
+      break;
+    case 'parking':
+      features['Parking'] = Icons.local_parking;
+      break;
+    case 'hebergement':
+      features['Hébergement sur place'] = Icons.hotel;
+      break;
+    case 'exclusivite':
+      features['Exclusivité du lieu'] = Icons.verified_user;
+      break;
+    case 'feu_artifice':
+      features['Feu d\'artifice autorisé'] = Icons.celebration;
+      break;
+    case 'cadre':
+      features['Cadre exceptionnel'] = Icons.landscape;
+      break;
+    case 'proximite_transports':
+      features['Proximité transports'] = Icons.directions_bus;
+      break;
+    case 'accessibilite_pmr':
+      features['Accessibilité PMR'] = Icons.accessible;
+      break;
+    case 'salle_reception':
+      features['Salle de réception'] = Icons.meeting_room;
+      break;
+    case 'espace_cocktail':
+      features['Espace cocktail'] = Icons.local_bar;
+      break;
+    case 'espace_ceremonie':
+      features['Espace cérémonie'] = Icons.celebration;
+      break;
+    case 'jardin':
+      features['Jardin'] = Icons.park;
+      break;
+    case 'parc':
+      features['Parc'] = Icons.nature;
+      break;
+    case 'terrasse':
+      features['Terrasse'] = Icons.deck;
+      break;
+    case 'cour':
+      features['Cour intérieure'] = Icons.yard;
+      break;
+    case 'disponibilite_weekend':
+      features['Disponible le weekend'] = Icons.weekend;
+      break;
+    case 'disponibilite_semaine':
+      features['Disponible en semaine'] = Icons.work;
+      break;
+    case 'espace_enfants':
+      features['Espace enfants'] = Icons.child_care;
+      break;
+    case 'climatisation':
+      features['Climatisation'] = Icons.ac_unit;
+      break;
+    case 'espace_lacher_lanternes':
+      features['Espace pour lanternes'] = Icons.light;
+      break;
+    case 'lieu_seance_photo':
+      features['Lieu pour photos'] = Icons.photo_camera;
+      break;
+    case 'acces_bateau_helicoptere':
+      features['Accès bateau/hélicoptère'] = Icons.flight;
+      break;
+    
+    // SERVICES INCLUS
+    case 'systeme_sonorisation':
+      services['Système de sonorisation'] = Icons.speaker;
+      break;
+    case 'tables_fournies':
+      services['Tables fournies'] = Icons.table_bar;
+      break;
+    case 'chaises_fournies':
+      services['Chaises fournies'] = Icons.event_seat;
+      break;
+    case 'nappes_fournies':
+      services['Nappes fournies'] = Icons.table_restaurant;
+      break;
+    case 'vaisselle_fournie':
+      services['Vaisselle fournie'] = Icons.restaurant;
+      break;
+    case 'eclairage':
+      services['Éclairage'] = Icons.lightbulb;
+      break;
+    case 'sonorisation':
+      services['Sonorisation'] = Icons.surround_sound;
+      break;
+    case 'wifi':
+      services['Wi-Fi'] = Icons.wifi;
+      break;
+    case 'coordinateur_sur_place':
+      services['Coordinateur sur place'] = Icons.people;
+      break;
+    case 'vestiaire':
+      services['Vestiaire'] = Icons.checkroom;
+      break;
+    case 'voiturier':
+      services['Service voiturier'] = Icons.car_rental;
+      break;
+    default:
+      print("Propriété non reconnue: $key");
+      break;
   }
+}
 
   // Widget pour afficher un avis
   Widget _buildReviewItem({

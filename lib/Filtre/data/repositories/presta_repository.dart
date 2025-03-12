@@ -1,5 +1,3 @@
-// Mise à jour de la classe PrestaRepository dans lib/Filtre/data/repositories/presta_repository.dart
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/presta_type_model.dart';
 import 'package:logger/logger.dart';
@@ -33,14 +31,20 @@ class PrestaRepository {
       _logger.d('Fetching prestataires by type: $typeId');
       final response = await _client
           .from('presta')
-          .select('*, tarifs(*)') // Sélectionne également les tarifs associés
+          .select('''
+            *, 
+            tarifs(*),
+            lieux(*)
+          ''') // Ajout de la sélection de lieux
           .eq('presta_type_id', typeId)
           .eq('actif', true)
           .order('note_moyenne', ascending: false);
 
+      _logger.d('Response raw data: ${response.runtimeType}');
+      
       final List<Map<String, dynamic>> result = [];
       
-      // Convertir la réponse en une liste de Map<String, dynamic>
+      // Conversion des données
       for (var item in response) {
         if (item is Map) {
           final Map<String, dynamic> prestataire = {};
@@ -49,15 +53,28 @@ class PrestaRepository {
           });
           
           // Extraire le prix de base à partir des tarifs si disponible
-          if (prestataire.containsKey('tarifs') && prestataire['tarifs'] is List && prestataire['tarifs'].isNotEmpty) {
-            var lowestPrice = double.infinity;
-            for (var tarif in prestataire['tarifs']) {
-              if (tarif['prix_base'] != null && tarif['prix_base'] < lowestPrice) {
-                lowestPrice = tarif['prix_base'];
-              }
+          if (prestataire.containsKey('tarifs') && prestataire['tarifs'] != null) {
+            var tarifs = prestataire['tarifs'];
+            List<dynamic> tarifsList = [];
+            
+            if (tarifs is List) {
+              tarifsList = tarifs;
+            } else if (tarifs is Map) {
+              tarifsList = [tarifs];
             }
-            if (lowestPrice != double.infinity) {
-              prestataire['prix_base'] = lowestPrice;
+            
+            if (tarifsList.isNotEmpty) {
+              double lowestPrice = double.infinity;
+              for (var tarif in tarifsList) {
+                var prixBase = tarif is Map ? tarif['prix_base'] : null;
+                if (prixBase != null && prixBase is num && prixBase < lowestPrice) {
+                  lowestPrice = prixBase.toDouble();
+                }
+              }
+              
+              if (lowestPrice != double.infinity) {
+                prestataire['prix_base'] = lowestPrice;
+              }
             }
           }
           
@@ -84,7 +101,11 @@ class PrestaRepository {
   }) async {
     try {
       _logger.d('Searching prestataires with: query=$query, typeId=$typeId, region=$region');
-      var request = _client.from('presta').select('*, tarifs(*)').eq('actif', true);
+      var request = _client.from('presta').select('''
+        *, 
+        tarifs(*),
+        lieux(*)
+      ''').eq('actif', true); // Ajout de la sélection de lieux
 
       if (query != null && query.isNotEmpty) {
         request = request.ilike('nom_entreprise', '%$query%');
@@ -101,7 +122,7 @@ class PrestaRepository {
       final response = await request.order('note_moyenne', ascending: false);
       final List<Map<String, dynamic>> result = [];
       
-      // Traiter les résultats et filtrer par prix si nécessaire
+      // Conversion des données
       for (var item in response) {
         if (item is Map) {
           final Map<String, dynamic> prestataire = {};
@@ -111,24 +132,59 @@ class PrestaRepository {
           
           // Extraire le prix de base et filtrer si nécessaire
           double? lowestPrice;
-          if (prestataire.containsKey('tarifs') && prestataire['tarifs'] is List && prestataire['tarifs'].isNotEmpty) {
-            lowestPrice = double.infinity;
-            for (var tarif in prestataire['tarifs']) {
-              if (tarif['prix_base'] != null && tarif['prix_base'] < lowestPrice!) {
-                lowestPrice = tarif['prix_base'];
-              }
+          if (prestataire.containsKey('tarifs') && prestataire['tarifs'] != null) {
+            var tarifs = prestataire['tarifs'];
+            List<dynamic> tarifsList = [];
+            
+            if (tarifs is List) {
+              tarifsList = tarifs;
+            } else if (tarifs is Map) {
+              tarifsList = [tarifs];
             }
-            if (lowestPrice != double.infinity) {
-              prestataire['prix_base'] = lowestPrice;
-            } else {
-              lowestPrice = null;
+            
+            if (tarifsList.isNotEmpty) {
+              lowestPrice = double.infinity;
+              for (var tarif in tarifsList) {
+                var prixBase = tarif is Map ? tarif['prix_base'] : null;
+                if (prixBase != null && prixBase is num && prixBase < lowestPrice!) {
+                  lowestPrice = prixBase.toDouble();
+                }
+              }
+              
+              if (lowestPrice != double.infinity) {
+                prestataire['prix_base'] = lowestPrice;
+              } else {
+                lowestPrice = null;
+              }
             }
           }
           
-          // Filtrer par prix
-          if ((minPrice == null || lowestPrice == null || lowestPrice >= minPrice) &&
-              (maxPrice == null || lowestPrice == null || lowestPrice <= maxPrice) &&
-              (minRating == null || prestataire['note_moyenne'] == null || prestataire['note_moyenne'] >= minRating)) {
+          // Filtrer par prix et note
+          bool passesFilter = true;
+          
+          if (minPrice != null && lowestPrice != null && lowestPrice < minPrice) {
+            passesFilter = false;
+          }
+          
+          if (maxPrice != null && lowestPrice != null && lowestPrice > maxPrice) {
+            passesFilter = false;
+          }
+          
+          var noteMoyenne = prestataire['note_moyenne'];
+          if (minRating != null && noteMoyenne != null) {
+            double? noteValue;
+            if (noteMoyenne is num) {
+              noteValue = noteMoyenne.toDouble();
+            } else if (noteMoyenne is String) {
+              noteValue = double.tryParse(noteMoyenne);
+            }
+            
+            if (noteValue != null && noteValue < minRating) {
+              passesFilter = false;
+            }
+          }
+          
+          if (passesFilter) {
             result.add(prestataire);
           }
         }
