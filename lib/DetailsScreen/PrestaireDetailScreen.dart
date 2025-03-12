@@ -568,29 +568,23 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
       ),
     );
   }
-
 // Fonction principale pour construire les caractéristiques et services
 Widget _buildFeaturesAndServices() {
   // Variables pour les caractéristiques principales et services
   final Map<String, IconData> features = {};
   final Map<String, IconData> services = {};
   
-  // Ajouter quelques logs pour déboguer
-  print("Données prestataire pour caractéristiques: ${widget.prestataire}");
-  
-  // Vérifier si le prestataire a des données de lieux
+  // Récupérer les données de lieux depuis le prestataire
   if (widget.prestataire.containsKey('lieux')) {
     var lieuxData = widget.prestataire['lieux'];
     
     // Si c'est une liste, extraire le premier élément
     if (lieuxData is List && lieuxData.isNotEmpty) {
       final lieu = lieuxData[0];
-      print("Données de lieu trouvées: $lieu");
       
       // Parcourir les propriétés du lieu
       if (lieu is Map<String, dynamic>) {
         lieu.forEach((key, value) {
-          print("Traitement propriété: $key = $value");
           // Ajouter à features ou services uniquement si la valeur est true
           if (value == true) {
             _addFeatureOrService(key, features, services);
@@ -600,33 +594,34 @@ Widget _buildFeaturesAndServices() {
     } 
     // Si c'est directement un objet Map
     else if (lieuxData is Map<String, dynamic>) {
-      print("Données de lieu (objet direct): $lieuxData");
       lieuxData.forEach((key, value) {
-        print("Traitement propriété: $key = $value");
         if (value == true) {
           _addFeatureOrService(key, features, services);
         }
       });
     }
-  } else {
-    print("Aucune donnée de lieux trouvée dans le prestataire");
   }
   
   // Si aucune caractéristique n'est trouvée, ajouter quelques exemples par défaut
   if (features.isEmpty && services.isEmpty) {
-    print("Aucune caractéristique ou service trouvé, ajout de valeurs par défaut");
-    
     // Ajouter quelques caractéristiques par défaut
     features['Espace extérieur'] = Icons.terrain;
     features['Parking disponible'] = Icons.local_parking;
+    features['Vue sur la montagne'] = Icons.landscape;
+    features['Piscine'] = Icons.pool;
+    features['Terrasse privée'] = Icons.deck;
+    features['Climatisation'] = Icons.ac_unit;
+    features['Accès handicapés'] = Icons.accessible;
+    features['Barbecue'] = Icons.outdoor_grill;
+    features['Jardin'] = Icons.park;
     
     // Ajouter quelques services par défaut
     services['WiFi gratuit'] = Icons.wifi;
     services['Sonorisation incluse'] = Icons.music_note;
+    services['Service voiturier'] = Icons.directions_car;
+    services['Traiteur sur place'] = Icons.restaurant;
+    services['Vestiaire'] = Icons.checkroom;
   }
-  
-  print("Caractéristiques trouvées: ${features.length}");
-  print("Services trouvés: ${services.length}");
   
   // Retourner la structure UI
   return Column(
@@ -644,10 +639,37 @@ Widget _buildFeaturesAndServices() {
         ),
         const SizedBox(height: 16),
         
-        // Afficher toutes les caractéristiques
-        ...features.entries.map((entry) => 
+        // Limiter l'affichage à 8 caractéristiques maximum initialement
+        ...features.entries.take(8).map((entry) => 
           _buildFeatureItem(icon: entry.value, text: entry.key)
         ).toList(),
+        
+        // Bouton "Voir plus" si plus de 8 caractéristiques
+        if (features.length > 8)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: InkWell(
+              onTap: () => _showAllFeatures(features, 'Toutes les caractéristiques (${features.length})'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                width: double.infinity,
+                child: Center(
+                  child: Text(
+                    'Voir toutes les caractéristiques (${features.length})',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2B2B2B),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
       
       const SizedBox(height: 32),
@@ -664,41 +686,62 @@ Widget _buildFeaturesAndServices() {
         ),
         const SizedBox(height: 16),
         
-        // Afficher tous les services
-        ...services.entries.map((entry) => 
+        // Limiter l'affichage à 8 services maximum initialement
+        ...services.entries.take(8).map((entry) => 
           _buildFeatureItem(icon: entry.value, text: entry.key)
         ).toList(),
+        
+        // Bouton "Voir plus" si plus de 8 services
+        if (services.length > 8)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: InkWell(
+              onTap: () => _showAllFeatures(services, 'Tous les services inclus (${services.length})'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                width: double.infinity,
+                child: Center(
+                  child: Text(
+                    'Voir tous les services inclus (${services.length})',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2B2B2B),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     ],
   );
 }
 
+
 // Widget pour afficher un item de caractéristique (style Airbnb)
 Widget _buildFeatureItem({required IconData icon, required String text}) {
   return Padding(
-    padding: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.only(bottom: 20),
     child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
           width: 32,
           height: 32,
           margin: const EdgeInsets.only(right: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Icon(icon, size: 18, color: const Color(0xFF1A4D2E)),
+          child: Icon(icon, size: 24, color: const Color(0xFF2B2B2B)),
         ),
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF2B2B2B),
-              ),
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Color(0xFF2B2B2B),
             ),
           ),
         ),
@@ -707,62 +750,74 @@ Widget _buildFeatureItem({required IconData icon, required String text}) {
   );
 }
 
-  // Méthode pour afficher toutes les caractéristiques dans une nouvelle vue
-  void _showAllFeatures(Map<String, IconData> features, String title) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.9,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return Column(
-              children: [
-                // Header avec titre et bouton fermer
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 16, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        title.split(' (')[0], // Prendre uniquement la partie nom sans le nombre
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
+ // Méthode pour afficher toutes les caractéristiques dans une nouvelle vue
+void _showAllFeatures(Map<String, IconData> items, String title) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (context) {
+      return DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          return Column(
+            children: [
+              // Header avec titre et bouton fermer
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                
-                // Liste des caractéristiques
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.all(24),
-                    children: features.entries.map((entry) => 
-                      _buildFeatureItem(icon: entry.value, text: entry.key)
-                    ).toList(),
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      title.split(' (')[0], // Prendre uniquement la partie nom sans le nombre
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
+              ),
+              
+              // Liste des caractéristiques
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final entry = items.entries.elementAt(index);
+                    return _buildFeatureItem(icon: entry.value, text: entry.key);
+                  },
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
 
 // Fonction pour classer les propriétés dans features ou services
 void _addFeatureOrService(String key, Map<String, IconData> features, Map<String, IconData> services) {
