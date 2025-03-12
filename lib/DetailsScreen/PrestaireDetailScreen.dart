@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
+import 'dart:collection'; // Pour LinkedHashMap
+
 
 class PrestaireDetailScreen extends StatefulWidget {
   final Map<String, dynamic> prestataire;
@@ -570,9 +572,9 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   }
 // Fonction principale pour construire les caractéristiques et services
 Widget _buildFeaturesAndServices() {
-  // Variables pour les caractéristiques principales et services
-  final Map<String, IconData> features = {};
-  final Map<String, IconData> services = {};
+  // Utiliser LinkedHashMap pour préserver l'ordre d'insertion
+  final LinkedHashMap<String, dynamic> features = LinkedHashMap<String, dynamic>();
+  final LinkedHashMap<String, IconData> services = LinkedHashMap<String, IconData>();
   
   // Récupérer les données de lieux depuis le prestataire
   if (widget.prestataire.containsKey('lieux')) {
@@ -584,16 +586,41 @@ Widget _buildFeaturesAndServices() {
       
       // Parcourir les propriétés du lieu
       if (lieu is Map<String, dynamic>) {
+        // D'abord ajouter les caractéristiques numériques et textuelles
+        _addNumericFeatures(lieu, features);
+        
+        // Ajouter les caractéristiques textuelles
+        if (lieu.containsKey('cadre') && lieu['cadre'] != null && lieu['cadre'].toString().isNotEmpty) {
+          features['Cadre'] = {
+            'type': 'text',
+            'value': lieu['cadre'],
+            'icon': Icons.landscape
+          };
+        }
+        
+        // Ensuite ajouter les caractéristiques booléennes
         lieu.forEach((key, value) {
-          // Ajouter à features ou services uniquement si la valeur est true
           if (value == true) {
             _addFeatureOrService(key, features, services);
           }
         });
-      } 
+      }
     } 
     // Si c'est directement un objet Map
     else if (lieuxData is Map<String, dynamic>) {
+      // D'abord ajouter les caractéristiques numériques et textuelles
+      _addNumericFeatures(lieuxData, features);
+      
+      // Ajouter les caractéristiques textuelles
+      if (lieuxData.containsKey('cadre') && lieuxData['cadre'] != null && lieuxData['cadre'].toString().isNotEmpty) {
+        features['Cadre'] = {
+          'type': 'text',
+          'value': lieuxData['cadre'],
+          'icon': Icons.landscape
+        };
+      }
+      
+      // Ensuite ajouter les caractéristiques booléennes
       lieuxData.forEach((key, value) {
         if (value == true) {
           _addFeatureOrService(key, features, services);
@@ -604,23 +631,78 @@ Widget _buildFeaturesAndServices() {
   
   // Si aucune caractéristique n'est trouvée, ajouter quelques exemples par défaut
   if (features.isEmpty && services.isEmpty) {
-    // Ajouter quelques caractéristiques par défaut
-    features['Espace extérieur'] = Icons.terrain;
-    features['Parking disponible'] = Icons.local_parking;
-    features['Vue sur la montagne'] = Icons.landscape;
-    features['Piscine'] = Icons.pool;
-    features['Terrasse privée'] = Icons.deck;
-    features['Climatisation'] = Icons.ac_unit;
-    features['Accès handicapés'] = Icons.accessible;
-    features['Barbecue'] = Icons.outdoor_grill;
-    features['Jardin'] = Icons.park;
+    // D'abord ajouter les caractéristiques numériques
+    features['Capacité maximale'] = {
+      'type': 'numeric',
+      'value': 150,
+      'unit': 'invités',
+      'icon': Icons.people
+    };
+    
+    features['Capacité minimale'] = {
+      'type': 'numeric',
+      'value': 50,
+      'unit': 'invités',
+      'icon': Icons.people_outline
+    };
+    
+    features['Capacité d\'hébergement'] = {
+      'type': 'numeric',
+      'value': 30,
+      'unit': 'couchages',
+      'icon': Icons.hotel
+    };
+    
+    features['Nombre de chambres'] = {
+      'type': 'numeric',
+      'value': 8,
+      'unit': '',
+      'icon': Icons.bed
+    };
+    
+    features['Superficie intérieure'] = {
+      'type': 'numeric',
+      'value': 400,
+      'unit': 'm²',
+      'icon': Icons.square_foot
+    };
+    
+    features['Superficie extérieure'] = {
+      'type': 'numeric',
+      'value': 2000,
+      'unit': 'm²',
+      'icon': Icons.grass
+    };
+    
+    features['Cadre'] = {
+      'type': 'text',
+      'value': 'Château avec parc à la française',
+      'icon': Icons.park
+    };
+    
+    // Ensuite ajouter les caractéristiques booléennes
+    features['Espace extérieur'] = {
+      'type': 'boolean',
+      'value': true,
+      'icon': Icons.terrain
+    };
+    
+    features['Parking disponible'] = {
+      'type': 'boolean',
+      'value': true,
+      'icon': Icons.local_parking
+    };
+    
+    features['Vue sur la montagne'] = {
+      'type': 'boolean',
+      'value': true, 
+      'icon': Icons.landscape
+    };
     
     // Ajouter quelques services par défaut
     services['WiFi gratuit'] = Icons.wifi;
     services['Sonorisation incluse'] = Icons.music_note;
     services['Service voiturier'] = Icons.directions_car;
-    services['Traiteur sur place'] = Icons.restaurant;
-    services['Vestiaire'] = Icons.checkroom;
   }
   
   // Retourner la structure UI
@@ -640,9 +722,39 @@ Widget _buildFeaturesAndServices() {
         const SizedBox(height: 16),
         
         // Limiter l'affichage à 8 caractéristiques maximum initialement
-        ...features.entries.take(8).map((entry) => 
-          _buildFeatureItem(icon: entry.value, text: entry.key)
-        ).toList(),
+        ...features.entries.take(8).map((entry) {
+          // Différencier l'affichage selon le type de caractéristique
+          if (entry.value is Map) {
+            final featureData = entry.value as Map<String, dynamic>;
+            final type = featureData['type'];
+            
+            if (type == 'numeric') {
+              return _buildNumericFeatureItem(
+                icon: featureData['icon'],
+                text: entry.key,
+                value: featureData['value'],
+                unit: featureData['unit'] ?? '',
+              );
+            } else if (type == 'text') {
+              return _buildTextFeatureItem(
+                icon: featureData['icon'],
+                label: entry.key,
+                text: featureData['value'],
+              );
+            } else {
+              return _buildFeatureItem(
+                icon: featureData['icon'],
+                text: entry.key,
+              );
+            }
+          } else {
+            // Fallback pour les anciennes entrées (IconData direct)
+            return _buildFeatureItem(
+              icon: entry.value,
+              text: entry.key,
+            );
+          }
+        }).toList(),
         
         // Bouton "Voir plus" si plus de 8 caractéristiques
         if (features.length > 8)
@@ -723,8 +835,77 @@ Widget _buildFeaturesAndServices() {
 }
 
 
-// Widget pour afficher un item de caractéristique (style Airbnb)
-Widget _buildFeatureItem({required IconData icon, required String text}) {
+
+// Méthode pour ajouter les caractéristiques numériques et textuelles
+void _addNumericFeatures(Map<String, dynamic> lieu, Map<String, dynamic> features) {
+  // Capacité maximale
+  if (lieu.containsKey('capacite_max') && lieu['capacite_max'] != null) {
+    features['Capacité maximale'] = {
+      'type': 'numeric',
+      'value': lieu['capacite_max'],
+      'unit': 'invités',
+      'icon': Icons.people
+    };
+  }
+  
+  // Capacité minimale
+  if (lieu.containsKey('capacite_min') && lieu['capacite_min'] != null) {
+    features['Capacité minimale'] = {
+      'type': 'numeric',
+      'value': lieu['capacite_min'],
+      'unit': 'invités',
+      'icon': Icons.people_outline
+    };
+  }
+  
+  // Capacité d'hébergement
+  if (lieu.containsKey('capacite_hebergement') && lieu['capacite_hebergement'] != null) {
+    features['Capacité d\'hébergement'] = {
+      'type': 'numeric',
+      'value': lieu['capacite_hebergement'],
+      'unit': 'couchages',
+      'icon': Icons.hotel
+    };
+  }
+  
+  // Nombre de chambres
+  if (lieu.containsKey('nombre_chambres') && lieu['nombre_chambres'] != null) {
+    features['Nombre de chambres'] = {
+      'type': 'numeric',
+      'value': lieu['nombre_chambres'],
+      'unit': '',
+      'icon': Icons.bed
+    };
+  }
+  
+  // Superficie intérieure
+  if (lieu.containsKey('superficie_interieur') && lieu['superficie_interieur'] != null) {
+    features['Superficie intérieure'] = {
+      'type': 'numeric',
+      'value': lieu['superficie_interieur'],
+      'unit': 'm²',
+      'icon': Icons.square_foot
+    };
+  }
+  
+  // Superficie extérieure
+  if (lieu.containsKey('superficie_exterieur') && lieu['superficie_exterieur'] != null) {
+    features['Superficie extérieure'] = {
+      'type': 'numeric',
+      'value': lieu['superficie_exterieur'],
+      'unit': 'm²',
+      'icon': Icons.grass
+    };
+  }
+}
+
+// Widget pour afficher un item numérique (avec valeur et unité)
+Widget _buildNumericFeatureItem({
+  required IconData icon,
+  required String text,
+  required dynamic value,
+  required String unit,
+}) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 20),
     child: Row(
@@ -737,12 +918,26 @@ Widget _buildFeatureItem({required IconData icon, required String text}) {
           child: Icon(icon, size: 24, color: const Color(0xFF2B2B2B)),
         ),
         Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Color(0xFF2B2B2B),
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF2B2B2B),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$value ${unit.isNotEmpty ? unit : ''}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -750,8 +945,56 @@ Widget _buildFeatureItem({required IconData icon, required String text}) {
   );
 }
 
- // Méthode pour afficher toutes les caractéristiques dans une nouvelle vue
-void _showAllFeatures(Map<String, IconData> items, String title) {
+
+// Widget pour afficher un item textuel (avec label et contenu)
+Widget _buildTextFeatureItem({
+  required IconData icon,
+  required String label,
+  required String text,
+}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 20),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          margin: const EdgeInsets.only(right: 16),
+          child: Icon(icon, size: 24, color: const Color(0xFF2B2B2B)),
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF2B2B2B),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                text,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// Méthode pour afficher toutes les caractéristiques dans une nouvelle vue
+void _showAllFeatures(Map<String, dynamic> items, String title) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -807,7 +1050,44 @@ void _showAllFeatures(Map<String, IconData> items, String title) {
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     final entry = items.entries.elementAt(index);
-                    return _buildFeatureItem(icon: entry.value, text: entry.key);
+                    
+                    // Différencier l'affichage selon le type de caractéristique
+                    if (entry.value is Map) {
+                      final featureData = entry.value as Map<String, dynamic>;
+                      final type = featureData['type'];
+                      
+                      if (type == 'numeric') {
+                        return _buildNumericFeatureItem(
+                          icon: featureData['icon'],
+                          text: entry.key,
+                          value: featureData['value'],
+                          unit: featureData['unit'] ?? '',
+                        );
+                      } else if (type == 'text') {
+                        return _buildTextFeatureItem(
+                          icon: featureData['icon'],
+                          label: entry.key,
+                          text: featureData['value'],
+                        );
+                      } else {
+                        return _buildFeatureItem(
+                          icon: featureData['icon'],
+                          text: entry.key,
+                        );
+                      }
+                    } else if (entry.value is IconData) {
+                      // Pour les services (toujours IconData)
+                      return _buildFeatureItem(
+                        icon: entry.value,
+                        text: entry.key,
+                      );
+                    } else {
+                      // Fallback
+                      return _buildFeatureItem(
+                        icon: Icons.info_outline,
+                        text: entry.key,
+                      );
+                    }
                   },
                 ),
               ),
@@ -818,82 +1098,192 @@ void _showAllFeatures(Map<String, IconData> items, String title) {
     },
   );
 }
+// Widget pour afficher un item de caractéristique (style Airbnb)
+Widget _buildFeatureItem({required IconData icon, required String text}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 20),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          margin: const EdgeInsets.only(right: 16),
+          child: Icon(icon, size: 24, color: const Color(0xFF2B2B2B)),
+        ),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Color(0xFF2B2B2B),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 
 // Fonction pour classer les propriétés dans features ou services
-void _addFeatureOrService(String key, Map<String, IconData> features, Map<String, IconData> services) {
-  print("Classification de la propriété: $key");
-  
+void _addFeatureOrService(String key, Map<String, dynamic> features, Map<String, IconData> services) {
   // Table complète de correspondance basée sur le schéma Supabase
   switch (key) {
     // CARACTERISTIQUES DU LIEU
     case 'espace_exterieur':
-      features['Espace extérieur'] = Icons.terrain;
+      features['Espace extérieur'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.terrain
+      };
       break;
     case 'piscine':
-      features['Piscine'] = Icons.pool;
+      features['Piscine'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.pool
+      };
       break;
     case 'parking':
-      features['Parking'] = Icons.local_parking;
+      features['Parking'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.local_parking
+      };
       break;
     case 'hebergement':
-      features['Hébergement sur place'] = Icons.hotel;
+      features['Hébergement sur place'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.hotel
+      };
       break;
     case 'exclusivite':
-      features['Exclusivité du lieu'] = Icons.verified_user;
+      features['Exclusivité du lieu'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.verified_user
+      };
       break;
     case 'feu_artifice':
-      features['Feu d\'artifice autorisé'] = Icons.celebration;
-      break;
-    case 'cadre':
-      features['Cadre exceptionnel'] = Icons.landscape;
+      features['Feu d\'artifice autorisé'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.celebration
+      };
       break;
     case 'proximite_transports':
-      features['Proximité transports'] = Icons.directions_bus;
+      features['Proximité transports'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.directions_bus
+      };
       break;
     case 'accessibilite_pmr':
-      features['Accessibilité PMR'] = Icons.accessible;
+      features['Accessibilité PMR'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.accessible
+      };
       break;
     case 'salle_reception':
-      features['Salle de réception'] = Icons.meeting_room;
+      features['Salle de réception'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.meeting_room
+      };
       break;
     case 'espace_cocktail':
-      features['Espace cocktail'] = Icons.local_bar;
+      features['Espace cocktail'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.local_bar
+      };
       break;
     case 'espace_ceremonie':
-      features['Espace cérémonie'] = Icons.celebration;
+      features['Espace cérémonie'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.celebration
+      };
       break;
     case 'jardin':
-      features['Jardin'] = Icons.park;
+      features['Jardin'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.park
+      };
       break;
     case 'parc':
-      features['Parc'] = Icons.nature;
+      features['Parc'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.nature
+      };
       break;
     case 'terrasse':
-      features['Terrasse'] = Icons.deck;
+      features['Terrasse'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.deck
+      };
       break;
     case 'cour':
-      features['Cour intérieure'] = Icons.yard;
+      features['Cour intérieure'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.yard
+      };
       break;
     case 'disponibilite_weekend':
-      features['Disponible le weekend'] = Icons.weekend;
+      features['Disponible le weekend'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.weekend
+      };
       break;
     case 'disponibilite_semaine':
-      features['Disponible en semaine'] = Icons.work;
+      features['Disponible en semaine'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.work
+      };
       break;
     case 'espace_enfants':
-      features['Espace enfants'] = Icons.child_care;
+      features['Espace enfants'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.child_care
+      };
       break;
     case 'climatisation':
-      features['Climatisation'] = Icons.ac_unit;
+      features['Climatisation'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.ac_unit
+      };
       break;
     case 'espace_lacher_lanternes':
-      features['Espace pour lanternes'] = Icons.light;
+      features['Espace pour lanternes'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.light
+      };
       break;
     case 'lieu_seance_photo':
-      features['Lieu pour photos'] = Icons.photo_camera;
+      features['Lieu pour photos'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.photo_camera
+      };
       break;
     case 'acces_bateau_helicoptere':
-      features['Accès bateau/hélicoptère'] = Icons.flight;
+      features['Accès bateau/hélicoptère'] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': Icons.flight
+      };
       break;
     
     // SERVICES INCLUS
@@ -929,9 +1319,6 @@ void _addFeatureOrService(String key, Map<String, IconData> features, Map<String
       break;
     case 'voiturier':
       services['Service voiturier'] = Icons.car_rental;
-      break;
-    default:
-      print("Propriété non reconnue: $key");
       break;
   }
 }
