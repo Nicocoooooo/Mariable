@@ -1,9 +1,12 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/lieu_type_model.dart';
+import 'package:logger/logger.dart';
 
 /// Repository class for all lieu-related data operations
 class LieuRepository {
   final SupabaseClient _client = Supabase.instance.client;
+  final Logger _logger = Logger();
+
 
   /// Fetch all lieu types from the database
   Future<List<LieuTypeModel>> getLieuTypes() async {
@@ -122,6 +125,60 @@ class LieuRepository {
       rethrow;
     }
   }
+
+
+Future<List<Map<String, dynamic>>> getTarifsByPrestaId(String prestaId) async {
+  try {
+    _logger.d('Fetching tarifs for prestataire: $prestaId');
+    
+    final tarifsResponse = await _client
+        .from('tarifs')
+        .select('*')
+        .eq('presta_id', prestaId)
+        .order('prix_base', ascending: true);
+    
+    _logger.d('Found ${tarifsResponse.length} tarifs for prestataire: $prestaId');
+    return tarifsResponse;
+  } catch (e) {
+    _logger.e('Error fetching tarifs for prestataire: $prestaId', e);
+    return [];
+  }
+}
+
+Future<List<Map<String, dynamic>>> getTarifsByLieuId(String lieuId) async {
+  try {
+    _logger.d('Fetching tarifs for lieu: $lieuId');
+    
+    // D'abord obtenir le presta_id associé au lieu
+    final lieuResponse = await _client
+        .from('lieux')
+        .select('presta_id')
+        .eq('id', lieuId)
+        .single();
+    
+    // Si nous avons trouvé un prestataire associé
+    if (lieuResponse != null && lieuResponse['presta_id'] != null) {
+      String prestaId = lieuResponse['presta_id'];
+      _logger.d('Found presta_id: $prestaId for lieu: $lieuId');
+      
+      // Maintenant chercher les tarifs associés à ce prestataire
+      final tarifsResponse = await _client
+          .from('tarifs')
+          .select('*')
+          .eq('presta_id', prestaId)
+          .order('prix_base', ascending: true);
+      
+      _logger.d('Found ${tarifsResponse.length} tarifs for prestataire: $prestaId');
+      return tarifsResponse;
+    }
+    
+    _logger.w('No presta_id found for lieu: $lieuId');
+    return [];
+  } catch (e) {
+    _logger.e('Error fetching tarifs for lieu: $lieuId', e);
+    return [];
+  }
+}
 
   // Transforme la réponse Supabase en format attendu par l'UI
   List<Map<String, dynamic>> _transformLieuxResponse(List<dynamic> response) {

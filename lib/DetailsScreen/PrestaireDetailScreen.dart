@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 import 'dart:collection'; // Pour LinkedHashMap
+import '../Filtre/data/repositories/lieu_repository.dart'; // Ajoutez cette ligne
+import '../utils/logger.dart'; // Ajoutez cette ligne pour le logger
+
 
 
 class PrestaireDetailScreen extends StatefulWidget {
@@ -19,12 +22,16 @@ class PrestaireDetailScreen extends StatefulWidget {
 class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
+  bool _isLoadingFormules = true;
+  List<Map<String, dynamic>> _formules = [];
+  final LieuRepository _lieuRepository = LieuRepository(); // Ajoutez cette ligne
+
 
   @override
   void initState() {
     super.initState();
-    // Écouter le scroll pour changer l'apparence de l'AppBar
     _scrollController.addListener(_onScroll);
+    _loadFormules();
   }
 
   @override
@@ -47,6 +54,20 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
       });
     }
   }
+    // Ajoutez cette méthode
+  Future<void> _loadFormules() async {
+  setState(() => _isLoadingFormules = true);
+  try {
+    if (widget.prestataire['id'] != null) {
+      final formules = await LieuRepository().getTarifsByPrestaId(widget.prestataire['id']);
+      setState(() => _formules = formules);
+    }
+  } catch (e) {
+    // Gestion d'erreur
+  } finally {
+    setState(() => _isLoadingFormules = false);
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -385,7 +406,7 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
           ),
           
           // Formules/Packages
-          if (formules.isNotEmpty)
+          if (_formules.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -401,16 +422,25 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    ...formules.map((formule) => _buildPackageItem(
-                      title: formule['nom'],
-                      price: formule['prix'],
-                      description: formule['description'],
-                    )).toList(),
+                    _isLoadingFormules
+                      ? const Center(child: CircularProgressIndicator())
+                      : _formules.isEmpty
+                          ? const Text('Aucune formule disponible')
+                          : Column(
+                              children: _formules.map((formule) => _buildPackageItem(
+                                title: formule['nom_formule'] ?? 'Formule',
+                                price: formule['prix_base'] is num
+                                    ? formule['prix_base'].toDouble()
+                                    : 0.0,
+                                description: formule['description'] ?? '',
+                              )).toList(),
+                            ),
                   ],
                 ),
               ),
             ),
-          
+
+                    
           // Avis
           if (avis.isNotEmpty)
             SliverToBoxAdapter(
@@ -505,7 +535,7 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF3E4),
+              color: const Color(0xFF524B46),
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
@@ -519,7 +549,7 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
-                    color: Color(0xFF2B2B2B),
+                    color: Colors.white,
                   ),
                 ),
                 Text(
@@ -527,7 +557,7 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
-                    color: Color(0xFF524B46),
+                    color: Colors.white,
                   ),
                 ),
               ],
@@ -570,6 +600,9 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
       ),
     );
   }
+
+
+  
 // Fonction principale pour construire les caractéristiques et services
 Widget _buildFeaturesAndServices() {
   // Utiliser LinkedHashMap pour préserver l'ordre d'insertion
