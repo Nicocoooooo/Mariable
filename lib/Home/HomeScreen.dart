@@ -317,31 +317,67 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Fonction pour sélectionner une date
-  Future<void> _selectDate(BuildContext context, {required bool isStartDate}) async {
-    final DateTime now = DateTime.now();
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: isStartDate ? (_startDate ?? now) : (_endDate ?? (now.add(const Duration(days: 1)))),
-      firstDate: isStartDate ? now : (_startDate ?? now),
-      lastDate: DateTime(now.year + 2),
-    );
-
-    if (picked != null) {
-      setState(() {
-        if (isStartDate) {
-          _startDate = picked;
-          // Réinitialiser la date de fin si elle est antérieure à la date de début
-          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
-            _endDate = null;
-          }
-        } else {
-          _endDate = picked;
-        }
-      });
-    }
+// Modification de la fonction _selectDate dans lib/Home/HomeScreen.dart
+Future<void> _selectDate(BuildContext context, {required bool isStartDate}) async {
+  final DateTime now = DateTime.now();
+  
+  // Définir la bonne date initiale pour chaque cas
+  DateTime initialDate;
+  if (isStartDate) {
+    initialDate = _startDate ?? now;
+  } else {
+    // Pour la date de fin, utiliser la date de début + 1 jour ou aujourd'hui + 1 jour
+    initialDate = _endDate ?? (_startDate != null ? _startDate!.add(const Duration(days: 1)) : now.add(const Duration(days: 1)));
   }
+  
+  // Assurer que la date initiale est dans la plage valide
+  if (initialDate.isBefore(now)) {
+    initialDate = now;
+  }
+  
+  final DateTime? picked = await showDatePicker(
+    context: context,
+    initialDate: initialDate,
+    // Pour la date de début, commencer à aujourd'hui
+    // Pour la date de fin, commencer à la date de début ou aujourd'hui
+    firstDate: isStartDate ? now : (_startDate ?? now),
+    lastDate: DateTime(now.year + 3), // Permettre jusqu'à 3 ans dans le futur
+    
+    // S'assurer qu'aucun jour n'est désactivé
+    selectableDayPredicate: (DateTime date) {
+      return true; // Permettre tous les jours, y compris les weekends
+    },
+    
+    // Peut-être ajouter des paramètres supplémentaires pour personnaliser l'apparence
+    builder: (context, child) {
+      return Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: const Color(0xFF524B46), // Couleur accent
+            onPrimary: Colors.white,
+            surface: Colors.white,
+            onSurface: const Color(0xFF2B2B2B),
+          ),
+        ),
+        child: child!,
+      );
+    },
+  );
 
+  if (picked != null) {
+    setState(() {
+      if (isStartDate) {
+        _startDate = picked;
+        // Réinitialiser la date de fin si elle est antérieure à la nouvelle date de début
+        if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+          _endDate = null;
+        }
+      } else {
+        _endDate = picked;
+      }
+    });
+  }
+}
   // Ouvre le modal des filtres prestataires
   Future<void> _showPrestatairesFilter(BuildContext context) async {
     final result = await showModalBottomSheet<dynamic>(
