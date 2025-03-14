@@ -8,22 +8,42 @@ class PrestaRepository {
 
   /// Fetch all prestataire types from the database
   Future<List<PrestaTypeModel>> getPrestaTypes() async {
-    try {
-      _logger.d('Fetching prestataire types');
-      final response = await _client
-          .from('presta_type')
-          .select('id, name, description, image_url')
-          .order('id', ascending: true);
-
-      _logger.d('Received ${response.length} prestataire types');
-      return (response as List)
-          .map((item) => PrestaTypeModel.fromMap(item))
-          .toList();
-    } catch (e) {
-      _logger.e('Error fetching prestataire types: $e');
-      rethrow;
+  try {
+    _logger.d('Fetching prestataire types');
+    
+    // Utilisez explicitement la bonne table et les bons champs
+    final response = await _client
+        .from('presta_type')  // Assurez-vous que le nom de la table est correct
+        .select('id, name, description, image_url')
+        .order('id', ascending: true);
+    
+    _logger.d('Response raw: $response');
+    
+    // Convertir explicitement le résultat en List<Map<String, dynamic>>
+    final List<PrestaTypeModel> result = [];
+    
+    if (response is List) {
+      for (var item in response) {
+        if (item is Map) {
+          // Conversion explicite en Map<String, dynamic>
+          final Map<String, dynamic> typedItem = {};
+          item.forEach((key, value) {
+            typedItem[key.toString()] = value;
+          });
+          
+          // Créer un modèle à partir de la map typée
+          result.add(PrestaTypeModel.fromMap(typedItem));
+        }
+      }
     }
+    
+    _logger.d('Parsed ${result.length} prestataire types');
+    return result;
+  } catch (e) {
+    _logger.e('Error fetching prestataire types: $e');
+    rethrow;
   }
+}
 
   /// Fetch prestataires by type
   Future<List<Map<String, dynamic>>> getPrestairesByType(int typeId) async {
