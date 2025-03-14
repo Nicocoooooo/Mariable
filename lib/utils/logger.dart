@@ -14,20 +14,23 @@ class AppLogger {
     ),
   );
 
-  static void debug(String message) {
-    _logger.d(message);
+   static void debug(String message) {
+    print('[DEBUG] $message');
   }
 
   static void info(String message) {
-    _logger.i(message);
+    print('[INFO] $message');
   }
 
   static void warning(String message) {
-    _logger.w(message);
+    print('[WARNING] $message');
   }
 
   static void error(String message, [dynamic error]) {
-    _logger.e(message, error);
+    print('[ERROR] $message');
+    if (error != null) {
+      print('[ERROR DETAILS] $error');
+    }
   }
 
   static void supabaseRequest(String method, String table, Map<String, dynamic>? params) {

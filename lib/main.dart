@@ -17,6 +17,9 @@ void main() async {
       url: 'https://wrdychfyhctekddzysen.supabase.co',
       anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZHljaGZ5aGN0ZWtkZHp5c2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg1OTgwNDQsImV4cCI6MjA1NDE3NDA0NH0.8GVSqkqq0se3BhXO47hgZkaI4zUF5cmKPQso11jdWSk',
     );
+
+    await Future.delayed(const Duration(seconds: 1)); // Ajout d'un délai
+
     AppLogger.info('Supabase initialized successfully');
     
     // Tester la connexion à Supabase

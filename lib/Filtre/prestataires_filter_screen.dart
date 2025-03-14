@@ -47,29 +47,65 @@ class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
     });
   }
 
-  Future<void> _fetchPrestaTypes() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = '';
-      });
 
-      // Fetch prestataire types using the repository
-      final prestaTypes = await _repository.getPrestaTypes();
-      final prestaTypesMapList = prestaTypes.map((type) => type.toMap()).toList();
+Future<void> _fetchPrestaTypes() async {
+  try {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
+    // Ajouter un délai avant de récupérer les données
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    // Fetch prestataire types using the repository
+    final prestaTypes = await _repository.getPrestaTypes();
+    
+    // Si la liste est vide, utiliser des données fictives
+    if (prestaTypes.isEmpty) {
+      print('No prestataire types found, using default values');
+
+      final defaultTypes = [
+        PrestaTypeModel(id: 1, name: 'Lieu', description: 'Lieux pour votre mariage'),
+        // ... autres types par défaut
+      ];
+      
+      final prestaTypesMapList = defaultTypes.map((type) => type.toMap()).toList();
+      
       setState(() {
         _prestaTypes = prestaTypesMapList;
         _filteredPrestaTypes = List.from(_prestaTypes);
         _isLoading = false;
       });
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Erreur lors du chargement des types de prestataires: ${e.toString()}';
-        _isLoading = false;
-      });
+      return;
     }
+    
+    final prestaTypesMapList = prestaTypes.map((type) => type.toMap()).toList();
+
+    setState(() {
+      _prestaTypes = prestaTypesMapList;
+      _filteredPrestaTypes = List.from(_prestaTypes);
+      _isLoading = false;
+    });
+  } catch (e) {
+    print('No prestataire types found, using default values');
+
+    
+    setState(() {
+      _errorMessage = 'Erreur lors du chargement des types de prestataires: ${e.toString()}';
+      _isLoading = false;
+      
+      // Ajouter des données fictives en cas d'erreur
+      _prestaTypes = [
+        {'id': 1, 'name': 'Lieu', 'description': 'Lieux pour votre mariage'},
+        {'id': 2, 'name': 'Traiteur', 'description': 'Services de restauration'},
+        {'id': 3, 'name': 'Photographe', 'description': 'Capture de vos souvenirs'},
+        {'id': 4, 'name': 'Wedding Planner', 'description': 'Organisation complète de votre mariage'},
+      ];
+      _filteredPrestaTypes = List.from(_prestaTypes);
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
