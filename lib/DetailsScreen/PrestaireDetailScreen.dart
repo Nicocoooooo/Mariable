@@ -7,6 +7,7 @@ import '../utils/logger.dart'; // Ajoutez cette ligne pour le logger
 import '../Filtre/data/models/avis_model.dart';
 import '../widgets/avis_card.dart';
 import '../utils/fake_data.dart';
+import 'FormulaCalculatorScreen.dart';
 
 
 
@@ -436,12 +437,13 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
                           ? const Text('Aucune formule disponible')
                           : Column(
                               children: _formules.map((formule) => _buildPackageItem(
-                                title: formule['nom_formule'] ?? 'Formule',
-                                price: formule['prix_base'] is num
-                                    ? formule['prix_base'].toDouble()
-                                    : 0.0,
-                                description: formule['description'] ?? '',
-                              )).toList(),
+                              title: formule['nom_formule'] ?? 'Formule',
+                              price: formule['prix_base'] is num 
+                                  ? formule['prix_base'].toDouble() 
+                                  : double.tryParse(formule['prix_base'].toString()) ?? 0.0,
+                              description: formule['description'] ?? '',
+                              formule: formule,  // Passez la formule complète ici
+                            )).toList(),
                             ),
                   ],
                 ),
@@ -638,90 +640,90 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   }
   
   // Widget pour afficher une formule/package
-  Widget _buildPackageItem({
+    Widget _buildPackageItem({
     required String title,
     required double price,
     required String description,
+    required Map<String, dynamic> formule,  // Ajoutez ce paramètre
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.3),
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF524B46),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(8),
-                topRight: Radius.circular(8),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  '${price.round()} €',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+  return Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey.withOpacity(0.3)),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // En-tête avec titre et prix
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Color(0xFF524B46),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(8),
+              topRight: Radius.circular(8),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              description,
-              style: TextStyle(
-                color: Colors.grey[800],
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: OutlinedButton(
-              onPressed: () {
-                // Action pour en savoir plus ou ajouter au devis
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF524B46)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: const Text(
-                'Choisir cette formule',
-                style: TextStyle(
-                  color: Color(0xFF524B46),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.white,
                 ),
               ),
+              Text(
+                '${price.round()} €',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Description
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            description,
+            style: TextStyle(
+              color: Colors.grey[800],
+              fontSize: 14,
+              height: 1.5,
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        // Bouton - remplacez ce qui était ici
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: OutlinedButton(
+          onPressed: () => _showFormulaCalculator(formule),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Color(0xFF524B46)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          ),
+          child: const Text(
+            'Choisir cette formule',
+            style: TextStyle(
+              color: Color(0xFF524B46),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        ),
+      ],
+    ),
+  );
+}
 
 
   
@@ -1997,6 +1999,404 @@ void _showAllReviews() {
         },
       );
     },
+  );
+}
+
+void _showFormulaCalculator(Map<String, dynamic> formula) {
+  // Récupération des données
+  final String formulaName = formula['nom_formule'] ?? 'Formule';
+  final double basePrice = formula['prix_base'] is num ? 
+    formula['prix_base'].toDouble() : 
+    double.tryParse(formula['prix_base'].toString()) ?? 0.0;
+  
+  // Variables pour les options
+  int guestCount = 50;
+  DateTime? selectedDate;
+  List<Map<String, dynamic>> selectedOptions = [];
+  double totalPrice = basePrice;
+  
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return DraggableScrollableSheet(
+            initialChildSize: 0.9,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (context, scrollController) {
+              return Column(
+                children: [
+                  // En-tête avec titre et bouton fermer
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF524B46),
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          formulaName,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            Text(
+                              '${totalPrice.toInt()} €',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Colors.white),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Contenu défilable
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        // Nombre d'invités
+                        const Text(
+                          'Nombre d\'invités',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Slider(
+                          value: guestCount.toDouble(),
+                          min: 10,
+                          max: 350,
+                          divisions: 19,
+                          label: guestCount.toString(),
+                          activeColor: const Color(0xFF524B46),
+                          onChanged: (value) {
+                            setState(() {
+                              guestCount = value.toInt();
+                              // Recalcul du prix
+                              totalPrice = basePrice;
+                              if (guestCount > 100) {
+                                totalPrice += (guestCount - 100) * 10;
+                              }
+                              for (var option in selectedOptions) {
+                                totalPrice += option['prix'] ?? 0.0;
+                              }
+                            });
+                          },
+                        ),
+                        Center(
+                          child: Text(
+                            '$guestCount invités',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // Date
+                        const Text(
+                          'Date de l\'événement',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        InkWell(
+                          onTap: () async {
+                            final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: selectedDate ?? DateTime.now().add(const Duration(days: 30)),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime.now().add(const Duration(days: 365 * 2)),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                selectedDate = picked;
+                                // Majoration week-end
+                                if (picked.weekday == DateTime.saturday || picked.weekday == DateTime.sunday) {
+                                  totalPrice = basePrice * 1.2;
+                                } else {
+                                  totalPrice = basePrice;
+                                }
+                                // Réappliquer les autres majorations
+                                if (guestCount > 100) {
+                                  totalPrice += (guestCount - 100) * 10;
+                                }
+                                for (var option in selectedOptions) {
+                                  totalPrice += option['prix'] ?? 0.0;
+                                }
+                              });
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF3E4),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.calendar_today),
+                                const SizedBox(width: 12),
+                                Text(
+                                  selectedDate != null 
+                                    ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                                    : 'Choisir une date',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: selectedDate != null ? Colors.black : Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // Options supplémentaires
+                        const Text(
+                          'Options supplémentaires',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Options à cocher
+                        _buildOptionCheckbox(
+                          'Service de nettoyage',
+                          'Nettoyage complet avant et après l\'événement',
+                          250.0,
+                          selectedOptions.any((o) => o['nom'] == 'Service de nettoyage'),
+                          (isChecked) {
+                            setState(() {
+                              if (isChecked) {
+                                selectedOptions.add({
+                                  'nom': 'Service de nettoyage',
+                                  'prix': 250.0
+                                });
+                                totalPrice += 250.0;
+                              } else {
+                                selectedOptions.removeWhere((o) => o['nom'] == 'Service de nettoyage');
+                                totalPrice -= 250.0;
+                              }
+                            });
+                          },
+                        ),
+                        
+                        _buildOptionCheckbox(
+                          'Coordinateur sur place',
+                          'Un coordinateur dédié pendant toute la durée de l\'événement',
+                          500.0,
+                          selectedOptions.any((o) => o['nom'] == 'Coordinateur sur place'),
+                          (isChecked) {
+                            setState(() {
+                              if (isChecked) {
+                                selectedOptions.add({
+                                  'nom': 'Coordinateur sur place',
+                                  'prix': 500.0
+                                });
+                                totalPrice += 500.0;
+                              } else {
+                                selectedOptions.removeWhere((o) => o['nom'] == 'Coordinateur sur place');
+                                totalPrice -= 500.0;
+                              }
+                            });
+                          },
+                        ),
+                        
+                        _buildOptionCheckbox(
+                          'Hébergement',
+                          'Chambres disponibles pour 20 personnes',
+                          800.0,
+                          selectedOptions.any((o) => o['nom'] == 'Hébergement'),
+                          (isChecked) {
+                            setState(() {
+                              if (isChecked) {
+                                selectedOptions.add({
+                                  'nom': 'Hébergement',
+                                  'prix': 800.0
+                                });
+                                totalPrice += 800.0;
+                              } else {
+                                selectedOptions.removeWhere((o) => o['nom'] == 'Hébergement');
+                                totalPrice -= 800.0;
+                              }
+                            });
+                          },
+                        ),
+                        
+                        _buildOptionCheckbox(
+                          'Système son et lumière',
+                          'Équipement professionnel pour votre soirée',
+                          350.0,
+                          selectedOptions.any((o) => o['nom'] == 'Système son et lumière'),
+                          (isChecked) {
+                            setState(() {
+                              if (isChecked) {
+                                selectedOptions.add({
+                                  'nom': 'Système son et lumière',
+                                  'prix': 350.0
+                                });
+                                totalPrice += 350.0;
+                              } else {
+                                selectedOptions.removeWhere((o) => o['nom'] == 'Système son et lumière');
+                                totalPrice -= 350.0;
+                              }
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Bouton d'action en bas
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, -5),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Total',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              Text(
+                                '${totalPrice.toInt()} €',
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF524B46),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            // Ajouter au panier et fermer
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('features bientôt disponible'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF524B46),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          ),
+                          child: const Text(
+                            'Téléchager le devis',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    },
+  );
+}
+
+Widget _buildOptionCheckbox(
+  String title,
+  String description,
+  double price,
+  bool isSelected,
+  Function(bool) onChanged,
+) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      border: Border.all(
+        color: isSelected ? const Color(0xFF524B46) : Colors.grey.shade300,
+        width: isSelected ? 2 : 1,
+      ),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: CheckboxListTile(
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(description),
+          const SizedBox(height: 4),
+          Text(
+            '${price.toInt()} €',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF524B46),
+            ),
+          ),
+        ],
+      ),
+      value: isSelected,
+      onChanged: (value) => onChanged(value ?? false),
+      activeColor: const Color(0xFF524B46),
+      checkColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      controlAffinity: ListTileControlAffinity.trailing,
+    ),
   );
 }
 
