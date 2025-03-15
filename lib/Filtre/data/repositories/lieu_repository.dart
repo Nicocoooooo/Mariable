@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/lieu_type_model.dart';
 import 'package:logger/logger.dart';
+import '../models/avis_model.dart';
 
 /// Repository class for all lieu-related data operations
 class LieuRepository {
@@ -204,5 +205,61 @@ Future<List<Map<String, dynamic>>> getTarifsByLieuId(String lieuId) async {
         // Ajouter d'autres champs si nécessaire
       };
     }).toList();
+  }
+
+  /// Récupère les avis pour un prestataire spécifique
+  Future<List<AvisModel>> getAvisByPrestataireId(String prestataireId) async {
+    try {
+      _logger.d('Fetching avis for prestataire: $prestataireId');
+      
+      final response = await _client
+          .from('avis')
+          .select('*, profiles(*)')
+          .eq('prestataire_id', prestataireId)
+          .eq('status', 'publie') // Seulement les avis publiés
+          .order('created_at', ascending: false);
+      
+      final List<AvisModel> avis = (response as List)
+          .map((item) => AvisModel.fromMap(item))
+          .toList();
+          
+      _logger.d('Found ${avis.length} avis for prestataire: $prestataireId');
+      return avis;
+    } catch (e) {
+      _logger.e('Error fetching avis for prestataire: $prestataireId', e);
+      return [];
+    }
+  }
+
+
+
+}
+
+class AvisService {
+  final _client = Supabase.instance.client;
+  
+  Future<bool> addAvis({
+    required String prestataireId,
+    required String userId,
+    required double note,
+    required String commentaire,
+  }) async {
+    try {
+      print('Adding avis for prestataire: $prestataireId by user: $userId');
+      
+      await _client.from('avis').insert({
+        'prestataire_id': prestataireId,
+        'user_id': userId,
+        'note': note,
+        'commentaire': commentaire,
+        'status': 'en_attente', // L'avis sera modéré avant publication
+      });
+      
+      print('Successfully added avis for prestataire: $prestataireId');
+      return true;
+    } catch (e) {
+      print('Error adding avis for prestataire: $prestataireId: $e');
+      return false;
+    }
   }
 }

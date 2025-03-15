@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'dart:collection'; // Pour LinkedHashMap
 import '../Filtre/data/repositories/lieu_repository.dart'; // Ajoutez cette ligne
 import '../utils/logger.dart'; // Ajoutez cette ligne pour le logger
+import '../Filtre/data/models/avis_model.dart';
+import '../widgets/avis_card.dart';
+import '../utils/fake_data.dart';
 
 
 
@@ -23,6 +26,8 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
   bool _isLoadingFormules = true;
+  List<AvisModel> _avis = [];
+  bool _isLoadingAvis = true;
   List<Map<String, dynamic>> _formules = [];
   final LieuRepository _lieuRepository = LieuRepository(); // Ajoutez cette ligne
 
@@ -32,6 +37,7 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     _loadFormules();
+    _loadAvis();
   }
 
   @override
@@ -68,6 +74,8 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     setState(() => _isLoadingFormules = false);
   }
 }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -444,30 +452,144 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
           // Avis
           if (avis.isNotEmpty)
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Avis',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2B2B2B),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Titre et note moyenne
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Avis',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2B2B2B),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    ...avis.map((review) => _buildReviewItem(
-                      author: review['auteur'],
-                      date: review['date'],
-                      rating: review['note'],
-                      comment: review['commentaire'],
-                    )).toList(),
-                  ],
+                      if (_avis.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF524B46),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _calculateAverageRating().toStringAsFixed(1),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                                size: 16,
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Affichage des avis
+        _isLoadingAvis
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          : _avis.isEmpty
+              ? Center(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      Icon(Icons.comment_outlined, size: 48, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Aucun avis pour le moment',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                )
+              : Column(
+                  children: _avis
+                      .take(3) // Limiter à 3 avis affichés initialement
+                      .map((avis) => _buildAvisItem(avis))
+                      .toList(),
+                ),
+        
+        // Bouton "Voir tous les avis" si plus de 3 avis
+        if (_avis.length > 3)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: OutlinedButton(
+                onPressed: () => _showAllReviews(),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF524B46)),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Voir tous les avis (${_avis.length})',
+                  style: const TextStyle(
+                    color: Color(0xFF524B46),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
+          ),
+          
+        // Bouton pour laisser un avis
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Cette fonctionnalité sera disponible prochainement'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF524B46),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              icon: const Icon(Icons.rate_review, color: Colors.white,),
+              label: const Text('Laisser un avis'),
+            ),
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+
           
           // Espace pour ne pas que le bouton cache du contenu
           const SliverToBoxAdapter(
@@ -868,6 +990,301 @@ Widget _buildFeaturesAndServices() {
 }
 
 
+  Future<void> _loadAvis() async {
+    setState(() => _isLoadingAvis = true);
+    try {
+      // Au lieu d'appeler l'API, utilisez les données fictives
+      if (widget.prestataire != null && widget.prestataire['id'] != null) {
+        // Petit délai pour simuler un appel réseau
+        await Future.delayed(const Duration(milliseconds: 800));
+        
+        // Charger les données fictives
+        final fakeAvis = FakeData.getFakeAvis(widget.prestataire['id']);
+        
+        setState(() {
+          _avis = fakeAvis;
+        });
+      }
+    } catch (e) {
+      print('Erreur lors du chargement des avis: $e');
+    } finally {
+      setState(() => _isLoadingAvis = false);
+    }
+  }
+
+
+
+// Méthode pour calculer la moyenne des notes
+double _calculateAverageRating() {
+  if (_avis.isEmpty) return 0.0;
+  
+  double total = 0.0;
+  for (var avis in _avis) {
+    total += avis.note;
+  }
+  return total / _avis.length;
+}
+
+// Widget pour l'état vide (aucun avis)
+Widget _buildEmptyAvisState() {
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 24),
+    alignment: Alignment.center,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.rate_review_outlined,
+          size: 48,
+          color: Colors.grey[400],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Aucun avis pour le moment',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Soyez le premier à donner votre avis!',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[500],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+// Méthode pour afficher tous les avis dans une modale
+void _showAllAvis() {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (context) {
+      return DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          return Column(
+            children: [
+              // Header avec titre et bouton fermer
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'Tous les avis',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF524B46),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                _calculateAverageRating().toStringAsFixed(1),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                                size: 16,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Liste des avis
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  itemCount: _avis.length,
+                  itemBuilder: (context, index) => AvisCard(avis: _avis[index]),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
+
+
+// 6. Ajoutons un bouton pour laisser un avis dans la page de détail du prestataire
+// (après la section des avis existants)
+
+// 7. Enfin, implémentons la méthode pour afficher le dialogue d'ajout d'avis
+
+
+  void _showAddAvisDialog() {
+  double rating = 5.0;
+  final commentController = TextEditingController();
+  final avisService = AvisService(); // Instancier le service ici
+  
+  showDialog(
+    context: context,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setState) {
+        return AlertDialog(
+          title: const Text('Laisser un avis'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Votre note:'),
+              const SizedBox(height: 8),
+              // Étoiles pour la notation
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(5, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      index < rating ? Icons.star : Icons.star_border,
+                      color: Colors.amber,
+                      size: 36,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        rating = index + 1.0;
+                      });
+                    },
+                  );
+                }),
+              ),
+              const SizedBox(height: 16),
+              const Text('Votre commentaire:'),
+              const SizedBox(height: 8),
+              // Champ de commentaire
+              TextField(
+                controller: commentController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  hintText: 'Partagez votre expérience...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                // Vérifier si le commentaire n'est pas vide
+                if (commentController.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Veuillez ajouter un commentaire'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                  return;
+                }
+                
+                // Récupérer l'ID utilisateur (exemple simple)
+                final userId = 'anonymous'; // ID temporaire pour les tests
+                
+                // Soumettre l'avis avec le AvisService au lieu de LieuRepository
+                final success = await avisService.addAvis(
+                  prestataireId: widget.prestataire['id'],
+                  userId: userId,
+                  note: rating,
+                  commentaire: commentController.text.trim(),
+                );
+                
+                Navigator.pop(context);
+                
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Merci pour votre avis! Il sera visible après modération.'),
+                      duration: Duration(seconds: 3),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Une erreur est survenue lors de l\'envoi de votre avis'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF524B46),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Soumettre'),
+            ),
+          ],
+        );
+      },
+    ),
+  );
+}
+
+// Ces deux méthodes sont des placeholders à adapter selon votre système d'authentification
+bool _userIsLoggedIn() {
+  // Version simplifiée temporaire
+  return true; // Toujours autorisé pendant le développement
+}
+
+String _getCurrentUserId() {
+  // Version simplifiée temporaire
+  return "user_test_id"; // ID fixe pour les tests
+}
+
 
 // Méthode pour ajouter les caractéristiques numériques et textuelles
 void _addNumericFeatures(Map<String, dynamic> lieu, Map<String, dynamic> features) {
@@ -1158,6 +1575,75 @@ Widget _buildFeatureItem({required IconData icon, required String text}) {
   );
 }
 
+Widget _buildAvisItem(AvisModel avis) {
+  return Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      border: Border.all(color: Colors.grey.withOpacity(0.3)),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Nom de l'auteur
+            Text(
+              "${avis.profile?['prenom'] ?? ''} ${avis.profile?['nom'] ?? 'Anonyme'}",
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            // Date
+            Text(
+              "${_getMonthName(avis.createdAt.month)} ${avis.createdAt.year}",
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Étoiles pour la note
+        Row(
+          children: List.generate(5, (index) {
+            if (index < avis.note.floor()) {
+              return const Icon(Icons.star, color: Colors.amber, size: 16);
+            } else if (index < avis.note.ceil() && avis.note % 1 > 0) {
+              return const Icon(Icons.star_half, color: Colors.amber, size: 16);
+            } else {
+              return const Icon(Icons.star_border, color: Colors.amber, size: 16);
+            }
+          }),
+        ),
+        const SizedBox(height: 8),
+        // Commentaire
+        Text(
+          avis.commentaire,
+          style: TextStyle(
+            color: Colors.grey[800],
+            fontSize: 14,
+            height: 1.5,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+// Fonction utilitaire pour obtenir le nom du mois
+String _getMonthName(int month) {
+  List<String> months = [
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+  ];
+  return months[month - 1];
+}
 
 // Fonction pour classer les propriétés dans features ou services
 void _addFeatureOrService(String key, Map<String, dynamic> features, Map<String, IconData> services) {
@@ -1419,4 +1905,99 @@ void _addFeatureOrService(String key, Map<String, dynamic> features, Map<String,
    ),
  );
 }
+
+void _showAllReviews() {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.white,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (context) {
+      return DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          return Column(
+            children: [
+              // En-tête
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'Tous les avis',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF524B46),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                _calculateAverageRating().toStringAsFixed(1),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.star,
+                                color: Colors.amber,
+                                size: 16,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Liste des avis
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  itemCount: _avis.length,
+                  itemBuilder: (context, index) => _buildAvisItem(_avis[index]),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+
 }

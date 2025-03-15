@@ -6,6 +6,8 @@ import 'utils/logger.dart';
 import 'utils/supabase_test.dart';
 // Import des écrans
 import 'Home/HomeScreen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,6 +87,16 @@ class MyApp extends StatelessWidget {
     
     return MaterialApp.router(
       title: 'Mariable',
+      localizationsDelegates: const [
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+      supportedLocales: const [
+        Locale('fr', 'FR'),
+        Locale('en', 'US'),
+      ],
+      
       theme: ThemeData(
         // Couleurs selon la DA
         colorScheme: ColorScheme.fromSeed(
