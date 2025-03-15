@@ -602,40 +602,70 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
       
       // Bouton Réserver fixe en bas
       bottomSheet: Container(
-        width: double.infinity,
-        height: 70,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: ElevatedButton(
+  width: double.infinity,
+  height: 70,
+  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.1),
+        blurRadius: 10,
+        offset: const Offset(0, -5),
+      ),
+    ],
+  ),
+  child: Row(
+    children: [
+      // Premier bouton - Contacter
+      Expanded(
+        child: OutlinedButton(
           onPressed: () {
-            // Action de réservation
+            // Action pour envoyer une demande de contact
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Demande envoyée')),
+            );
           },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF524B46),
-            foregroundColor: Colors.white,
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Color(0xFF524B46)),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 16),
           ),
           child: const Text(
-            'Réserver',
+            'Contacter',
             style: TextStyle(
-              fontSize: 18,
+              color: Color(0xFF524B46),
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
       ),
+          const SizedBox(width: 12),
+          // Deuxième bouton - Réserver
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => _showFormulaCalculator(widget.prestataire),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF524B46),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text(
+                'Réserver',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
     );
   }
   
