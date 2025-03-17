@@ -9,8 +9,7 @@ import '../utils/fake_data.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../Widgets/availability_selector.dart';
 import 'package:intl/intl.dart';
-
-
+import 'ImageGalleryScreen.dart';
 
 class PrestaireDetailScreen extends StatefulWidget {
   final Map<String, dynamic> prestataire;
@@ -29,6 +28,7 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   bool _isScrolled = false;
   bool _isLoadingFormules = true;
   List<AvisModel> _avis = [];
+  List<String> _galleryImages = [];
   bool _isLoadingAvis = true;
   List<Map<String, dynamic>> _formules = [];
   final LieuRepository _lieuRepository = LieuRepository(); // Ajoutez cette ligne
@@ -40,6 +40,7 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     _scrollController.addListener(_onScroll);
     _loadFormules();
     _loadAvis();
+    _loadGalleryImages(); // Ajoutez cette ligne
   }
 
   @override
@@ -63,6 +64,20 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     }
   }
 
+  void _loadGalleryImages() {
+    _galleryImages = [
+      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1519741347686-c1e331fcb4d0?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6a3?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1537633552985-df8429e8048b?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1507504031003-b417219a0fde?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop',
+    ];
+  }
+
   void _showAvailabilitySelector() {
   showModalBottomSheet(
     context: context,
@@ -80,6 +95,7 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     },
   );
   }
+
   void _handleAppointmentConfirmation(DateTime date, String timeSlot) {
     final DateFormat formatter = DateFormat('EEEE d MMMM yyyy à HH:mm', 'fr_FR');
     final String formattedDate = formatter.format(
@@ -178,11 +194,10 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   } finally {
     setState(() => _isLoadingFormules = false);
   }
-}
+  }
 
 
-
-  @override
+@override
 Widget build(BuildContext context) {
   // Extraire les données du prestataire
   final String nom = widget.prestataire['nom_entreprise'] ?? 'Sans nom';
@@ -298,14 +313,16 @@ Widget build(BuildContext context) {
       slivers: [
         // Image principale avec informations superposées
         SliverToBoxAdapter(
-          child: Stack(
+          child: GestureDetector(  // Ajoutez ce GestureDetector englobant
+          onTap: () => _openGallery(),
+          child: Stack(  // Votre Stack existant
             children: [
               // Image principale
               SizedBox(
-                height: MediaQuery.of(context).size.height,
-                width: double.infinity,
-                child: CachedNetworkImage(
-                  imageUrl: imageUrl,
+                  height: MediaQuery.of(context).size.height * 0.6, // Même hauteur qu'avant
+                  width: double.infinity, // Largeur à 100%
+                  child: CachedNetworkImage(
+                  imageUrl:     'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop',
                   fit: BoxFit.cover,
                   placeholder: (context, url) => Container(
                     color: Colors.grey[300],
@@ -317,7 +334,7 @@ Widget build(BuildContext context) {
                     color: Colors.grey[300],
                     child: const Icon(Icons.error),
                   ),
-                ),
+                      ),
               ),
               
               // Dégradé pour assurer la lisibilité des textes
@@ -491,6 +508,7 @@ Widget build(BuildContext context) {
               ),
             ],
           ),
+        ),
         ),
         
         // Caractéristiques et services (UNE SEULE FOIS)
@@ -2590,6 +2608,21 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
   );
 }
 
+  void _openGallery() {
+  // Récupérer l'URL de l'image principale de votre prestataire
+  final String imageUrl = widget.prestataire['photo_url'] ?? 
+      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+      
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => ImageGalleryScreen(
+        mainImageUrl: imageUrl,
+        additionalImages: _galleryImages,
+      ),
+    ),
+  );
+  }
 
   Widget buildLocationWidget(String address) {
     return Container(
