@@ -183,142 +183,126 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
 
 
   @override
-  Widget build(BuildContext context) {
-    // Extraire les données du prestataire
-    final String nom = widget.prestataire['nom_entreprise'] ?? 'Sans nom';
-    final String region = widget.prestataire['region'] ?? '';
-    final String adresse = widget.prestataire['adresse'] ?? '';
-    final String location = (region.isNotEmpty && adresse.isNotEmpty) 
-        ? '$region, France' 
-        : (region.isNotEmpty ? '$region, France' : 'France');
-    final String description = widget.prestataire['description'] ?? 'Aucune description disponible';
-    final int? capaciteMax = widget.prestataire.containsKey('lieux') && 
-                            widget.prestataire['lieux'] is List && 
-                            widget.prestataire['lieux'].isNotEmpty && 
-                            widget.prestataire['lieux'][0].containsKey('capacite_max') 
-                              ? widget.prestataire['lieux'][0]['capacite_max'] 
-                              : null;
-    final double? prixBase = widget.prestataire['prix_base'] != null 
-        ? (widget.prestataire['prix_base'] is double 
-            ? widget.prestataire['prix_base'] 
-            : double.tryParse(widget.prestataire['prix_base'].toString()))
-        : null;
-    final double? rating = widget.prestataire['note_moyenne'] != null 
-        ? (widget.prestataire['note_moyenne'] is double 
-            ? widget.prestataire['note_moyenne'] 
-            : double.tryParse(widget.prestataire['note_moyenne'].toString()))
-        : null;
-    final bool isFavorite = false; // À implémenter avec la gestion des favoris
-    
-    // URL de l'image (à remplacer par la vraie source)
-    final String imageUrl = widget.prestataire['photo_url'] ?? 
-        'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+Widget build(BuildContext context) {
+  // Extraire les données du prestataire
+  final String nom = widget.prestataire['nom_entreprise'] ?? 'Sans nom';
+  final String region = widget.prestataire['region'] ?? '';
+  final String adresse = widget.prestataire['adresse'] ?? '';
+  final String location = (region.isNotEmpty && adresse.isNotEmpty) 
+      ? '$region, France' 
+      : (region.isNotEmpty ? '$region, France' : 'France');
+  final String description = widget.prestataire['description'] ?? 'Aucune description disponible';
+  final int? capaciteMax = widget.prestataire.containsKey('lieux') && 
+                          widget.prestataire['lieux'] is List && 
+                          widget.prestataire['lieux'].isNotEmpty && 
+                          widget.prestataire['lieux'][0].containsKey('capacite_max') 
+                            ? widget.prestataire['lieux'][0]['capacite_max'] 
+                            : null;
+  final double? prixBase = widget.prestataire['prix_base'] != null 
+      ? (widget.prestataire['prix_base'] is double 
+          ? widget.prestataire['prix_base'] 
+          : double.tryParse(widget.prestataire['prix_base'].toString()))
+      : null;
+  final double? rating = widget.prestataire['note_moyenne'] != null 
+      ? (widget.prestataire['note_moyenne'] is double 
+          ? widget.prestataire['note_moyenne'] 
+          : double.tryParse(widget.prestataire['note_moyenne'].toString()))
+      : null;
+  final bool isFavorite = false; // À implémenter avec la gestion des favoris
+  
+  // URL de l'image (à remplacer par la vraie source)
+  final String imageUrl = widget.prestataire['photo_url'] ?? 
+      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
 
-    // Formules/Packages (à partir de tarifs)
-    List<Map<String, dynamic>> formules = [];
-    if (widget.prestataire.containsKey('tarifs') && 
-        widget.prestataire['tarifs'] is List) {
-      for (var tarif in widget.prestataire['tarifs']) {
-        if (tarif is Map) {
-          formules.add({
-            'nom': tarif['nom_formule'] ?? 'Formule standard',
-            'prix': tarif['prix_base'] ?? 0.0,
-            'description': tarif['description'] ?? 'Aucune description disponible',
-          });
-        }
+  // Formules/Packages (à partir de tarifs)
+  List<Map<String, dynamic>> formules = [];
+  if (widget.prestataire.containsKey('tarifs') && 
+      widget.prestataire['tarifs'] is List) {
+    for (var tarif in widget.prestataire['tarifs']) {
+      if (tarif is Map) {
+        formules.add({
+          'nom': tarif['nom_formule'] ?? 'Formule standard',
+          'prix': tarif['prix_base'] ?? 0.0,
+          'description': tarif['description'] ?? 'Aucune description disponible',
+        });
       }
     }
-    // Ajouter une formule par défaut si aucune n'est disponible
-    if (formules.isEmpty && prixBase != null) {
-      formules.add({
-        'nom': 'Formule standard',
-        'prix': prixBase,
-        'description': 'Prestation de base',
-      });
-    }
+  }
+  // Ajouter une formule par défaut si aucune n'est disponible
+  if (formules.isEmpty && prixBase != null) {
+    formules.add({
+      'nom': 'Formule standard',
+      'prix': prixBase,
+      'description': 'Prestation de base',
+    });
+  }
 
-    // Avis (à remplacer par les vrais avis)
-    List<Map<String, dynamic>> avis = [
-      {
-        'auteur': 'Sophie & Thomas',
-        'date': 'Juillet 2023',
-        'commentaire': 'Un lieu magnifique pour notre mariage ! L\'équipe était très professionnelle et attentionnée.',
-        'note': 5.0,
-      },
-      {
-        'auteur': 'Marie & Jean',
-        'date': 'Septembre 2023',
-        'commentaire': 'Cadre exceptionnel, mais quelques petits soucis d\'organisation.',
-        'note': 4.0,
-      },
-    ];
-
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: _isScrolled ? Colors.white : Colors.transparent,
-        elevation: _isScrolled ? 4 : 0,
-        leading: IconButton(
+  return Scaffold(
+    extendBodyBehindAppBar: true,
+    appBar: AppBar(
+      backgroundColor: _isScrolled ? Colors.white : Colors.transparent,
+      elevation: _isScrolled ? 4 : 0,
+      leading: IconButton(
+        icon: CircleAvatar(
+          backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
+          child: Icon(
+            Icons.arrow_back,
+            color: _isScrolled ? Colors.black : Colors.white,
+          ),
+        ),
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      actions: [
+        IconButton(
           icon: CircleAvatar(
             backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
             child: Icon(
-              Icons.arrow_back,
+              Icons.share,
               color: _isScrolled ? Colors.black : Colors.white,
             ),
           ),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            // Ajouter la fonctionnalité de partage
+          },
         ),
-        actions: [
-          IconButton(
-            icon: CircleAvatar(
-              backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
-              child: Icon(
-                Icons.share,
-                color: _isScrolled ? Colors.black : Colors.white,
-              ),
+        IconButton(
+          icon: CircleAvatar(
+            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
+            child: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: _isScrolled ? (isFavorite ? Colors.red : Colors.black) : Colors.white,
             ),
-            onPressed: () {
-              // Ajouter la fonctionnalité de partage
-            },
           ),
-          IconButton(
-            icon: CircleAvatar(
-              backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
-              child: Icon(
-                isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: _isScrolled ? (isFavorite ? Colors.red : Colors.black) : Colors.white,
-              ),
-            ),
-            onPressed: () {
-              // Ajouter/retirer des favoris
-              setState(() {
-                // isFavorite = !isFavorite;
-              });
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
-        title: _isScrolled ? Text(
-          nom,
-          style: const TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ) : null,
-        systemOverlayStyle: _isScrolled 
-            ? SystemUiOverlayStyle.dark 
-            : SystemUiOverlayStyle.light,
-      ),
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          // Image principale avec informations superposées
-          SliverToBoxAdapter(
-            child: Stack(
-              children: [
-                // Image principale
-                SizedBox(
-                  height: MediaQuery.of(context).size.height,
+          onPressed: () {
+            // Ajouter/retirer des favoris
+            setState(() {
+              // isFavorite = !isFavorite;
+            });
+          },
+        ),
+        const SizedBox(width: 8),
+      ],
+      title: _isScrolled ? Text(
+        nom,
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+        ),
+      ) : null,
+      systemOverlayStyle: _isScrolled 
+          ? SystemUiOverlayStyle.dark 
+          : SystemUiOverlayStyle.light,
+    ),
+    body: CustomScrollView(
+      controller: _scrollController,
+      slivers: [
+        // Image principale avec informations superposées
+        SliverToBoxAdapter(
+          child: Stack(
+            children: [
+              // Image principale
+              SizedBox(
+                height: MediaQuery.of(context).size.height,
                 width: double.infinity,
                 child: CachedNetworkImage(
                   imageUrl: imageUrl,
@@ -332,30 +316,30 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
                   errorWidget: (context, url, error) => Container(
                     color: Colors.grey[300],
                     child: const Icon(Icons.error),
+                  ),
+                ),
+              ),
+              
+              // Dégradé pour assurer la lisibilité des textes
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.3),
+                        Colors.black.withOpacity(0.6),
+                      ],
+                      stops: const [0.5, 0.8, 1.0],
                     ),
                   ),
                 ),
-                
-                // Dégradé pour assurer la lisibilité des textes
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.3),
-                          Colors.black.withOpacity(0.6),
-                        ],
-                        stops: const [0.5, 0.8, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
-                
-                // Informations principales
-                Positioned(
+              ),
+              
+              // Informations principales
+              Positioned(
                 // Position depuis le bas
                 bottom: MediaQuery.of(context).size.height * 0.15, 
                 left: 0,
@@ -377,74 +361,74 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
                               blurRadius: 5,
                               color: Colors.black,
                               offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                        ),
-                        
-                        // Localisation
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.place,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              location,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                shadows: [
-                                  Shadow(
-                                    blurRadius: 3,
-                                    color: Colors.black,
-                                    offset: Offset(0, 1),
-                                  ),
-                                ],
-                              ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 8),
-                                                
-                        // Première section d'étoiles améliorée
-                        Row(
-                          children: [
-                            for (int i = 1; i <= 5; i++)
-                              Icon(
-                                i <= (rating ?? 0) ? Icons.star : 
-                                (i - 0.5 <= (rating ?? 0) ? Icons.star_half : Icons.star_border),
-                                color: Colors.amber,
-                                size: 24,
-                              ),
-                            if (rating != null)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Text(
-                                  rating.toStringAsFixed(1),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [
-                                      Shadow(
-                                        blurRadius: 3,
-                                        color: Colors.black,
-                                        offset: Offset(0, 1),
-                                      ),
-                                    ],
-                                  ),
+                      ),
+                      
+                      // Localisation
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.place,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            location,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              shadows: [
+                                Shadow(
+                                  blurRadius: 3,
+                                  color: Colors.black,
+                                  offset: Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                                              
+                      // Première section d'étoiles améliorée
+                      Row(
+                        children: [
+                          for (int i = 1; i <= 5; i++)
+                            Icon(
+                              i <= (rating ?? 0) ? Icons.star : 
+                              (i - 0.5 <= (rating ?? 0) ? Icons.star_half : Icons.star_border),
+                              color: Colors.amber,
+                              size: 24,
+                            ),
+                          if (rating != null)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: Text(
+                                rating.toStringAsFixed(1),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  shadows: [
+                                    Shadow(
+                                      blurRadius: 3,
+                                      color: Colors.black,
+                                      offset: Offset(0, 1),
+                                    ),
+                                  ],
                                 ),
                               ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 12),
-                        
-                        // Capacité
-                        if (capaciteMax != null)
+                            ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // Capacité
+                      if (capaciteMax != null)
                         Text(
                           '$capaciteMax invités',
                           style: const TextStyle(
@@ -456,16 +440,15 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
                                 blurRadius: 3,
                                 color: Colors.black,
                                 offset: Offset(0, 1),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        
-                        
-                        const SizedBox(height: 12),
-                        
-                        // Prix
-                        if (prixBase != null)
+                        ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // Prix
+                      if (prixBase != null)
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
@@ -478,273 +461,354 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              ),
                             ),
-                          ),
-                        
-                        const SizedBox(height: 12),
-                        
-                        // Description
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            description,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              height: 1.4,
-                            ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                      ],
-                    ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // Description
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          description,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            height: 1.4,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          
-          // Caractéristiques et services (UNE SEULE FOIS)
+        ),
+        
+        // Caractéristiques et services (UNE SEULE FOIS)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: _buildFeaturesAndServices(),
+          ),
+        ),
+        
+        // Formules/Packages
+        if (_formules.isNotEmpty)
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
-              child: _buildFeaturesAndServices(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Nos formules',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2B2B2B),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _isLoadingFormules
+                    ? const Center(child: CircularProgressIndicator())
+                    : _formules.isEmpty
+                        ? const Text('Aucune formule disponible')
+                        : Column(
+                            children: _formules.map((formule) => _buildPackageItem(
+                              title: formule['nom_formule'] ?? 'Formule',
+                              price: formule['prix_base'] is num 
+                                ? formule['prix_base'].toDouble() 
+                                : double.tryParse(formule['prix_base'].toString()) ?? 0.0,
+                              description: formule['description'] ?? '',
+                              formule: formule,  // Passez la formule complète ici
+                            )).toList(),
+                          ),
+                ],
+              ),
             ),
           ),
-          
-          // Formules/Packages
-          if (_formules.isNotEmpty)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+
+        // Adresse & Localisation
+        SliverToBoxAdapter(
+          child: buildLocationWidget(
+            widget.prestataire['adresse'] ?? 'Adresse non disponible',
+          ),
+        ),
+        
+        // Avis
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Titre et note moyenne
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Nos formules',
+                      'Avis',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF2B2B2B),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    _isLoadingFormules
-                      ? const Center(child: CircularProgressIndicator())
-                      : _formules.isEmpty
-                          ? const Text('Aucune formule disponible')
-                          : Column(
-                              children: _formules.map((formule) => _buildPackageItem(
-                              title: formule['nom_formule'] ?? 'Formule',
-                              price: formule['prix_base'] is num 
-                                  ? formule['prix_base'].toDouble() 
-                                  : double.tryParse(formule['prix_base'].toString()) ?? 0.0,
-                              description: formule['description'] ?? '',
-                              formule: formule,  // Passez la formule complète ici
-                            )).toList(),
+                    if (_avis.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF524B46),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _calculateAverageRating().toStringAsFixed(1),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
-              ),
-            ),
-
-          SliverToBoxAdapter(
-            child: buildLocationWidget(
-              widget.prestataire['adresse'] ?? 'Adresse non disponible',
-            ),
-          ),
-          // Avis
-          if (avis.isNotEmpty)
-            SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Titre et note moyenne
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Avis',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2B2B2B),
-                        ),
+                const SizedBox(height: 16),
+                
+                // Affichage des avis
+                _isLoadingAvis
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(),
                       ),
-                      if (_avis.isNotEmpty)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF524B46),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                    )
+                  : _avis.isEmpty
+                      ? Center(
+                          child: Column(
                             children: [
+                              const SizedBox(height: 20),
+                              Icon(Icons.comment_outlined, size: 48, color: Colors.grey[400]),
+                              const SizedBox(height: 16),
                               Text(
-                                _calculateAverageRating().toStringAsFixed(1),
-                                style: const TextStyle(
+                                'Aucun avis pour le moment',
+                                style: TextStyle(
                                   fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey[600],
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.star,
-                                color: Colors.amber,
-                                size: 16,
-                              ),
+                              const SizedBox(height: 20),
                             ],
                           ),
+                        )
+                      : Column(
+                          children: _avis
+                              .take(3) // Limiter à 3 avis affichés initialement
+                              .map((avis) => _buildAvisItem(avis))
+                              .toList(),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Affichage des avis
-        _isLoadingAvis
-          ? const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20.0),
-                child: CircularProgressIndicator(),
-              ),
-            )
-          : _avis.isEmpty
-              ? Center(
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      Icon(Icons.comment_outlined, size: 48, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Aucun avis pour le moment',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey[600],
+                
+                // Boutons côte à côte si des avis existent
+                if (_avis.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0, bottom: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Bouton "Voir tous les avis"
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => _showAllReviews(),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF524B46)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: Text(
+                              'Voir tous les avis (${_avis.length})',
+                              style: const TextStyle(
+                                color: Color(0xFF524B46),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
+                        const SizedBox(width: 12),
+                        // Bouton "Laisser un avis"
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Cette fonctionnalité sera disponible prochainement'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF524B46),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            icon: const Icon(Icons.rate_review, color: Colors.white, size: 18),
+                            label: const Text('Laisser un avis'),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                )
-              : Column(
-                  children: _avis
-                      .take(3) // Limiter à 3 avis affichés initialement
-                      .map((avis) => _buildAvisItem(avis))
-                      .toList(),
+              ],
+            ),
+          ),
+        ),
+
+        // Conditions d'annulation
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Conditions d\'annulation',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2B2B2B),
+                  ),
                 ),
-        
-        // Bouton "Voir tous les avis" si plus de 3 avis
-        if (_avis.length > 3)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: OutlinedButton(
-                onPressed: () => _showAllReviews(),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF524B46)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.withOpacity(0.3)),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                ),
-                child: Text(
-                  'Voir tous les avis (${_avis.length})',
-                  style: const TextStyle(
-                    color: Color(0xFF524B46),
-                    fontWeight: FontWeight.w500,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF5F5F5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.calendar_today,
+                              size: 20,
+                              color: Color(0xFF524B46),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Politique d\'annulation souple',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF2B2B2B),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      _buildCancellationItem(
+                        'Remboursement à 100%',
+                        'Jusqu\'à 60 jours avant la date de l\'événement',
+                        const Color(0xFF3CB371),
+                      ),
+                      const Divider(height: 30, thickness: 1),
+                      _buildCancellationItem(
+                        'Remboursement à 50%',
+                        'Entre 60 et 30 jours avant l\'événement',
+                        const Color(0xFFFFA500),
+                      ),
+                      const Divider(height: 30, thickness: 1),
+                      _buildCancellationItem(
+                        'Non remboursable',
+                        'Moins de 30 jours avant l\'événement',
+                        const Color(0xFFDC3545),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+              ],
             ),
           ),
-          
-        // Bouton pour laisser un avis
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Cette fonctionnalité sera disponible prochainement'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF524B46),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              icon: const Icon(Icons.rate_review, color: Colors.white,),
-              label: const Text('Laisser un avis'),
-            ),
-          ),
+        ),
+        
+        // Espace pour ne pas que le bouton cache du contenu
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 80),
         ),
       ],
     ),
-  ),
-),
-
-          
-          // Espace pour ne pas que le bouton cache du contenu
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 80),
+    
+    // Bouton Réserver fixe en bas
+    bottomSheet: Container(
+      width: double.infinity,
+      height: 70,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
           ),
         ],
       ),
-      
-      // Bouton Réserver fixe en bas
-      bottomSheet: Container(
-  width: double.infinity,
-  height: 70,
-  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.1),
-        blurRadius: 10,
-        offset: const Offset(0, -5),
-      ),
-    ],
-  ),
-  child: Row(
-    children: [
-      // Premier bouton - Contacter
-      Expanded(
-      child: OutlinedButton(
-        onPressed: _showAvailabilitySelector, // Appel de la nouvelle méthode
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Color(0xFF524B46)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+      child: Row(
+        children: [
+          // Premier bouton - Contacter
+          Expanded(
+            child: OutlinedButton(
+              onPressed: _showAvailabilitySelector,
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF524B46)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text(
+                'Prendre RDV',
+                style: TextStyle(
+                  color: Color(0xFF524B46),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-        ),
-        child: const Text(
-          'Prendre RDV',
-          style: TextStyle(
-            color: Color(0xFF524B46),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    ),
           const SizedBox(width: 12),
           // Deuxième bouton - Réserver
           Expanded(
@@ -769,8 +833,50 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
         ],
       ),
     ),
-    );
-  }
+  );
+}
+
+// Helper pour l'affichage des conditions d'annulation
+Widget _buildCancellationItem(String title, String subtitle, Color color) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Container(
+        width: 16,
+        height: 16,
+        margin: const EdgeInsets.only(top: 2),
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+      ),
+      const SizedBox(width: 16),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Color(0xFF2B2B2B),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
   
   // Widget pour afficher une formule/package
     Widget _buildPackageItem({
@@ -1292,8 +1398,7 @@ void _showAllAvis() {
 
 
 
-// 6. Ajoutons un bouton pour laisser un avis dans la page de détail du prestataire
-// (après la section des avis existants)
+
 
 // 7. Enfin, implémentons la méthode pour afficher le dialogue d'ajout d'avis
 
@@ -2627,5 +2732,5 @@ Widget _buildOptionCheckbox(
     ),
   );
 }
-
+  
 }
