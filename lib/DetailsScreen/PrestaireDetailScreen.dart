@@ -2589,99 +2589,97 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
     },
   );
 }
-Widget buildLocationWidget(String address) {
-  return Container(
-    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: Colors.grey.shade300),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // En-tête avec titre (comme pour les formules)
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: const BoxDecoration(
-            color: Color(0xFF524B46),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(8),
-              topRight: Radius.circular(8),
+
+
+  Widget buildLocationWidget(String address) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Titre "Adresse"
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              "Adresse",
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2B2B2B),
+              ),
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Adresse",
+          
+          // Contenu (adresse)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text(
+              address,
+              style: TextStyle(
+                color: Colors.grey[800],
+                fontSize: 16,
+                height: 1.5,
+              ),
+            ),
+          ),
+          
+          // Bouton "Voir sur la carte"
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: OutlinedButton.icon(
+              icon: const Icon(
+                Icons.map,
+                color: Color(0xFF524B46),
+              ),
+              label: const Text(
+                "Voir sur la carte",
                 style: TextStyle(
+                  color: Color(0xFF524B46),
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.white,
                 ),
               ),
-            ],
-          ),
-        ),
-        // Contenu (adresse)
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            address,
-            style: TextStyle(
-              color: Colors.grey[800],
-              fontSize: 16,
-              height: 1.5,
-            ),
-          ),
-        ),
-        // Bouton au même style que "Choisir cette formule"
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: OutlinedButton.icon(
-            icon: const Icon(
-              Icons.map,
-              color: Color(0xFF524B46),
-            ),
-            label: const Text(
-              "Voir sur la carte",
-              style: TextStyle(
-                color: Color(0xFF524B46),
-                fontWeight: FontWeight.bold,
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF524B46)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFF524B46)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            onPressed: () async {
-              final encodedAddress = Uri.encodeComponent(address);
-              final Uri url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$encodedAddress");
-              
-              try {
-                if (await canLaunchUrl(url)) {
-                  await launchUrl(url, mode: LaunchMode.externalApplication);
-                } else {
+              onPressed: () async {
+                final encodedAddress = Uri.encodeComponent(address);
+                final Uri url = Uri.parse("https://www.google.com/maps/search/?api=1&query=$encodedAddress");
+                
+                try {
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Impossible d\'ouvrir la carte')),
+                    );
+                  }
+                } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Impossible d\'ouvrir la carte')),
+                    SnackBar(content: Text('Erreur: ${e.toString()}')),
                   );
                 }
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Erreur: ${e.toString()}')),
-                );
-              }
-            },
+              },
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
     
 
 
