@@ -7,6 +7,8 @@ import '../Filtre/data/models/avis_model.dart';
 import '../widgets/avis_card.dart';
 import '../utils/fake_data.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../Widgets/availability_selector.dart';
+import 'package:intl/intl.dart';
 
 
 
@@ -60,6 +62,109 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
       });
     }
   }
+
+  void _showAvailabilitySelector() {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return AvailabilitySelector(
+        prestataireName: widget.prestataire['nom_entreprise'] ?? 'ce prestataire',
+        onClose: () => Navigator.pop(context),
+        onTimeSelected: (date, timeSlot) {
+          Navigator.pop(context);
+          _handleAppointmentConfirmation(date, timeSlot);
+        },
+      );
+    },
+  );
+  }
+  void _handleAppointmentConfirmation(DateTime date, String timeSlot) {
+    final DateFormat formatter = DateFormat('EEEE d MMMM yyyy à HH:mm', 'fr_FR');
+    final String formattedDate = formatter.format(
+      DateTime(
+        date.year,
+        date.month,
+        date.day,
+        int.parse(timeSlot.split(':')[0]),
+        int.parse(timeSlot.split(':')[1]),
+      ),
+    );
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rendez-vous confirmé'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Votre rendez-vous avec ${widget.prestataire['nom_entreprise']} est confirmé pour le :'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.event,
+                    color: Color(0xFF1A4D2E),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      formattedDate,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Un email de confirmation vous a été envoyé avec les détails du rendez-vous.',
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Vous recevrez également un rappel 24h avant le rendez-vous.',
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF1A4D2E),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              // Ici, vous pourriez naviguer vers la page du calendrier ou des rendez-vous
+            },
+            child: const Text('Voir mes rendez-vous'),
+          ),
+        ],
+      ),
+    );
+  }
+
     // Ajoutez cette méthode
   Future<void> _loadFormules() async {
   setState(() => _isLoadingFormules = true);
@@ -622,29 +727,24 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     children: [
       // Premier bouton - Contacter
       Expanded(
-        child: OutlinedButton(
-          onPressed: () {
-            // Action pour envoyer une demande de contact
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Demande envoyée')),
-            );
-          },
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Color(0xFF524B46)),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 16),
+      child: OutlinedButton(
+        onPressed: _showAvailabilitySelector, // Appel de la nouvelle méthode
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Color(0xFF524B46)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
           ),
-          child: const Text(
-            'Contacter',
-            style: TextStyle(
-              color: Color(0xFF524B46),
-              fontWeight: FontWeight.bold,
-            ),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+        ),
+        child: const Text(
+          'Prendre RDV',
+          style: TextStyle(
+            color: Color(0xFF524B46),
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
+    ),
           const SizedBox(width: 12),
           // Deuxième bouton - Réserver
           Expanded(
