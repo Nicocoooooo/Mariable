@@ -66,15 +66,15 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
 
   void _loadGalleryImages() {
     _galleryImages = [
-      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1519741347686-c1e331fcb4d0?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1550005809-91ad75fb315f?q=80&w=2949&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1482482097755-0b595893ba63?q=80&w=2940&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6a3?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1507504031003-b417219a0fde?q=80&w=2940&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1537633552985-df8429e8048b?q=80&w=2940&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1507504031003-b417219a0fde?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?q=80&w=2787&auto=format&fit=crop',
       'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=2787&auto=format&fit=crop',
     ];
   }
 
@@ -313,17 +313,17 @@ Widget build(BuildContext context) {
       slivers: [
         // Image principale avec informations superposées
         SliverToBoxAdapter(
-          child: GestureDetector(  // Ajoutez ce GestureDetector englobant
+          child: GestureDetector(  // GestureDetector englobant pour l'ouverture de la galerie
           onTap: () => _openGallery(),
-          child: Stack(  // Votre Stack existant
+          child: Stack(
             children: [
-              // Image principale
-              SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.6, // Même hauteur qu'avant
-                  width: double.infinity, // Largeur à 100%
-                  child: CachedNetworkImage(
-                  imageUrl:     'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop',
-                  fit: BoxFit.cover,
+              // Image principale prenant tout l'écran
+              Container(
+                height: MediaQuery.of(context).size.height, // Pleine hauteur de l'écran
+                width: MediaQuery.of(context).size.width, // Pleine largeur de l'écran
+                child: CachedNetworkImage(
+                  imageUrl: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop',
+                  fit: BoxFit.cover, // Couvre tout l'espace disponible
                   placeholder: (context, url) => Container(
                     color: Colors.grey[300],
                     child: const Center(
@@ -334,7 +334,7 @@ Widget build(BuildContext context) {
                     color: Colors.grey[300],
                     child: const Icon(Icons.error),
                   ),
-                      ),
+                ),
               ),
               
               // Dégradé pour assurer la lisibilité des textes
@@ -510,6 +510,7 @@ Widget build(BuildContext context) {
           ),
         ),
         ),
+        
         
         // Caractéristiques et services (UNE SEULE FOIS)
         SliverToBoxAdapter(
