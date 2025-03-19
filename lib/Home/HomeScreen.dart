@@ -3,6 +3,10 @@ import 'package:go_router/go_router.dart';
 import '../Filtre/prestataires_filter_screen.dart';
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
+import '../services/region_service.dart';
+import '../Widgets/lieu_selector_dialog.dart';
+
+
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -275,46 +279,55 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Fonction pour sélectionner un lieu
+  
   Future<void> _showLieuSelector(BuildContext context) async {
-    // Ici vous pourriez afficher une liste de lieux ou un champ de texte pour saisir un lieu
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sélectionnez un lieu'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Quelques exemples de lieux
-            ListTile(
-              title: const Text('Paris'),
-              onTap: () => Navigator.pop(context, 'Paris'),
-            ),
-            ListTile(
-              title: const Text('Lyon'),
-              onTap: () => Navigator.pop(context, 'Lyon'),
-            ),
-            ListTile(
-              title: const Text('Marseille'),
-              onTap: () => Navigator.pop(context, 'Marseille'),
-            ),
-            ListTile(
-              title: const Text('Bordeaux'),
-              onTap: () => Navigator.pop(context, 'Bordeaux'),
-            ),
-            ListTile(
-              title: const Text('Strasbourg'),
-              onTap: () => Navigator.pop(context, 'Strasbourg'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (result != null) {
-      setState(() {
-        _lieuText = result;
-      });
+    final regionService = RegionService();
+    List<String> regions = [];
+    bool isLoading = true;
+    
+    // Récupérer les régions avant d'afficher le modal
+    try {
+      regions = await regionService.getAllRegions();
+    } catch (e) {
+      print('Erreur: $e');
+      // Utiliser des valeurs par défaut en cas d'erreur
+      regions = ['Paris', 'Lyon', 'Marseille', 'Bordeaux', 'Strasbourg'];
+    } finally {
+      isLoading = false;
     }
+    
+    showDialog<String>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text('Sélectionnez un lieu'),
+            backgroundColor: const Color(0xFFFFF3E4),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: isLoading
+                ? Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: regions.length,
+                    itemBuilder: (context, index) {
+                      return ListTile(
+                        title: Text(regions[index]),
+                        onTap: () => Navigator.pop(context, regions[index]),
+                      );
+                    },
+                  ),
+            ),
+          );
+        },
+      ),
+    ).then((result) {
+      if (result != null) {
+        setState(() {
+          _lieuText = result;
+        });
+      }
+    });
   }
 
 // Modification de la fonction _selectDate dans lib/Home/HomeScreen.dart

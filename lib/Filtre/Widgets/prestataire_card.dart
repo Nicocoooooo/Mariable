@@ -62,42 +62,42 @@ class PrestaireCard extends StatelessWidget {
               children: [
                 // Image principale
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: AspectRatio(
-                    aspectRatio: 4/3,
-                    child: photoUrl != null
-                        ? CachedNetworkImage(
-                            imageUrl: photoUrl,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: beige.withOpacity(0.3),
-                              child: const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              color: beige.withOpacity(0.3),
-                              child: Center(
-                                child: Icon(
-                                  Icons.business,
-                                  size: 40,
-                                  color: accentColor.withOpacity(0.6),
-                                ),
-                              ),
-                            ),
-                          )
-                        : Container(
+                borderRadius: BorderRadius.circular(12), // Tous les côtés sont arrondis
+                child: SizedBox(
+                  width: double.infinity, // Largeur complète
+                  height: 200, // Hauteur fixe, ajustez selon vos préférences
+                  child: photoUrl != null
+                      ? CachedNetworkImage(
+                          imageUrl: photoUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
                             color: beige.withOpacity(0.3),
-                            child: Center(
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) {
+                            print("Error loading image: $url, error: $error");
+                            return Container(
+                              color: beige.withOpacity(0.3),
                               child: Icon(
                                 Icons.business,
                                 size: 40,
                                 color: accentColor.withOpacity(0.6),
                               ),
-                            ),
+                            );
+                          },
+                        )
+                      : Container(
+                          color: beige.withOpacity(0.3),
+                          child: Icon(
+                            Icons.business,
+                            size: 40,
+                            color: accentColor.withOpacity(0.6),
                           ),
-                  ),
+                        ),
                 ),
+              ),
                 
                 // Bouton favori
                 Positioned(

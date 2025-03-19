@@ -48,68 +48,69 @@ class PrestaRepository {
 
   /// Fetch prestataires by type
   Future<List<Map<String, dynamic>>> getPrestairesByType(int typeId) async {
-    try {
-      _logger.d('Fetching prestataires by type: $typeId');
-      final response = await _client
-          .from('presta')
-          .select('''
-            *, 
-            tarifs(*),
-            lieux(*)
-          ''') // Ajout de la sélection de lieux
-          .eq('presta_type_id', typeId)
-          .eq('actif', true)
-          .order('note_moyenne', ascending: false);
+  try {
+    _logger.d('Fetching prestataires by type: $typeId');
+    final response = await _client
+        .from('presta')
+        .select('''
+          *, 
+          tarifs(*),
+          lieux(*)
+        ''')
+        .eq('presta_type_id', typeId)
+        .eq('actif', true);
 
-      _logger.d('Response raw data: ${response.runtimeType}');
-      
-      final List<Map<String, dynamic>> result = [];
-      
-      // Conversion des données
-      for (var item in response) {
-        if (item is Map) {
-          final Map<String, dynamic> prestataire = {};
-          item.forEach((key, value) {
-            prestataire[key.toString()] = value;
-          });
+    _logger.d('Response raw data: ${response.length} items');
+    
+    final List<Map<String, dynamic>> result = [];
+    
+    // Conversion des données
+    for (var item in response) {
+      if (item is Map) {
+        final Map<String, dynamic> prestataire = {};
+        item.forEach((key, value) {
+          prestataire[key.toString()] = value;
+        });
+        
+        // Extraction de l'URL de l'image
+        if (prestataire.containsKey('lieux') && prestataire['lieux'] != null) {
+          var lieux = prestataire['lieux'];
+          _logger.d('Lieux data: $lieux');
           
-          // Extraire le prix de base à partir des tarifs si disponible
-          if (prestataire.containsKey('tarifs') && prestataire['tarifs'] != null) {
-            var tarifs = prestataire['tarifs'];
-            List<dynamic> tarifsList = [];
-            
-            if (tarifs is List) {
-              tarifsList = tarifs;
-            } else if (tarifs is Map) {
-              tarifsList = [tarifs];
-            }
-            
-            if (tarifsList.isNotEmpty) {
-              double lowestPrice = double.infinity;
-              for (var tarif in tarifsList) {
-                var prixBase = tarif is Map ? tarif['prix_base'] : null;
-                if (prixBase != null && prixBase is num && prixBase < lowestPrice) {
-                  lowestPrice = prixBase.toDouble();
-                }
-              }
-              
-              if (lowestPrice != double.infinity) {
-                prestataire['prix_base'] = lowestPrice;
+          if (lieux is List && lieux.isNotEmpty) {
+            // Parcourir la liste des lieux pour trouver une image
+            for (var lieu in lieux) {
+              if (lieu is Map && lieu.containsKey('image_url') && lieu['image_url'] != null) {
+                prestataire['photo_url'] = lieu['image_url'];
+                _logger.d('Found image URL in lieux list: ${lieu['image_url']}');
+                break;
               }
             }
+          } else if (lieux is Map && lieux.containsKey('image_url') && lieux['image_url'] != null) {
+            prestataire['photo_url'] = lieux['image_url'];
+            _logger.d('Found image URL in lieux map: ${lieux['image_url']}');
           }
-          
-          result.add(prestataire);
         }
-      }
 
-      _logger.d('Received ${result.length} prestataires for type $typeId');
-      return result;
-    } catch (e) {
-      _logger.e('Error fetching prestataires by type: $e');
-      rethrow;
+        // Si pas d'image trouvée, utiliser une URL par défaut
+        if (!prestataire.containsKey('photo_url') || prestataire['photo_url'] == null) {
+          prestataire['photo_url'] = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+          _logger.d('Using default image for prestataire: ${prestataire['nom_entreprise']}');
+        } else {
+          _logger.d('Using image URL: ${prestataire['photo_url']} for prestataire: ${prestataire['nom_entreprise']}');
+        }
+        
+        // Reste du code inchangé
+        result.add(prestataire);
+      }
     }
+
+    return result;
+  } catch (e) {
+    _logger.e('Error fetching prestataires by type: $e');
+    rethrow;
   }
+}
 
   /// Search prestataires by name and type
   Future<List<Map<String, dynamic>>> searchPrestataires({
@@ -178,6 +179,24 @@ class PrestaRepository {
                 lowestPrice = null;
               }
             }
+            if (prestataire.containsKey('lieux') && prestataire['lieux'] != null) {
+            var lieux = prestataire['lieux'];
+            _logger.d('Lieux data: $lieux');
+            
+            if (lieux is List && lieux.isNotEmpty) {
+              // Parcourir la liste des lieux pour trouver une image
+              for (var lieu in lieux) {
+                if (lieu is Map && lieu.containsKey('image_url') && lieu['image_url'] != null) {
+                  prestataire['photo_url'] = lieu['image_url'];
+                  _logger.d('Found image URL in lieux list: ${lieu['image_url']}');
+                  break;
+                }
+              }
+            } else if (lieux is Map && lieux.containsKey('image_url') && lieux['image_url'] != null) {
+              prestataire['photo_url'] = lieux['image_url'];
+              _logger.d('Found image URL in lieux map: ${lieux['image_url']}');
+            }
+          }
           }
           
           // Filtrer par prix et note

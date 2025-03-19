@@ -224,10 +224,8 @@ Widget build(BuildContext context) {
           : double.tryParse(widget.prestataire['note_moyenne'].toString()))
       : null;
   final bool isFavorite = false; // À implémenter avec la gestion des favoris
-  
-  // URL de l'image (à remplacer par la vraie source)
-  final String imageUrl = widget.prestataire['photo_url'] ?? 
-      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+   
+   // ici 
 
   // Formules/Packages (à partir de tarifs)
   List<Map<String, dynamic>> formules = [];
@@ -322,19 +320,28 @@ Widget build(BuildContext context) {
                 height: MediaQuery.of(context).size.height, // Pleine hauteur de l'écran
                 width: MediaQuery.of(context).size.width, // Pleine largeur de l'écran
                 child: CachedNetworkImage(
-                  imageUrl: 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop',
-                  fit: BoxFit.cover, // Couvre tout l'espace disponible
-                  placeholder: (context, url) => Container(
-                    color: Colors.grey[300],
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.error),
+                imageUrl: widget.prestataire['image_url'] ?? 
+                  (widget.prestataire.containsKey('lieux') && 
+                  widget.prestataire['lieux'] is List && 
+                  widget.prestataire['lieux'].isNotEmpty && 
+                  widget.prestataire['lieux'][0].containsKey('image_url') ? 
+                  widget.prestataire['lieux'][0]['image_url'] : ''),
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: CircularProgressIndicator(),
                   ),
                 ),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[300],
+                  child: const Icon(
+                    Icons.business,
+                    size: 48,
+                    color: Color(0xFF2B2B2B),
+                  ),
+                ),
+              )
               ),
               
               // Dégradé pour assurer la lisibilité des textes
