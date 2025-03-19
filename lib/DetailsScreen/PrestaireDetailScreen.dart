@@ -27,6 +27,7 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
   bool _isLoadingFormules = true;
+  bool _isDescriptionExpanded = false;
   List<AvisModel> _avis = [];
   List<String> _galleryImages = [];
   bool _isLoadingAvis = true;
@@ -493,22 +494,56 @@ Widget build(BuildContext context) {
                       
                       // Description
                       Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          description,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            height: 1.4,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            description,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                            maxLines: _isDescriptionExpanded ? null : 3,
+                            overflow: _isDescriptionExpanded ? null : TextOverflow.ellipsis,
+                          ),
+                          if (description.length > 150) // Afficher le bouton seulement si la description est longue
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _isDescriptionExpanded = !_isDescriptionExpanded;
+                                });
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _isDescriptionExpanded ? 'Voir moins' : 'Voir plus',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Icon(
+                                      _isDescriptionExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                     ],
                   ),
                 ),
@@ -600,7 +635,7 @@ Widget build(BuildContext context) {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              _calculateAverageRating().toStringAsFixed(1),
+                              rating?.toStringAsFixed(1) ?? "0.0",
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -2173,6 +2208,11 @@ void _addFeatureOrService(String key, Map<String, dynamic> features, Map<String,
 }
 
 void _showAllReviews() {
+  final double? reviewRating = widget.prestataire['note_moyenne'] != null 
+      ? (widget.prestataire['note_moyenne'] is double 
+          ? widget.prestataire['note_moyenne'] 
+          : double.tryParse(widget.prestataire['note_moyenne'].toString()))
+      : null;
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -2224,7 +2264,7 @@ void _showAllReviews() {
                           child: Row(
                             children: [
                               Text(
-                                _calculateAverageRating().toStringAsFixed(1),
+                                reviewRating?.toStringAsFixed(1) ?? "0.0",
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
