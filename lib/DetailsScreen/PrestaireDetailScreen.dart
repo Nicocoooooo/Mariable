@@ -1032,58 +1032,97 @@ Widget _buildFeaturesAndServices() {
   // Utiliser LinkedHashMap pour préserver l'ordre d'insertion
   final LinkedHashMap<String, dynamic> features = LinkedHashMap<String, dynamic>();
   final LinkedHashMap<String, IconData> services = LinkedHashMap<String, IconData>();
-  
-  // Récupérer les données de lieux depuis le prestataire
-  if (widget.prestataire.containsKey('lieux')) {
-    var lieuxData = widget.prestataire['lieux'];
-    
-    // Si c'est une liste, extraire le premier élément
-    if (lieuxData is List && lieuxData.isNotEmpty) {
-      final lieu = lieuxData[0];
+
+  final int? prestaTypeId = widget.prestataire['presta_type_id'];
+  // Pour les lieux uniquement (type_id = 1)
+  if (prestaTypeId == 1) {
+    // Récupérer les données de lieux depuis le prestataire
+    if (widget.prestataire.containsKey('lieux')) {
+      var lieuxData = widget.prestataire['lieux'];
       
-      // Parcourir les propriétés du lieu
-      if (lieu is Map<String, dynamic>) {
-        // D'abord ajouter les caractéristiques numériques et textuelles
-        _addNumericFeatures(lieu, features);
+      // Si c'est une liste, extraire le premier élément
+      if (lieuxData is List && lieuxData.isNotEmpty) {
+        final lieu = lieuxData[0];
         
-        // Ajouter les caractéristiques textuelles
-        if (lieu.containsKey('cadre') && lieu['cadre'] != null && lieu['cadre'].toString().isNotEmpty) {
+        // Parcourir les propriétés du lieu
+        if (lieu is Map<String, dynamic>) {
+          // D'abord ajouter les caractéristiques numériques et textuelles
+          _addNumericFeatures(lieu, features);
+          
+          // Ajouter les caractéristiques textuelles
+          if (lieu.containsKey('cadre') && lieu['cadre'] != null && lieu['cadre'].toString().isNotEmpty) {
+            features['Cadre'] = {
+              'type': 'text',
+              'value': lieu['cadre'],
+              'icon': Icons.landscape
+            };
+          }
+          
+          // Ensuite ajouter les caractéristiques booléennes
+          lieu.forEach((key, value) {
+            if (value == true) {
+              _addFeatureOrService(key, features, services);
+            }
+          });
+        }
+      } 
+      // Si c'est directement un objet Map
+      else if (lieuxData is Map<String, dynamic>) {
+        // Même traitement que ci-dessus
+        _addNumericFeatures(lieuxData, features);
+        
+        if (lieuxData.containsKey('cadre') && lieuxData['cadre'] != null && lieuxData['cadre'].toString().isNotEmpty) {
           features['Cadre'] = {
             'type': 'text',
-            'value': lieu['cadre'],
+            'value': lieuxData['cadre'],
             'icon': Icons.landscape
           };
         }
         
-        // Ensuite ajouter les caractéristiques booléennes
-        lieu.forEach((key, value) {
+        lieuxData.forEach((key, value) {
           if (value == true) {
             _addFeatureOrService(key, features, services);
           }
         });
       }
-    } 
-    // Si c'est directement un objet Map
-    else if (lieuxData is Map<String, dynamic>) {
-      // D'abord ajouter les caractéristiques numériques et textuelles
-      _addNumericFeatures(lieuxData, features);
-      
-      // Ajouter les caractéristiques textuelles
-      if (lieuxData.containsKey('cadre') && lieuxData['cadre'] != null && lieuxData['cadre'].toString().isNotEmpty) {
-        features['Cadre'] = {
-          'type': 'text',
-          'value': lieuxData['cadre'],
-          'icon': Icons.landscape
-        };
-      }
-      
-      // Ensuite ajouter les caractéristiques booléennes
-      lieuxData.forEach((key, value) {
-        if (value == true) {
-          _addFeatureOrService(key, features, services);
-        }
-      });
     }
+  } 
+  // Pour les traiteurs (type_id = 2)
+  else if (prestaTypeId == 2) {
+    // Ajouter des caractéristiques spécifiques aux traiteurs
+    features['Type de cuisine'] = {
+      'type': 'text',
+      'value': 'Cuisine française traditionnelle',
+      'icon': Icons.restaurant
+    };
+    
+    features['Personnel inclus'] = {
+      'type': 'boolean',
+      'value': true,
+      'icon': Icons.people
+    };
+    
+    services['Service à l\'assiette'] = Icons.restaurant_menu;
+    services['Vaisselle fournie'] = Icons.dining;
+    services['Menu dégustation'] = Icons.restaurant;
+  }
+  // Pour les photographes (type_id = 3)
+  else if (prestaTypeId == 3) {
+    features['Style de photographie'] = {
+      'type': 'text',
+      'value': 'Reportage naturel',
+      'icon': Icons.camera_alt
+    };
+    
+    features['Durée de présence'] = {
+      'type': 'text',
+      'value': 'Journée complète',
+      'icon': Icons.access_time
+    };
+    
+    services['Albums photo inclus'] = Icons.photo_album;
+    services['Galerie en ligne'] = Icons.cloud;
+    services['Drone disponible'] = Icons.flight;
   }
   
   // Si aucune caractéristique n'est trouvée, ajouter quelques exemples par défaut
