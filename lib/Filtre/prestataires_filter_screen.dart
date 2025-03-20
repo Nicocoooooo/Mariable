@@ -55,58 +55,35 @@ Future<void> _fetchPrestaTypes() async {
       _isLoading = true;
       _errorMessage = '';
     });
-
-    // Ajouter un délai avant de récupérer les données
-    await Future.delayed(const Duration(milliseconds: 500));
     
-    // Fetch prestataire types using the repository
-    final prestaTypes = await _repository.getPrestaTypes();
+    // Utilisez la méthode existante si elle existe
+    List<Map<String, dynamic>> typesData = [];
     
-    // Si la liste est vide, utiliser des données fictives
-    if (prestaTypes.isEmpty) {
-      print('No prestataire types found, using default values');
-
-      final defaultTypes = [
-        PrestaTypeModel(id: 1, name: 'Lieu', description: 'Lieux pour votre mariage'),
-        // ... autres types par défaut
-      ];
-      
-      final prestaTypesMapList = defaultTypes.map((type) => type.toMap()).toList();
-      
-      setState(() {
-        _prestaTypes = prestaTypesMapList;
-        _filteredPrestaTypes = List.from(_prestaTypes);
-        _isLoading = false;
-      });
-      return;
-    }
-    
-    final prestaTypesMapList = prestaTypes.map((type) => type.toMap()).toList();
-
-    setState(() {
-      _prestaTypes = prestaTypesMapList;
-      _filteredPrestaTypes = List.from(_prestaTypes);
-      _isLoading = false;
-    });
-  } catch (e) {
-    print('No prestataire types found, using default values');
-
-    
-    setState(() {
-      _errorMessage = 'Erreur lors du chargement des types de prestataires: ${e.toString()}';
-      _isLoading = false;
-      
-      // Ajouter des données fictives en cas d'erreur
-      _prestaTypes = [
+    try {
+      // Utilisez le repository au lieu d'accéder directement à Supabase
+      typesData = await _repository.getPrestaTypesAsMap();
+      print('Got ${typesData.length} presta types from repository');
+    } catch (innerError) {
+      print('Error fetching presta types from repository: $innerError');
+      // Utiliser des données factices si la requête échoue
+      typesData = [
         {'id': 1, 'name': 'Lieu', 'description': 'Lieux pour votre mariage'},
         {'id': 2, 'name': 'Traiteur', 'description': 'Services de restauration'},
         {'id': 3, 'name': 'Photographe', 'description': 'Capture de vos souvenirs'},
         {'id': 4, 'name': 'Wedding Planner', 'description': 'Organisation complète de votre mariage'},
       ];
+    }
+    
+    setState(() {
+      _prestaTypes = typesData;
       _filteredPrestaTypes = List.from(_prestaTypes);
+      _isLoading = false;
     });
+  } catch (e) {
+    // Gestion d'erreur...
   }
 }
+
 
   @override
   Widget build(BuildContext context) {

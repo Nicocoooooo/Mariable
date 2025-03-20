@@ -73,7 +73,8 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
       });
     }
   }
-  
+
+
 Future<void> _loadPrestataires() async {
   try {
     setState(() {
@@ -83,18 +84,44 @@ Future<void> _loadPrestataires() async {
 
     List<Map<String, dynamic>> prestataires = [];
     
-    // Simplification: utiliser searchPrestataires pour tous les cas
-    prestataires = await _repository.searchPrestataires(
-      typeId: widget.prestaType.id,
-      region: widget.location,
-    );
+    // Récupérer le type principal de prestataire (Lieu, Traiteur, etc.)
+    final int prestaTypeId = widget.prestaType.id;
+    print('Loading prestataires for type ID: $prestaTypeId');
+    
+    // Si c'est un lieu (type_id = 1) avec un sous-type spécifié
+    if (prestaTypeId == 1 && widget.subType != null) {
+      print('Loading lieux by type: ${widget.subType!['id']}');
+      final lieuTypeId = widget.subType!['id'];
+      // Charger les lieux par type
+      prestataires = await _repository.getLieuxByType(lieuTypeId);
+    }
+    // Si c'est un traiteur (type_id = 2) avec un sous-type spécifié
+    else if (prestaTypeId == 2 && widget.subType != null) {
+      print('Loading traiteurs by type: ${widget.subType!['id']}');
+      final traiteurTypeId = widget.subType!['id'];
+      // Charger les traiteurs par type
+      prestataires = await _repository.getTraiteursByType(
+        traiteurTypeId, 
+        region: widget.location
+      );
+    }
+    // Pour tous les autres cas, utiliser la recherche générique
+    else {
+      print('Using searchPrestataires for typeId: $prestaTypeId, location: ${widget.location}');
+      prestataires = await _repository.searchPrestataires(
+        typeId: prestaTypeId,
+        region: widget.location,
+      );
+    }
+    
+    print('Loaded ${prestataires.length} prestataires');
     
     setState(() {
       _prestataires = prestataires;
       _isLoading = false;
     });
   } catch (e) {
-    AppLogger.error('Erreur lors du chargement des prestataires', e);
+    print('Error loading prestataires: $e');
     setState(() {
       _errorMessage = 'Erreur lors du chargement des prestataires: ${e.toString()}';
       _isLoading = false;

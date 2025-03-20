@@ -215,68 +215,70 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-   void _search() {
-    // Vérifier qu'au moins un critère est rempli
-    if (_selectedPrestaType == null && _selectedSubType == null && _lieuText == 'Lieu' && _startDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez sélectionner au moins un critère de recherche'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-
-    // Si un sous-type est sélectionné, naviguer vers la liste des prestataires de ce sous-type
-    if (_selectedSubType != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PrestatairesListScreen(
-            prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
-            subType: _selectedSubType,
-            location: _lieuText != 'Lieu' ? _lieuText : null,
-            startDate: _startDate,
-            endDate: _endDate,
-          ),
-        ),
-      );
-    }
-    // Si seulement un type de prestataire est sélectionné
-    else if (_selectedPrestaType != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PrestatairesListScreen(
-            prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
-            location: _lieuText != 'Lieu' ? _lieuText : null,
-            startDate: _startDate,
-            endDate: _endDate,
-          ),
-        ),
-      );
-    }
-    // Si seul le lieu est renseigné
-    else if (_lieuText != 'Lieu') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Recherche par lieu : $_lieuText'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      // Ici vous pourriez naviguer vers une liste de tous les prestataires filtrés par lieu
-    }
-    // Si seules les dates sont renseignées
-    else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Recherche par date'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      // Ici vous pourriez naviguer vers une liste de tous les prestataires disponibles à ces dates
-    }
+  void _search() {
+  // Vérifier qu'au moins un critère est rempli
+  if (_selectedPrestaType == null && _selectedSubType == null && _lieuText == 'Lieu' && _startDate == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Veuillez sélectionner au moins un critère de recherche'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    return;
   }
+
+  // Si un sous-type est sélectionné, naviguer vers la liste des prestataires de ce sous-type
+  if (_selectedSubType != null) {
+    print('Navigation avec sous-type: ${_selectedSubType!['name']}');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PrestatairesListScreen(
+          prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
+          subType: _selectedSubType,
+          location: _lieuText != 'Lieu' ? _lieuText : null,
+          startDate: _startDate,
+          endDate: _endDate,
+        ),
+      ),
+    );
+  }
+  // Si seulement un type de prestataire est sélectionné
+  else if (_selectedPrestaType != null) {
+    print('Navigation avec type principal: ${_selectedPrestaType!['name']}');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PrestatairesListScreen(
+          prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
+          location: _lieuText != 'Lieu' ? _lieuText : null,
+          startDate: _startDate,
+          endDate: _endDate,
+        ),
+      ),
+    );
+  }
+  // Si seul le lieu est renseigné
+  else if (_lieuText != 'Lieu') {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Recherche par lieu : $_lieuText'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+    // Ici vous pourriez naviguer vers une liste de tous les prestataires filtrés par lieu
+  }
+  // Si seules les dates sont renseignées
+  else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Recherche par date'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    // Ici vous pourriez naviguer vers une liste de tous les prestataires disponibles à ces dates
+  }
+}
 
   // Fonction pour sélectionner un lieu
   

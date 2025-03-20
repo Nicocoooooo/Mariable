@@ -10,6 +10,7 @@ class TraiteurTypesScreen extends StatefulWidget {
   State<TraiteurTypesScreen> createState() => _TraiteurTypesScreenState();
 }
 
+
 class _TraiteurTypesScreenState extends State<TraiteurTypesScreen> {
   final _searchController = TextEditingController();
   final PrestaRepository _repository = PrestaRepository();
@@ -45,29 +46,7 @@ class _TraiteurTypesScreenState extends State<TraiteurTypesScreen> {
       }
     });
   }
-
-Future<void> _fetchTraiteurTypes() async {
-  try {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-
-    // Utiliser la nouvelle méthode du repository
-    final traiteurTypes = await _repository.getTraiteurTypes();
-    
-    setState(() {
-      _traiteurTypes = traiteurTypes;
-      _filteredTraiteurTypes = List.from(_traiteurTypes);
-      _isLoading = false;
-    });
-  } catch (e) {
-    setState(() {
-      _errorMessage = 'Erreur: ${e.toString()}';
-      _isLoading = false;
-    });
-  }
-}
+ 
   
   @override
   Widget build(BuildContext context) {
@@ -114,7 +93,7 @@ Future<void> _fetchTraiteurTypes() async {
                 ),
                 // Title
                 Text(
-                'Types de traiteurs',  // Ce texte doit être "Types de traiteurs"
+                'Types de traiteurs',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -161,17 +140,38 @@ Future<void> _fetchTraiteurTypes() async {
                     ? Center(
                         child: Padding(
                           padding: const EdgeInsets.all(20),
-                          child: Text(
-                            _errorMessage,
-                            style: TextStyle(color: Colors.red[700]),
-                            textAlign: TextAlign.center,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 48,
+                                color: Colors.red[300],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _errorMessage,
+                                style: TextStyle(color: Colors.red[700]),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton.icon(
+                                onPressed: _fetchTraiteurTypes,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Réessayer'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: accentColor,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       )
                     : _filteredTraiteurTypes.isEmpty
                         ? EmptyState(
                             title: 'Aucun type de traiteur trouvé',
-                            message: 'Essayez de modifier votre recherche',
+                            message: 'Les types de traiteurs ne sont pas disponibles pour le moment ou n\'ont pas encore été configurés dans la base de données.',
                             icon: Icons.search_off,
                             actionLabel: 'Réinitialiser la recherche',
                             onActionPressed: () {
@@ -294,4 +294,36 @@ Future<void> _fetchTraiteurTypes() async {
       ),
     );
   }
+  // Dans _TraiteurTypesScreenState, ajoutez cette méthode:
+Future<void> _fetchTraiteurTypes() async {
+  try {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      // Appel à la méthode du repository
+      final traiteurTypes = await _repository.getTraiteurTypes();
+      
+      setState(() {
+        _traiteurTypes = traiteurTypes;
+        _filteredTraiteurTypes = List.from(_traiteurTypes);
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching traiteur types: $e');
+      setState(() {
+        _errorMessage = 'Erreur lors du chargement des types de traiteurs: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  } catch (e) {
+    setState(() {
+      _errorMessage = 'Erreur inattendue: ${e.toString()}';
+      _isLoading = false;
+    });
+  }
+}
+
 }
