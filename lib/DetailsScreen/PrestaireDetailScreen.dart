@@ -1026,7 +1026,6 @@ Widget _buildCancellationItem(String title, String subtitle, Color color) {
 }
 
 
-  
 // Fonction principale pour construire les caractéristiques et services
 Widget _buildFeaturesAndServices() {
   // Utiliser LinkedHashMap pour préserver l'ordre d'insertion
