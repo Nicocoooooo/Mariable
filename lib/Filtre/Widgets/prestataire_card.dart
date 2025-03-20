@@ -62,40 +62,11 @@ class PrestaireCard extends StatelessWidget {
               children: [
                 // Image principale
                 ClipRRect(
-                borderRadius: BorderRadius.circular(12), // Tous les côtés sont arrondis
+                borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
-                  width: double.infinity, // Largeur complète
-                  height: 200, // Hauteur fixe, ajustez selon vos préférences
-                  child: photoUrl != null
-                      ? CachedNetworkImage(
-                          imageUrl: photoUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: beige.withOpacity(0.3),
-                            child: const Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) {
-                            print("Error loading image: $url, error: $error");
-                            return Container(
-                              color: beige.withOpacity(0.3),
-                              child: Icon(
-                                Icons.business,
-                                size: 40,
-                                color: accentColor.withOpacity(0.6),
-                              ),
-                            );
-                          },
-                        )
-                      : Container(
-                          color: beige.withOpacity(0.3),
-                          child: Icon(
-                            Icons.business,
-                            size: 40,
-                            color: accentColor.withOpacity(0.6),
-                          ),
-                        ),
+                  width: double.infinity,
+                  height: 200,
+                  child: _buildPrestaireImage(prestataire),
                 ),
               ),
                 
@@ -256,4 +227,58 @@ class PrestaireCard extends StatelessWidget {
       ),
     );
   }
+  // Remplacez ce bloc de code dans la section "Image principale"
+
+
+// Et ajoutez cette fonction dans la classe PrestaireCard
+Widget _buildPrestaireImage(Map<String, dynamic> prestataire) {
+  final Color beige = const Color(0xFFFFF3E4);
+  final Color accentColor = const Color(0xFF524B46);
+  
+  // Déterminer le type de prestataire
+  final int? prestaTypeId = prestataire['presta_type_id'];
+  String? imageUrl;
+  
+  // Si c'est un lieu (type_id = 1), chercher l'image dans la table lieux
+  if (prestaTypeId == 1 && prestataire.containsKey('lieux')) {
+    var lieuxData = prestataire['lieux'];
+    if (lieuxData is List && lieuxData.isNotEmpty) {
+      imageUrl = lieuxData[0]['image_url'];
+    } else if (lieuxData is Map<String, dynamic>) {
+      imageUrl = lieuxData['image_url'];
+    }
+  } else {
+    // Pour les autres types (traiteur, photographe), utiliser l'image de presta
+    imageUrl = prestataire['image_url'] ?? prestataire['photo_url'];
+  }
+  
+  return imageUrl != null
+    ? CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          color: beige.withOpacity(0.3),
+          child: const Center(child: CircularProgressIndicator()),
+        ),
+        errorWidget: (context, url, error) {
+          print("Error loading image: $url, error: $error");
+          return Container(
+            color: beige.withOpacity(0.3),
+            child: Icon(
+              Icons.business,
+              size: 40,
+              color: accentColor.withOpacity(0.6),
+            ),
+          );
+        },
+      )
+    : Container(
+        color: beige.withOpacity(0.3),
+        child: Icon(
+          Icons.business,
+          size: 40,
+          color: accentColor.withOpacity(0.6),
+        ),
+      );
+}
 }

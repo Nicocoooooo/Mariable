@@ -4,6 +4,8 @@ import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/Widgets/prestataire_card.dart';
 import '../utils/logger.dart';
 import '../DetailsScreen/PrestaireDetailScreen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 
 class PrestatairesListScreen extends StatefulWidget {
   final PrestaTypeModel prestaType;
@@ -29,6 +31,8 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
   final PrestaRepository _repository = PrestaRepository();
   List<Map<String, dynamic>> _prestataires = [];
   bool _isLoading = true;
+  List<String> _availableRegions = [];
+  bool _isLoadingRegions = true;
   String _errorMessage = '';
   List<int> _favorites = []; // Pour simuler les favoris
   
@@ -41,11 +45,30 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
   @override
   void initState() {
     super.initState();
+    _loadAvailableRegions();
     // Initialiser les filtres avec les paramètres reçus
     if (widget.location != null) {
       _regionFilter = widget.location;
     }
     _loadPrestataires();
+  }
+
+  Future<void> _loadAvailableRegions() async {
+    setState(() {
+      _isLoadingRegions = true;
+    });
+    
+    try {
+      final regions = await _fetchAvailableRegions();
+      setState(() {
+        _availableRegions = regions;
+        _isLoadingRegions = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingRegions = false;
+      });
+    }
   }
 
   Future<void> _loadPrestataires() async {
@@ -348,6 +371,32 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
     );
   }
   
+  Future<List<String>> _fetchAvailableRegions() async {
+  try {
+    // Requête pour obtenir toutes les régions uniques des prestataires actifs
+    final response = await Supabase.instance.client
+        .from('presta')
+        .select('region')
+        .eq('actif', true)
+        .order('region');
+    
+    // Convertir la réponse en liste de régions uniques
+    final Set<String> uniqueRegions = {};
+    
+    for (var item in response) {
+      if (item['region'] != null && item['region'].toString().isNotEmpty) {
+        uniqueRegions.add(item['region'].toString());
+      }
+    }
+    
+    return uniqueRegions.toList();
+  } catch (e) {
+    print('Erreur lors de la récupération des régions: $e');
+    // Retourner une liste par défaut en cas d'erreur
+    return ['Paris', 'Lyon', 'Marseille', 'Bordeaux'];
+  }
+}
+
   // Élément de statistique
   Widget _buildStatItem(
     BuildContext context,
@@ -598,18 +647,9 @@ void _showFilterBottomSheet(BuildContext context) {
   const Color beige = Color(0xFFFFF3E4);
   
   // Liste des régions disponibles (à remplacer par vos données réelles)
-  final List<String> availableRegions = [
-    'Paris',
-    'Île-de-France',
-    'Lyon',
-    'Marseille',
-    'Bordeaux',
-    'Lille',
-    'Nantes',
-    'Strasbourg',
-    'Nice',
-    'Toulouse',
-  ];
+  final List<String> availableRegions = _isLoadingRegions 
+    ? ['Chargement...'] 
+    : _availableRegions;
   
   // Variables temporaires pour les filtres
   String? tempRegion = _regionFilter;
@@ -679,14 +719,7 @@ void _showFilterBottomSheet(BuildContext context) {
                         const SizedBox(height: 24),
                         
                         // Filtre par région
-                        const Text(
-                          'Région',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: grisTexte,
-                          ),
-                        ),
+                        const Text('Région', style: TextStyle(/*...*/)),
                         const SizedBox(height: 16),
                         Wrap(
                           spacing: 10,
@@ -695,9 +728,11 @@ void _showFilterBottomSheet(BuildContext context) {
                             final isSelected = tempRegion == region;
                             return GestureDetector(
                               onTap: () {
-                                setModalState(() {
-                                  tempRegion = isSelected ? null : region;
-                                });
+                                if (region != 'Chargement...') {
+                                  setModalState(() {
+                                    tempRegion = isSelected ? null : region;
+                                  });
+                                }
                               },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

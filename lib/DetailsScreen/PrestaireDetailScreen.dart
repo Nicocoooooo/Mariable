@@ -27,6 +27,7 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isScrolled = false;
   bool _isLoadingFormules = true;
+  bool _isDescriptionExpanded = false;
   List<AvisModel> _avis = [];
   List<String> _galleryImages = [];
   bool _isLoadingAvis = true;
@@ -493,22 +494,56 @@ Widget build(BuildContext context) {
                       
                       // Description
                       Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          description,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            height: 1.4,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            description,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                            maxLines: _isDescriptionExpanded ? null : 3,
+                            overflow: _isDescriptionExpanded ? null : TextOverflow.ellipsis,
+                          ),
+                          if (description.length > 150) // Afficher le bouton seulement si la description est longue
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _isDescriptionExpanded = !_isDescriptionExpanded;
+                                });
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      _isDescriptionExpanded ? 'Voir moins' : 'Voir plus',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    Icon(
+                                      _isDescriptionExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                     ],
                   ),
                 ),
@@ -600,7 +635,7 @@ Widget build(BuildContext context) {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              _calculateAverageRating().toStringAsFixed(1),
+                              rating?.toStringAsFixed(1) ?? "0.0",
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -991,64 +1026,102 @@ Widget _buildCancellationItem(String title, String subtitle, Color color) {
 }
 
 
-  
 // Fonction principale pour construire les caractéristiques et services
 Widget _buildFeaturesAndServices() {
   // Utiliser LinkedHashMap pour préserver l'ordre d'insertion
   final LinkedHashMap<String, dynamic> features = LinkedHashMap<String, dynamic>();
   final LinkedHashMap<String, IconData> services = LinkedHashMap<String, IconData>();
-  
-  // Récupérer les données de lieux depuis le prestataire
-  if (widget.prestataire.containsKey('lieux')) {
-    var lieuxData = widget.prestataire['lieux'];
-    
-    // Si c'est une liste, extraire le premier élément
-    if (lieuxData is List && lieuxData.isNotEmpty) {
-      final lieu = lieuxData[0];
+
+  final int? prestaTypeId = widget.prestataire['presta_type_id'];
+  // Pour les lieux uniquement (type_id = 1)
+  if (prestaTypeId == 1) {
+    // Récupérer les données de lieux depuis le prestataire
+    if (widget.prestataire.containsKey('lieux')) {
+      var lieuxData = widget.prestataire['lieux'];
       
-      // Parcourir les propriétés du lieu
-      if (lieu is Map<String, dynamic>) {
-        // D'abord ajouter les caractéristiques numériques et textuelles
-        _addNumericFeatures(lieu, features);
+      // Si c'est une liste, extraire le premier élément
+      if (lieuxData is List && lieuxData.isNotEmpty) {
+        final lieu = lieuxData[0];
         
-        // Ajouter les caractéristiques textuelles
-        if (lieu.containsKey('cadre') && lieu['cadre'] != null && lieu['cadre'].toString().isNotEmpty) {
+        // Parcourir les propriétés du lieu
+        if (lieu is Map<String, dynamic>) {
+          // D'abord ajouter les caractéristiques numériques et textuelles
+          _addNumericFeatures(lieu, features);
+          
+          // Ajouter les caractéristiques textuelles
+          if (lieu.containsKey('cadre') && lieu['cadre'] != null && lieu['cadre'].toString().isNotEmpty) {
+            features['Cadre'] = {
+              'type': 'text',
+              'value': lieu['cadre'],
+              'icon': Icons.landscape
+            };
+          }
+          
+          // Ensuite ajouter les caractéristiques booléennes
+          lieu.forEach((key, value) {
+            if (value == true) {
+              _addFeatureOrService(key, features, services);
+            }
+          });
+        }
+      } 
+      // Si c'est directement un objet Map
+      else if (lieuxData is Map<String, dynamic>) {
+        // Même traitement que ci-dessus
+        _addNumericFeatures(lieuxData, features);
+        
+        if (lieuxData.containsKey('cadre') && lieuxData['cadre'] != null && lieuxData['cadre'].toString().isNotEmpty) {
           features['Cadre'] = {
             'type': 'text',
-            'value': lieu['cadre'],
+            'value': lieuxData['cadre'],
             'icon': Icons.landscape
           };
         }
         
-        // Ensuite ajouter les caractéristiques booléennes
-        lieu.forEach((key, value) {
+        lieuxData.forEach((key, value) {
           if (value == true) {
             _addFeatureOrService(key, features, services);
           }
         });
       }
-    } 
-    // Si c'est directement un objet Map
-    else if (lieuxData is Map<String, dynamic>) {
-      // D'abord ajouter les caractéristiques numériques et textuelles
-      _addNumericFeatures(lieuxData, features);
-      
-      // Ajouter les caractéristiques textuelles
-      if (lieuxData.containsKey('cadre') && lieuxData['cadre'] != null && lieuxData['cadre'].toString().isNotEmpty) {
-        features['Cadre'] = {
-          'type': 'text',
-          'value': lieuxData['cadre'],
-          'icon': Icons.landscape
-        };
-      }
-      
-      // Ensuite ajouter les caractéristiques booléennes
-      lieuxData.forEach((key, value) {
-        if (value == true) {
-          _addFeatureOrService(key, features, services);
-        }
-      });
     }
+  } 
+  // Pour les traiteurs (type_id = 2)
+  else if (prestaTypeId == 2) {
+    // Ajouter des caractéristiques spécifiques aux traiteurs
+    features['Type de cuisine'] = {
+      'type': 'text',
+      'value': 'Cuisine française traditionnelle',
+      'icon': Icons.restaurant
+    };
+    
+    features['Personnel inclus'] = {
+      'type': 'boolean',
+      'value': true,
+      'icon': Icons.people
+    };
+    
+    services['Service à l\'assiette'] = Icons.restaurant_menu;
+    services['Vaisselle fournie'] = Icons.dining;
+    services['Menu dégustation'] = Icons.restaurant;
+  }
+  // Pour les photographes (type_id = 3)
+  else if (prestaTypeId == 3) {
+    features['Style de photographie'] = {
+      'type': 'text',
+      'value': 'Reportage naturel',
+      'icon': Icons.camera_alt
+    };
+    
+    features['Durée de présence'] = {
+      'type': 'text',
+      'value': 'Journée complète',
+      'icon': Icons.access_time
+    };
+    
+    services['Albums photo inclus'] = Icons.photo_album;
+    services['Galerie en ligne'] = Icons.cloud;
+    services['Drone disponible'] = Icons.flight;
   }
   
   // Si aucune caractéristique n'est trouvée, ajouter quelques exemples par défaut
@@ -2173,6 +2246,11 @@ void _addFeatureOrService(String key, Map<String, dynamic> features, Map<String,
 }
 
 void _showAllReviews() {
+  final double? reviewRating = widget.prestataire['note_moyenne'] != null 
+      ? (widget.prestataire['note_moyenne'] is double 
+          ? widget.prestataire['note_moyenne'] 
+          : double.tryParse(widget.prestataire['note_moyenne'].toString()))
+      : null;
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -2224,7 +2302,7 @@ void _showAllReviews() {
                           child: Row(
                             children: [
                               Text(
-                                _calculateAverageRating().toStringAsFixed(1),
+                                reviewRating?.toStringAsFixed(1) ?? "0.0",
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
