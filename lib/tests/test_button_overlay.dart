@@ -11,13 +11,27 @@ class TestButtonOverlay extends StatelessWidget {
     return Positioned(
       bottom: 120, // Au-dessus de la navigation
       right: 20,
-      child: FloatingActionButton(
-        onPressed: () {
-          context.go('/test'); // Assurez-vous que la route '/test' est définie
-        },
-        backgroundColor: Colors.amber,
-        child: const Icon(Icons.bug_report, color: Colors.black),
-        tooltip: 'Page de test',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              context.go('/test'); // Accès à la page de test
+            },
+            backgroundColor: Colors.amber,
+            child: const Icon(Icons.bug_report, color: Colors.black),
+            tooltip: 'Page de test',
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            onPressed: () {
+              context.go('/partner/login'); // Accès à l'espace partenaire
+            },
+            backgroundColor: Colors.blue,
+            child: const Icon(Icons.business, color: Colors.white),
+            tooltip: 'Espace partenaire',
+          ),
+        ],
       ),
     );
   }
