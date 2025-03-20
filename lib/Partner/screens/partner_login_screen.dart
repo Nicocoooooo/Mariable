@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../shared/widgets/custom_app_bar.dart';
 import '../../shared/widgets/loading_indicator.dart';
-import '../../shared/widgets/error_view.dart';
 import '../../shared/services/auth_service.dart';
 import '../../shared/constants/style_constants.dart';
 import '../../utils/logger.dart';
@@ -92,12 +91,45 @@ class _PartnerLoginScreenState extends State<PartnerLoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Logo ou image
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 30.0),
-                    child: Image.asset(
-                      'assets/images/wedding-background.jpg',
-                      height: 120,
-                      fit: BoxFit.contain,
+                  ClipRRect(
+                    borderRadius:
+                        BorderRadius.circular(30), // Rayon des bords arrondis
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(vertical: 30.0),
+                      width: double
+                          .infinity, // Pour prendre toute la largeur disponible
+                      height: 220, // Hauteur légèrement ajustée
+                      child: Image.network(
+                        'https://wrdychfyhctekddzysen.supabase.co/storage/v1/object/public/typeimg//orangerie.jpeg',
+                        fit: BoxFit
+                            .cover, // Cover au lieu de contain pour remplir tout l'espace
+                        loadingBuilder: (BuildContext context, Widget child,
+                            ImageChunkEvent? loadingProgress) {
+                          if (loadingProgress == null) {
+                            return child;
+                          }
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: Icon(
+                                Icons.image_not_supported,
+                                size: 50,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
 
