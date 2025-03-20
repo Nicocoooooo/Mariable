@@ -5,7 +5,7 @@ import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
 import '../services/region_service.dart';
 import '../Widgets/lieu_selector_dialog.dart';
-
+import '../Filtre/traiteur_types_screen.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -13,6 +13,7 @@ class HomePage extends StatefulWidget {
 
   @override
   State<HomePage> createState() => _HomePageState();
+ 
 }
 
 class _HomePageState extends State<HomePage> {
@@ -214,8 +215,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Fonction de recherche qui utilise les sélections
-  void _search() {
+   void _search() {
     // Vérifier qu'au moins un critère est rempli
     if (_selectedPrestaType == null && _selectedSubType == null && _lieuText == 'Lieu' && _startDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -393,43 +393,50 @@ Future<void> _selectDate(BuildContext context, {required bool isStartDate}) asyn
 }
   // Ouvre le modal des filtres prestataires
   Future<void> _showPrestatairesFilter(BuildContext context) async {
-    final result = await showModalBottomSheet<dynamic>(
-      context: context,
-      isScrollControlled: true, // Pour permettre au modal de prendre plus de place
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.75, // Prend 75% de l'écran par défaut
-        minChildSize: 0.5, // Minimum 50%
-        maxChildSize: 0.95, // Maximum 95%
-        builder: (_, scrollController) {
-          return const PrestatairesFilterScreen();
-        },
-      ),
-    );
+  final result = await showModalBottomSheet<dynamic>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (_, scrollController) {
+        return const PrestatairesFilterScreen();
+      },
+    ),
+  );
 
-    // Traiter le résultat selon ce qui a été sélectionné
-    if (result != null) {
-      // Si le résultat contient à la fois un type de prestataire et un sous-type
-      if (result is Map<String, dynamic> && result.containsKey('prestaType') && result.containsKey('subType')) {
-        final prestaType = result['prestaType'];
-        final subType = result['subType'];
-        
-        setState(() {
-          _selectedPrestaType = prestaType;
-          _selectedSubType = subType;
+  // Traiter le résultat selon ce qui a été sélectionné
+  if (result != null) {
+    print("Selected result: $result"); // Ajoutez ce debug
+    
+    // Si le résultat contient à la fois un type de prestataire et un sous-type
+    if (result is Map<String, dynamic> && result.containsKey('prestaType') && result.containsKey('subType')) {
+      final prestaType = result['prestaType'];
+      final subType = result['subType'];
+      
+      setState(() {
+        _selectedPrestaType = prestaType;
+        _selectedSubType = subType;
+        // Personnaliser le texte en fonction du type
+        if (prestaType['name'].toString().toLowerCase() == 'traiteur') {
           _prestaireText = '${prestaType['name']}: ${subType['name']}';
-        });
-      } 
-      // Si le résultat est juste un type de prestataire
-      else {
-        setState(() {
-          _selectedPrestaType = result;
-          _selectedSubType = null;
-          _prestaireText = result['name'];
-        });
-      }
+        } else {
+          _prestaireText = '${prestaType['name']}: ${subType['name']}';
+        }
+      });
+    } 
+    // Si le résultat est juste un type de prestataire
+    else {
+      setState(() {
+        _selectedPrestaType = result;
+        _selectedSubType = null;
+        _prestaireText = result['name'];
+      });
     }
   }
+}
 
   Widget _buildSearchField({
     required IconData icon,

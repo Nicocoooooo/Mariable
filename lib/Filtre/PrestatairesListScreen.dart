@@ -5,6 +5,9 @@ import '../Filtre/Widgets/prestataire_card.dart';
 import '../utils/logger.dart';
 import '../DetailsScreen/PrestaireDetailScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../Filtre/traiteur_types_screen.dart';
+import '../Filtre/data/repositories/presta_repository.dart';
+
 
 
 class PrestatairesListScreen extends StatefulWidget {
@@ -70,40 +73,35 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
       });
     }
   }
+  
+Future<void> _loadPrestataires() async {
+  try {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
-  Future<void> _loadPrestataires() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = '';
-      });
-
-      List<Map<String, dynamic>> prestataires = [];
-      
-      // Si nous avons un sous-type (pour les lieux), nous faisons une requête spécifique
-      if (widget.subType != null) {
-        prestataires = await _repository.searchPrestataires(
-          typeId: widget.prestaType.id,
-          region: widget.location,
-        );
-      } else {
-        // Sinon nous faisons une requête générale par type de prestataire
-        prestataires = await _repository.getPrestairesByType(widget.prestaType.id);
-      }
-      
-      setState(() {
-        _prestataires = prestataires;
-        _isLoading = false;
-      });
-    } catch (e) {
-      AppLogger.error('Erreur lors du chargement des prestataires', e);
-      setState(() {
-        _errorMessage = 'Erreur lors du chargement des prestataires: ${e.toString()}';
-        _isLoading = false;
-        _prestataires = [];
-      });
-    }
+    List<Map<String, dynamic>> prestataires = [];
+    
+    // Simplification: utiliser searchPrestataires pour tous les cas
+    prestataires = await _repository.searchPrestataires(
+      typeId: widget.prestaType.id,
+      region: widget.location,
+    );
+    
+    setState(() {
+      _prestataires = prestataires;
+      _isLoading = false;
+    });
+  } catch (e) {
+    AppLogger.error('Erreur lors du chargement des prestataires', e);
+    setState(() {
+      _errorMessage = 'Erreur lors du chargement des prestataires: ${e.toString()}';
+      _isLoading = false;
+      _prestataires = [];
+    });
   }
+}
   
   List<Map<String, dynamic>> get _filteredPrestataires {
     // Si aucun filtre n'est appliqué, retourner tous les prestataires
@@ -961,4 +959,7 @@ void _showFilterBottomSheet(BuildContext context) {
     },
   );
 }
+
+
+
 }
