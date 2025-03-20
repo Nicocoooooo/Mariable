@@ -5,8 +5,7 @@ import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
 import '../services/region_service.dart';
 import '../Widgets/lieu_selector_dialog.dart';
-
-
+import '../tests/test_button_overlay.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -30,7 +29,7 @@ class _HomePageState extends State<HomePage> {
     const Color grisTexte = Color(0xFF2B2B2B);
     const Color accentColor = Color(0xFF524B46);
     const Color beige = Color(0xFFFFF3E4);
-    
+
     return Scaffold(
       body: Stack(
         children: [
@@ -46,12 +45,12 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-          
+
           // Overlay pour lisibilité du texte
           Container(
             color: Colors.black.withOpacity(0.2),
           ),
-          
+
           // Contenu principal
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 80, 20, 20),
@@ -87,7 +86,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                
+
                 // Carte de recherche
                 Card(
                   margin: EdgeInsets.zero,
@@ -109,9 +108,9 @@ class _HomePageState extends State<HomePage> {
                           isSelected: _prestaireText != 'Prestataire',
                         ),
                       ),
-                      
+
                       const Divider(height: 1, thickness: 1),
-                      
+
                       // Champ Lieu
                       InkWell(
                         onTap: () => _showLieuSelector(context),
@@ -122,18 +121,19 @@ class _HomePageState extends State<HomePage> {
                           isSelected: _lieuText != 'Lieu',
                         ),
                       ),
-                      
+
                       const Divider(height: 1, thickness: 1),
-                      
+
                       // Champs Date double
                       Row(
                         children: [
                           Expanded(
                             child: InkWell(
-                              onTap: () => _selectDate(context, isStartDate: true),
+                              onTap: () =>
+                                  _selectDate(context, isStartDate: true),
                               child: _buildSearchField(
                                 icon: Icons.calendar_today,
-                                hint: _startDate != null 
+                                hint: _startDate != null
                                     ? '${_startDate!.day}/${_startDate!.month}/${_startDate!.year}'
                                     : 'Date',
                                 grisTexte: grisTexte,
@@ -148,19 +148,23 @@ class _HomePageState extends State<HomePage> {
                           ),
                           Expanded(
                             child: InkWell(
-                              onTap: () => _selectDate(context, isStartDate: false),
+                              onTap: () =>
+                                  _selectDate(context, isStartDate: false),
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
                                 child: Text(
-                                  _endDate != null 
+                                  _endDate != null
                                       ? '${_endDate!.day}/${_endDate!.month}/${_endDate!.year}'
                                       : 'Date',
                                   style: TextStyle(
-                                    color: _endDate != null 
-                                        ? grisTexte 
+                                    color: _endDate != null
+                                        ? grisTexte
                                         : grisTexte.withOpacity(0.5),
                                     fontSize: 14,
-                                    fontWeight: _endDate != null ? FontWeight.bold : FontWeight.normal,
+                                    fontWeight: _endDate != null
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                   ),
                                 ),
                               ),
@@ -168,7 +172,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ],
                       ),
-                      
+
                       // Bouton Rechercher
                       Container(
                         width: double.infinity,
@@ -203,11 +207,12 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-                
+
                 const Spacer(), // Pousse la barre de navigation vers le bas
               ],
             ),
           ),
+          const TestButtonOverlay(),
         ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(grisTexte, accentColor),
@@ -217,10 +222,14 @@ class _HomePageState extends State<HomePage> {
   // Fonction de recherche qui utilise les sélections
   void _search() {
     // Vérifier qu'au moins un critère est rempli
-    if (_selectedPrestaType == null && _selectedSubType == null && _lieuText == 'Lieu' && _startDate == null) {
+    if (_selectedPrestaType == null &&
+        _selectedSubType == null &&
+        _lieuText == 'Lieu' &&
+        _startDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Veuillez sélectionner au moins un critère de recherche'),
+          content:
+              Text('Veuillez sélectionner au moins un critère de recherche'),
           duration: Duration(seconds: 2),
         ),
       );
@@ -279,12 +288,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Fonction pour sélectionner un lieu
-  
+
   Future<void> _showLieuSelector(BuildContext context) async {
     final regionService = RegionService();
     List<String> regions = [];
     bool isLoading = true;
-    
+
     // Récupérer les régions avant d'afficher le modal
     try {
       regions = await regionService.getAllRegions();
@@ -295,7 +304,7 @@ class _HomePageState extends State<HomePage> {
     } finally {
       isLoading = false;
     }
-    
+
     showDialog<String>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -306,17 +315,17 @@ class _HomePageState extends State<HomePage> {
             content: SizedBox(
               width: double.maxFinite,
               child: isLoading
-                ? Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: regions.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        title: Text(regions[index]),
-                        onTap: () => Navigator.pop(context, regions[index]),
-                      );
-                    },
-                  ),
+                  ? Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: regions.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(regions[index]),
+                          onTap: () => Navigator.pop(context, regions[index]),
+                        );
+                      },
+                    ),
             ),
           );
         },
@@ -331,71 +340,77 @@ class _HomePageState extends State<HomePage> {
   }
 
 // Modification de la fonction _selectDate dans lib/Home/HomeScreen.dart
-Future<void> _selectDate(BuildContext context, {required bool isStartDate}) async {
-  final DateTime now = DateTime.now();
-  
-  // Définir la bonne date initiale pour chaque cas
-  DateTime initialDate;
-  if (isStartDate) {
-    initialDate = _startDate ?? now;
-  } else {
-    // Pour la date de fin, utiliser la date de début + 1 jour ou aujourd'hui + 1 jour
-    initialDate = _endDate ?? (_startDate != null ? _startDate!.add(const Duration(days: 1)) : now.add(const Duration(days: 1)));
-  }
-  
-  // Assurer que la date initiale est dans la plage valide
-  if (initialDate.isBefore(now)) {
-    initialDate = now;
-  }
-  
-  final DateTime? picked = await showDatePicker(
-    context: context,
-    initialDate: initialDate,
-    // Pour la date de début, commencer à aujourd'hui
-    // Pour la date de fin, commencer à la date de début ou aujourd'hui
-    firstDate: isStartDate ? now : (_startDate ?? now),
-    lastDate: DateTime(now.year + 3), // Permettre jusqu'à 3 ans dans le futur
-    
-    // S'assurer qu'aucun jour n'est désactivé
-    selectableDayPredicate: (DateTime date) {
-      return true; // Permettre tous les jours, y compris les weekends
-    },
-    
-    // Peut-être ajouter des paramètres supplémentaires pour personnaliser l'apparence
-    builder: (context, child) {
-      return Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.light(
-            primary: const Color(0xFF524B46), // Couleur accent
-            onPrimary: Colors.white,
-            surface: Colors.white,
-            onSurface: const Color(0xFF2B2B2B),
-          ),
-        ),
-        child: child!,
-      );
-    },
-  );
+  Future<void> _selectDate(BuildContext context,
+      {required bool isStartDate}) async {
+    final DateTime now = DateTime.now();
 
-  if (picked != null) {
-    setState(() {
-      if (isStartDate) {
-        _startDate = picked;
-        // Réinitialiser la date de fin si elle est antérieure à la nouvelle date de début
-        if (_endDate != null && _endDate!.isBefore(_startDate!)) {
-          _endDate = null;
+    // Définir la bonne date initiale pour chaque cas
+    DateTime initialDate;
+    if (isStartDate) {
+      initialDate = _startDate ?? now;
+    } else {
+      // Pour la date de fin, utiliser la date de début + 1 jour ou aujourd'hui + 1 jour
+      initialDate = _endDate ??
+          (_startDate != null
+              ? _startDate!.add(const Duration(days: 1))
+              : now.add(const Duration(days: 1)));
+    }
+
+    // Assurer que la date initiale est dans la plage valide
+    if (initialDate.isBefore(now)) {
+      initialDate = now;
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      // Pour la date de début, commencer à aujourd'hui
+      // Pour la date de fin, commencer à la date de début ou aujourd'hui
+      firstDate: isStartDate ? now : (_startDate ?? now),
+      lastDate: DateTime(now.year + 3), // Permettre jusqu'à 3 ans dans le futur
+
+      // S'assurer qu'aucun jour n'est désactivé
+      selectableDayPredicate: (DateTime date) {
+        return true; // Permettre tous les jours, y compris les weekends
+      },
+
+      // Peut-être ajouter des paramètres supplémentaires pour personnaliser l'apparence
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: const Color(0xFF524B46), // Couleur accent
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: const Color(0xFF2B2B2B),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isStartDate) {
+          _startDate = picked;
+          // Réinitialiser la date de fin si elle est antérieure à la nouvelle date de début
+          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+            _endDate = null;
+          }
+        } else {
+          _endDate = picked;
         }
-      } else {
-        _endDate = picked;
-      }
-    });
+      });
+    }
   }
-}
+
   // Ouvre le modal des filtres prestataires
   Future<void> _showPrestatairesFilter(BuildContext context) async {
     final result = await showModalBottomSheet<dynamic>(
       context: context,
-      isScrollControlled: true, // Pour permettre au modal de prendre plus de place
+      isScrollControlled:
+          true, // Pour permettre au modal de prendre plus de place
       backgroundColor: Colors.transparent,
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.75, // Prend 75% de l'écran par défaut
@@ -410,16 +425,18 @@ Future<void> _selectDate(BuildContext context, {required bool isStartDate}) asyn
     // Traiter le résultat selon ce qui a été sélectionné
     if (result != null) {
       // Si le résultat contient à la fois un type de prestataire et un sous-type
-      if (result is Map<String, dynamic> && result.containsKey('prestaType') && result.containsKey('subType')) {
+      if (result is Map<String, dynamic> &&
+          result.containsKey('prestaType') &&
+          result.containsKey('subType')) {
         final prestaType = result['prestaType'];
         final subType = result['subType'];
-        
+
         setState(() {
           _selectedPrestaType = prestaType;
           _selectedSubType = subType;
           _prestaireText = '${prestaType['name']}: ${subType['name']}';
         });
-      } 
+      }
       // Si le résultat est juste un type de prestataire
       else {
         setState(() {
@@ -459,7 +476,7 @@ Future<void> _selectDate(BuildContext context, {required bool isStartDate}) asyn
       ),
     );
   }
-  
+
   // Barre de navigation
   Widget _buildBottomNavigationBar(Color grisTexte, Color accentColor) {
     return Container(
@@ -486,9 +503,10 @@ Future<void> _selectDate(BuildContext context, {required bool isStartDate}) asyn
       ),
     );
   }
-  
+
   // Élément de la barre de navigation
-  Widget _buildNavItem(IconData icon, String label, Color color, {bool isSelected = false}) {
+  Widget _buildNavItem(IconData icon, String label, Color color,
+      {bool isSelected = false}) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
