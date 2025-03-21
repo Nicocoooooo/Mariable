@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../Filtre/prestataires_filter_screen.dart';
+import '../Filtre/prestataires_filter_screen.dart';  // Ajout de l'import pour la page des prestataires
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
 import '../services/region_service.dart';
 import '../Widgets/lieu_selector_dialog.dart';
-
-
+import '../Prestataires/PrestatairesScreen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -477,7 +476,14 @@ Future<void> _selectDate(BuildContext context, {required bool isStartDate}) asyn
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildNavItem(Icons.search, 'Prestataires', grisTexte),
+          _buildNavItem(Icons.search, 'Prestataires', grisTexte, onTap: () {
+           Navigator.push(
+            context,
+           MaterialPageRoute(
+            builder: (context) => PrestatairesScreen(), // Utilisez le nouvel écran
+           ),
+          );
+          }),
           _buildNavItem(Icons.favorite_border, 'Favoris', grisTexte),
           _buildNavItem(Icons.home, 'Accueil', accentColor, isSelected: true),
           _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte),
@@ -488,25 +494,28 @@ Future<void> _selectDate(BuildContext context, {required bool isStartDate}) asyn
   }
   
   // Élément de la barre de navigation
-  Widget _buildNavItem(IconData icon, String label, Color color, {bool isSelected = false}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: isSelected ? color : color.withOpacity(0.5),
-          size: 22,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
+  Widget _buildNavItem(IconData icon, String label, Color color, {bool isSelected = false, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
             color: isSelected ? color : color.withOpacity(0.5),
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+            size: 22,
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? color : color.withOpacity(0.5),
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

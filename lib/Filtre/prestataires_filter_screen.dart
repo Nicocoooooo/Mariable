@@ -47,65 +47,63 @@ class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
     });
   }
 
+  Future<void> _fetchPrestaTypes() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
 
-Future<void> _fetchPrestaTypes() async {
-  try {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-
-    // Ajouter un délai avant de récupérer les données
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    // Fetch prestataire types using the repository
-    final prestaTypes = await _repository.getPrestaTypes();
-    
-    // Si la liste est vide, utiliser des données fictives
-    if (prestaTypes.isEmpty) {
-      print('No prestataire types found, using default values');
-
-      final defaultTypes = [
-        PrestaTypeModel(id: 1, name: 'Lieu', description: 'Lieux pour votre mariage'),
-        // ... autres types par défaut
-      ];
+      // Ajouter un délai avant de récupérer les données
+      await Future.delayed(const Duration(milliseconds: 500));
       
-      final prestaTypesMapList = defaultTypes.map((type) => type.toMap()).toList();
+      // Fetch prestataire types using the repository
+      final prestaTypes = await _repository.getPrestaTypes();
       
+      // Si la liste est vide, utiliser des données fictives
+      if (prestaTypes.isEmpty) {
+        print('No prestataire types found, using default values');
+
+        final defaultTypes = [
+          PrestaTypeModel(id: 1, name: 'Lieu', description: 'Lieux pour votre mariage'),
+          // ... autres types par défaut
+        ];
+        
+        final prestaTypesMapList = defaultTypes.map((type) => type.toMap()).toList();
+        
+        setState(() {
+          _prestaTypes = prestaTypesMapList;
+          _filteredPrestaTypes = List.from(_prestaTypes);
+          _isLoading = false;
+        });
+        return;
+      }
+      
+      final prestaTypesMapList = prestaTypes.map((type) => type.toMap()).toList();
+
       setState(() {
         _prestaTypes = prestaTypesMapList;
         _filteredPrestaTypes = List.from(_prestaTypes);
         _isLoading = false;
       });
-      return;
-    }
-    
-    final prestaTypesMapList = prestaTypes.map((type) => type.toMap()).toList();
-
-    setState(() {
-      _prestaTypes = prestaTypesMapList;
-      _filteredPrestaTypes = List.from(_prestaTypes);
-      _isLoading = false;
-    });
-  } catch (e) {
-    print('No prestataire types found, using default values');
-
-    
-    setState(() {
-      _errorMessage = 'Erreur lors du chargement des types de prestataires: ${e.toString()}';
-      _isLoading = false;
+    } catch (e) {
+      print('No prestataire types found, using default values');
       
-      // Ajouter des données fictives en cas d'erreur
-      _prestaTypes = [
-        {'id': 1, 'name': 'Lieu', 'description': 'Lieux pour votre mariage'},
-        {'id': 2, 'name': 'Traiteur', 'description': 'Services de restauration'},
-        {'id': 3, 'name': 'Photographe', 'description': 'Capture de vos souvenirs'},
-        {'id': 4, 'name': 'Wedding Planner', 'description': 'Organisation complète de votre mariage'},
-      ];
-      _filteredPrestaTypes = List.from(_prestaTypes);
-    });
+      setState(() {
+        _errorMessage = 'Erreur lors du chargement des types de prestataires: ${e.toString()}';
+        _isLoading = false;
+        
+        // Ajouter des données fictives en cas d'erreur
+        _prestaTypes = [
+          {'id': 1, 'name': 'Lieu', 'description': 'Lieux pour votre mariage'},
+          {'id': 2, 'name': 'Traiteur', 'description': 'Services de restauration'},
+          {'id': 3, 'name': 'Photographe', 'description': 'Capture de vos souvenirs'},
+          {'id': 4, 'name': 'Wedding Planner', 'description': 'Organisation complète de votre mariage'},
+        ];
+        _filteredPrestaTypes = List.from(_prestaTypes);
+      });
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -114,120 +112,124 @@ Future<void> _fetchPrestaTypes() async {
     final Color grisTexte = Theme.of(context).colorScheme.onSurface; // #2B2B2B
     final Color beige = Theme.of(context).colorScheme.secondary; // #FFF3E4
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            spreadRadius: 0,
-            blurRadius: 10,
-            offset: const Offset(0, -3),
+    // Ajouter le Scaffold comme widget parent pour fournir le contexte Material
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle and close button row
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              spreadRadius: 0,
+              blurRadius: 10,
+              offset: const Offset(0, -3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle and close button row
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(5),
+                      ),
                     ),
                   ),
-                ),
-                // Title
-                Text(
-                  'Types de prestataires',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: grisTexte,
+                  // Title
+                  Text(
+                    'Types de prestataires',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: grisTexte,
+                    ),
                   ),
-                ),
-                // Close button
-                IconButton(
-                  icon: Icon(Icons.close, color: grisTexte),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
-          
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Rechercher un type de prestataire',
-                hintStyle: TextStyle(color: grisTexte.withOpacity(0.5)),
-                prefixIcon: Icon(Icons.search, color: grisTexte.withOpacity(0.6)),
-                filled: true,
-                fillColor: beige.withOpacity(0.3),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  // Close button
+                  IconButton(
+                    icon: Icon(Icons.close, color: grisTexte),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
               ),
             ),
-          ),
-          
-          // Divider
-          Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.2)),
-          
-          // List of prestataire types
-          Expanded(
-            child: _isLoading 
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage.isNotEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Text(
-                            _errorMessage,
-                            style: TextStyle(color: Colors.red[700]),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      )
-                    : _filteredPrestaTypes.isEmpty
-                        ? EmptyState(
-                            title: 'Aucun type de prestataire trouvé',
-                            message: 'Essayez de modifier votre recherche ou consultez tous les prestataires disponibles.',
-                            icon: Icons.search_off,
-                            actionLabel: 'Voir tous les prestataires',
-                            onActionPressed: () {
-                              _searchController.clear();
-                              _filterPrestaTypes();
-                            },
-                          )
-                        : ListView.separated(
+            
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Rechercher un type de prestataire',
+                  hintStyle: TextStyle(color: grisTexte.withOpacity(0.5)),
+                  prefixIcon: Icon(Icons.search, color: grisTexte.withOpacity(0.6)),
+                  filled: true,
+                  fillColor: beige.withOpacity(0.3),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+            
+            // Divider
+            Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.2)),
+            
+            // List of prestataire types
+            Expanded(
+              child: _isLoading 
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorMessage.isNotEmpty
+                      ? Center(
+                          child: Padding(
                             padding: const EdgeInsets.all(20),
-                            itemCount: _filteredPrestaTypes.length,
-                            separatorBuilder: (context, index) => const SizedBox(height: 16),
-                            itemBuilder: (context, index) {
-                              final prestaType = _filteredPrestaTypes[index];
-                              return _buildPrestaTypeCard(prestaType, accentColor, grisTexte);
-                            },
+                            child: Text(
+                              _errorMessage,
+                              style: TextStyle(color: Colors.red[700]),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-          ),
-        ],
+                        )
+                      : _filteredPrestaTypes.isEmpty
+                          ? EmptyState(
+                              title: 'Aucun type de prestataire trouvé',
+                              message: 'Essayez de modifier votre recherche ou consultez tous les prestataires disponibles.',
+                              icon: Icons.search_off,
+                              actionLabel: 'Voir tous les prestataires',
+                              onActionPressed: () {
+                                _searchController.clear();
+                                _filterPrestaTypes();
+                              },
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.all(20),
+                              itemCount: _filteredPrestaTypes.length,
+                              separatorBuilder: (context, index) => const SizedBox(height: 16),
+                              itemBuilder: (context, index) {
+                                final prestaType = _filteredPrestaTypes[index];
+                                return _buildPrestaTypeCard(prestaType, accentColor, grisTexte);
+                              },
+                            ),
+            ),
+          ],
+        ),
       ),
     );
   }
