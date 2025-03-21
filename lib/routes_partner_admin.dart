@@ -7,6 +7,10 @@ import 'Partner/screens/partner_reset_password_screen.dart';
 import 'Partner/screens/partner_registration_success_screen.dart';
 import 'Partner/screens/partner_dashboard_screen.dart';
 import 'Partner/screens/partner_profile_screen.dart';
+import 'Partner/screens/partner_documents_screen.dart';
+import 'Partner/screens/partner_document_view_screen.dart';
+import 'Partner/screens/partner_messages_screen.dart';
+import 'Partner/screens/partner_stats_screen.dart';
 
 class PartnerAdminRoutes {
   // Routes pour les partenaires
@@ -84,25 +88,27 @@ class PartnerAdminRoutes {
     GoRoute(
       path: partnerDocuments,
       builder: (BuildContext context, GoRouterState state) {
-        return const Scaffold(
-          body: Center(child: Text('Gestion des documents - À implémenter')),
-        );
+        return const PartnerDocumentsScreen();
+      },
+    ),
+    GoRoute(
+      path: '/partner/documents/:id',
+      builder: (BuildContext context, GoRouterState state) {
+        // Correction de la façon d'accéder aux paramètres
+        final documentId = state.pathParameters['id']!;
+        return PartnerDocumentViewScreen(documentId: documentId);
       },
     ),
     GoRoute(
       path: partnerMessages,
       builder: (BuildContext context, GoRouterState state) {
-        return const Scaffold(
-          body: Center(child: Text('Messagerie - À implémenter')),
-        );
+        return const PartnerMessagesScreen();
       },
     ),
     GoRoute(
       path: partnerStats,
       builder: (BuildContext context, GoRouterState state) {
-        return const Scaffold(
-          body: Center(child: Text('Statistiques - À implémenter')),
-        );
+        return const PartnerStatsScreen();
       },
     ),
     GoRoute(
