@@ -32,13 +32,12 @@ class MessageModel extends Equatable {
       contenu: map['contenu'] ?? '',
       lu: map['lu'] ?? false,
       messageIA: map['message_ia'] ?? false,
-      dateEnvoi: map['date_envoi'] != null
-          ? DateTime.parse(map['date_envoi'])
+      dateEnvoi: map['created_at'] != null // Changé de date_envoi à created_at
+          ? DateTime.parse(map['created_at'])
           : DateTime.now(),
     );
   }
 
-  /// Convertit en Map (généralement pour envoyer à Supabase)
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -48,7 +47,8 @@ class MessageModel extends Equatable {
       'contenu': contenu,
       'lu': lu,
       'message_ia': messageIA,
-      'date_envoi': dateEnvoi.toIso8601String(),
+      'created_at':
+          dateEnvoi.toIso8601String(), // Changé de date_envoi à created_at
     };
   }
 

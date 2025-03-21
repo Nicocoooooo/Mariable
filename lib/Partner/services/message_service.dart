@@ -38,7 +38,7 @@ class MessageService {
           .from('messages')
           .select()
           .eq('conversation_id', conversationId)
-          .order('date_envoi', ascending: true);
+          .order('created_at', ascending: true);
 
       return (response as List)
           .map((msg) => MessageModel.fromMap(msg))
@@ -65,7 +65,7 @@ class MessageService {
         'contenu': contenu,
         'lu': false,
         'message_ia': isAI,
-        'date_envoi': DateTime.now().toIso8601String(),
+        'created_at': DateTime.now().toIso8601String(),
       }).select();
 
       return MessageModel.fromMap(response[0]);

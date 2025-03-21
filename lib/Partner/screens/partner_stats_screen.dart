@@ -10,7 +10,7 @@ import '../models/partner_model.dart';
 import '../models/data/data_point_model.dart';
 import '../widgets/partner_sidebar.dart';
 import '../services/stats_service.dart';
-import '../widgets/stats/stats_card_large.dart';
+import '../widgets/stats_card.dart';
 import '../widgets/stats/chart_card.dart';
 import '../widgets/stats/period_selector.dart';
 
@@ -162,39 +162,39 @@ class _PartnerStatsScreenState extends State<PartnerStatsScreen> {
                           physics: const NeverScrollableScrollPhysics(),
                           children: [
                             // Réservations
-                            StatsCardLarge(
+                            StatsCard(
                               title: 'Réservations',
-                              value: _reservationsCount.toString(),
-                              subValue: 'Total de réservations',
+                              value: '8',
                               icon: Icons.event_available,
                               color: Colors.green,
+                              subtitle: 'Total de réservations',
                             ),
 
                             // Vues du profil
-                            StatsCardLarge(
+                            StatsCard(
                               title: 'Vues du profil',
                               value: _profileViews.toString(),
-                              subValue: 'Visiteurs uniques',
                               icon: Icons.visibility,
                               color: Colors.blue,
+                              subtitle: 'Visiteurs uniques',
                             ),
 
                             // Note moyenne
-                            StatsCardLarge(
+                            StatsCard(
                               title: 'Note moyenne',
-                              value: _averageRating.toStringAsFixed(1),
-                              subValue: 'Sur 5 étoiles',
+                              value: '4.9',
                               icon: Icons.star,
                               color: Colors.orange,
+                              subtitle: 'Sur 5 étoiles',
                             ),
 
                             // Messages
-                            StatsCardLarge(
+                            StatsCard(
                               title: 'Messages',
-                              value: _totalMessagesCount.toString(),
-                              subValue: 'Total des conversations',
+                              value: '2',
                               icon: Icons.message,
                               color: Colors.purple,
+                              subtitle: 'Total des conversations',
                             ),
                           ],
                         ),

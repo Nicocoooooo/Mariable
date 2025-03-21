@@ -50,12 +50,16 @@ class StatsCardLarge extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: PartnerAdminStyles.textColor,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14, // Taille réduite
+                      fontWeight: FontWeight.w500,
+                      color: PartnerAdminStyles.textColor,
+                    ),
+                    overflow: TextOverflow.ellipsis, // Gérer le texte trop long
+                    maxLines: 1,
                   ),
                 ),
               ],
