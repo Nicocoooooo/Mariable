@@ -65,23 +65,21 @@ class _PartnerConversationScreenState extends State<PartnerConversationScreen> {
       // S'abonner aux nouveaux messages pour cette conversation
       _messagesChannel = Supabase.instance.client.channel('messages');
 
-      // Utiliser la méthode correcte pour la version 2.8.x de Supabase
-      _messagesChannel!.onPostgresChanges(
-        event: PostgresChangeEvent.insert,
-        schema: 'public',
-        table: 'messages',
-        filter: PostgresChangeFilter(
-          type: PostgresChangeFilterType.eq,
-          column: 'conversation_id',
-          value: widget.conversationId,
+      // Version compatible avec supabase_flutter 1.10.25
+      _messagesChannel!.on(
+        RealtimeListenTypes.postgresChanges,
+        ChannelFilter(
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: 'conversation_id=eq.${widget.conversationId}',
         ),
-        callback: (payload) {
+        (payload, [ref]) {
           // Un nouveau message a été ajouté
           if (!mounted) return;
 
           // Créer un MessageModel à partir du payload
-          final newMessage =
-              MessageModel.fromMap(payload.newRecord as Map<String, dynamic>);
+          final newMessage = MessageModel.fromMap(payload['new']);
 
           // Ajouter le message à la liste
           setState(() {
@@ -99,9 +97,7 @@ class _PartnerConversationScreenState extends State<PartnerConversationScreen> {
             );
           }
         },
-      );
-
-      _messagesChannel!.subscribe();
+      ).subscribe();
     } catch (e) {
       AppLogger.error('Erreur lors de la configuration du canal temps réel', e);
     }
