@@ -10,6 +10,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../Widgets/availability_selector.dart';
 import 'package:intl/intl.dart';
 import 'ImageGalleryScreen.dart';
+import 'dart:math' as math;
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../Filtre/data/repositories/presta_repository.dart';
 
 class PrestaireDetailScreen extends StatefulWidget {
   final Map<String, dynamic> prestataire;
@@ -899,12 +903,19 @@ Widget build(BuildContext context) {
           ),
         ),
         
+
+        // Widget à ajouter à la fin de votre CustomScrollView dans le build de PrestaireDetailScreen
+        SliverToBoxAdapter(
+          child: _buildRecommendedPrestataires(),
+        ),
+
         // Espace pour ne pas que le bouton cache du contenu
         const SliverToBoxAdapter(
           child: SizedBox(height: 80),
         ),
       ],
     ),
+
     
     // Bouton Réserver fixe en bas
     bottomSheet: Container(
@@ -1466,6 +1477,318 @@ double _calculateAverageRating() {
     total += avis.note;
   }
   return total / _avis.length;
+}
+
+
+Widget _buildRecommendedPrestataires() {
+  // Récupérer le type du prestataire actuel
+  var prestaTypeId = widget.prestataire['presta_type_id'];
+  
+  // Conversion et détection plus robuste du type
+  String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
+  String description = widget.prestataire['description'] ?? '';
+  
+  // Si c'est clairement un traiteur par le nom ou la description
+  if (nomEntreprise.toLowerCase().contains('traiteur') || 
+      description.toLowerCase().contains('traiteur') ||
+      widget.prestataire['traiteur_type_id'] != null) {
+    print('Prestataire détecté comme TRAITEUR par le nom/description');
+    prestaTypeId = 2;
+  }
+  
+  // Si c'est une chaîne, convertir en entier
+  if (prestaTypeId is String) {
+    prestaTypeId = int.tryParse(prestaTypeId) ?? 1;
+  } else if (prestaTypeId is! int) {
+    prestaTypeId = 1; // Valeur par défaut si pas de type
+  }
+  
+  print('Type final utilisé pour les recommandations: $prestaTypeId');
+  
+  // Si pas de type défini, ne pas afficher la section
+  if (prestaTypeId == null) {
+    return const SizedBox(); // Widget invisible
+  }
+  // Si pas de type défini, ne pas afficher la section
+  if (prestaTypeId == null) {
+    return const SizedBox(); // Widget invisible
+  }
+  
+  return FutureBuilder<List<Map<String, dynamic>>>(
+    future: _loadRecommendedPrestataires(prestaTypeId),
+    builder: (context, snapshot) {
+      // Toujours commencer par afficher le titre
+      Widget titleWidget = const Padding(
+        padding: EdgeInsets.fromLTRB(20, 32, 20, 16),
+        child: Text(
+          'Vous allez aimer',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF2B2B2B),
+          ),
+        ),
+      );
+      
+      // En attente de chargement
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            titleWidget,
+            const SizedBox(height: 16),
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          ],
+        );
+      }
+      
+      // Cas d'erreur ou pas de données
+      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            titleWidget,
+            const SizedBox(height: 16),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    Icon(Icons.search_off, size: 48, color: Colors.grey[300]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Nous n\'avons pas d\'autres prestataires similaires à vous proposer pour le moment',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        );
+      }
+      
+      // Cas avec des recommandations
+      final recommendations = snapshot.data!;
+      
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          titleWidget,
+          SizedBox(
+            height: 280,
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              itemCount: recommendations.length,
+              itemBuilder: (context, index) {
+                final presta = recommendations[index];
+                return _buildRecommendationCard(presta);
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      );
+    },
+  );
+}
+
+Widget _buildRecommendationCard(Map<String, dynamic> prestataire) {
+  final String nom = prestataire['nom_entreprise'] ?? 'Sans nom';
+  final String region = prestataire['region'] ?? '';
+  final double? rating = prestataire['note_moyenne'] != null 
+      ? (prestataire['note_moyenne'] is double 
+          ? prestataire['note_moyenne'] 
+          : double.tryParse(prestataire['note_moyenne'].toString()))
+      : null;
+  final String imageUrl = prestataire['image_url'] ?? 
+      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+  
+  return GestureDetector(
+    onTap: () => _navigateToDetails(prestataire),
+    child: Container(
+      width: 250,
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
+              height: 150,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                color: Colors.grey[300],
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+              errorWidget: (context, url, error) => Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.error),
+              ),
+            ),
+          ),
+          // Informations
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  nom,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Color(0xFF2B2B2B),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                if (region.isNotEmpty)
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, size: 14, color: Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(
+                        region,
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 8),
+                if (rating != null)
+                  Row(
+                    children: [
+                      for (int i = 1; i <= 5; i++)
+                        Icon(
+                          i <= rating ? Icons.star : 
+                          (i - 0.5 <= rating ? Icons.star_half : Icons.star_border),
+                          color: Colors.amber,
+                          size: 16,
+                        ),
+                      const SizedBox(width: 4),
+                      Text(
+                        rating.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Future<List<Map<String, dynamic>>> _loadRecommendedPrestataires(int prestaTypeId) async {
+  try {
+    print("Chargement des recommandations pour le type: $prestaTypeId");
+    
+    // L'ID du prestataire actuel pour l'exclure des recommandations
+    final String currentPrestaId = widget.prestataire['id'] ?? '';
+    
+    // Récupérer tous les prestataires actifs du même type
+    final response = await Supabase.instance.client
+        .from('presta')
+        .select('id, nom_entreprise, region, note_moyenne, image_url, presta_type_id')
+        .eq('actif', true)
+        .not('id', 'eq', currentPrestaId);
+    
+    // Vérifier la réponse
+    print("Nombre total de prestataires trouvés: ${response.length}");
+    
+    // Convertir en format standard et filtrer par type
+    final List<Map<String, dynamic>> allPrestataires = [];
+    for (var item in response) {
+      if (item is Map) {
+        final Map<String, dynamic> presta = {};
+        item.forEach((key, value) {
+          presta[key.toString()] = value;
+        });
+        
+        // Vérifier si le type correspond
+        // Vérifier si le type correspond
+        var itemType = presta['presta_type_id'];
+        int? parsedType;
+
+        if (itemType is String) {
+          parsedType = int.tryParse(itemType);
+        } else if (itemType is int) {
+          parsedType = itemType;
+        } else if (itemType is double) {
+          parsedType = itemType.toInt();
+        } else {
+          parsedType = null;
+        }
+
+        if (parsedType == prestaTypeId) {
+          allPrestataires.add(presta);
+        }
+      }
+    }
+    
+    print("Prestataires du même type: ${allPrestataires.length}");
+    
+    // S'il n'y a pas assez de prestataires, retourner une liste vide
+    if (allPrestataires.length < 2) {
+      print("Pas assez de prestataires pour afficher des recommandations");
+      return [];
+    }
+    
+    // Mélanger et prendre max 4
+    allPrestataires.shuffle();
+    final int count = math.min(4, allPrestataires.length);
+    
+    print("Nombre de recommandations à afficher: $count");
+    return allPrestataires.take(count).toList();
+  } catch (e) {
+    print('Erreur lors du chargement des prestataires recommandés: $e');
+    return [];
+  }
+}
+
+void _navigateToDetails(Map<String, dynamic> prestataire) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => PrestaireDetailScreen(
+        prestataire: prestataire,
+      ),
+    ),
+  );
 }
 
 // Widget pour l'état vide (aucun avis)
