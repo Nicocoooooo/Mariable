@@ -11,6 +11,8 @@ import 'Partner/screens/partner_documents_screen.dart';
 import 'Partner/screens/partner_document_view_screen.dart';
 import 'Partner/screens/partner_messages_screen.dart';
 import 'Partner/screens/partner_stats_screen.dart';
+import 'Partner/screens/partner_offers_screen.dart';
+import 'Partner/screens/partner_offer_form_screen.dart';
 
 class PartnerAdminRoutes {
   // Routes pour les partenaires
@@ -26,6 +28,7 @@ class PartnerAdminRoutes {
   static const String partnerStats = '/partner/stats';
   static const String partnerOffers = '/partner/offers';
   static const String partnerAddOffer = '/partner/offers/add';
+  static const String partnerEditOffer = '/partner/offers/edit/:id';
   static const String partnerReservations = '/partner/reservations';
 
   // Routes pour les admins
@@ -94,7 +97,6 @@ class PartnerAdminRoutes {
     GoRoute(
       path: '/partner/documents/:id',
       builder: (BuildContext context, GoRouterState state) {
-        // Correction de la façon d'accéder aux paramètres
         final documentId = state.pathParameters['id']!;
         return PartnerDocumentViewScreen(documentId: documentId);
       },
@@ -114,17 +116,20 @@ class PartnerAdminRoutes {
     GoRoute(
       path: partnerOffers,
       builder: (BuildContext context, GoRouterState state) {
-        return const Scaffold(
-          body: Center(child: Text('Gestion des offres - À implémenter')),
-        );
+        return const PartnerOffersScreen();
       },
     ),
     GoRoute(
       path: partnerAddOffer,
       builder: (BuildContext context, GoRouterState state) {
-        return const Scaffold(
-          body: Center(child: Text('Ajouter une offre - À implémenter')),
-        );
+        return const PartnerOfferFormScreen();
+      },
+    ),
+    GoRoute(
+      path: '/partner/offers/edit/:id',
+      builder: (BuildContext context, GoRouterState state) {
+        final offerId = state.pathParameters['id']!;
+        return PartnerOfferFormScreen(offerId: offerId);
       },
     ),
     GoRoute(
