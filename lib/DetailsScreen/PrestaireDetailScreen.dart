@@ -1101,83 +1101,113 @@ Widget _buildCancellationItem(String title, String subtitle, Color color) {
 
 // Fonction principale pour construire les caractéristiques et services
 Widget _buildFeaturesAndServices() {
+  // Récupérer proprement le type de prestataire
+  var prestaTypeId = widget.prestataire['presta_type_id'];
+  print('Type original: $prestaTypeId');
+
+  // Vérifier le nom pour corriger les traiteurs sans ID correct
+  String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
+  String description = widget.prestataire['description'] ?? '';
+
+  // Si c'est clairement un traiteur par le nom ou la description
+  if (nomEntreprise.toLowerCase().contains('traiteur') || 
+      description.toLowerCase().contains('traiteur') ||
+      nomEntreprise.toLowerCase().contains('food') ||
+      nomEntreprise.toLowerCase().contains('cuisine') ||
+      widget.prestataire['traiteur_type_id'] != null) {
+    print('Détecté comme TRAITEUR par le nom/description');
+    prestaTypeId = 2;  // FORCER le type traiteur
+  }
+
+  // Si c'est une chaîne, convertir en entier
+  if (prestaTypeId is String) {
+    prestaTypeId = int.tryParse(prestaTypeId) ?? 1;
+  } else if (prestaTypeId is! int) {
+    prestaTypeId = 1; // Valeur par défaut si pas de type
+  }
+
   // Utiliser LinkedHashMap pour préserver l'ordre d'insertion
   final LinkedHashMap<String, dynamic> features = LinkedHashMap<String, dynamic>();
   final LinkedHashMap<String, IconData> services = LinkedHashMap<String, IconData>();
 
-  final int? prestaTypeId = widget.prestataire['presta_type_id'];
   // Pour les lieux uniquement (type_id = 1)
-  if (prestaTypeId == 1) {
-    // Récupérer les données de lieux depuis le prestataire
-    if (widget.prestataire.containsKey('lieux')) {
-      var lieuxData = widget.prestataire['lieux'];
-      
-      // Si c'est une liste, extraire le premier élément
-      if (lieuxData is List && lieuxData.isNotEmpty) {
-        final lieu = lieuxData[0];
-        
-        // Parcourir les propriétés du lieu
-        if (lieu is Map<String, dynamic>) {
-          // D'abord ajouter les caractéristiques numériques et textuelles
-          _addNumericFeatures(lieu, features);
-          
-          // Ajouter les caractéristiques textuelles
-          if (lieu.containsKey('cadre') && lieu['cadre'] != null && lieu['cadre'].toString().isNotEmpty) {
-            features['Cadre'] = {
-              'type': 'text',
-              'value': lieu['cadre'],
-              'icon': Icons.landscape
-            };
-          }
-          
-          // Ensuite ajouter les caractéristiques booléennes
-          lieu.forEach((key, value) {
-            if (value == true) {
-              _addFeatureOrService(key, features, services);
-            }
-          });
-        }
-      } 
-      // Si c'est directement un objet Map
-      else if (lieuxData is Map<String, dynamic>) {
-        // Même traitement que ci-dessus
-        _addNumericFeatures(lieuxData, features);
-        
-        if (lieuxData.containsKey('cadre') && lieuxData['cadre'] != null && lieuxData['cadre'].toString().isNotEmpty) {
-          features['Cadre'] = {
-            'type': 'text',
-            'value': lieuxData['cadre'],
-            'icon': Icons.landscape
-          };
-        }
-        
-        lieuxData.forEach((key, value) {
-          if (value == true) {
-            _addFeatureOrService(key, features, services);
-          }
-        });
+  // Pour les lieux uniquement (type_id = 1)
+// Pour les lieux uniquement (type_id = 1)
+if (prestaTypeId == 1) {
+  print('DEBUG LIEU: Récupération des données lieu pour: ${widget.prestataire['nom_entreprise']}');
+  
+  // Récupérer les données de lieux depuis le prestataire
+  if (widget.prestataire.containsKey('lieux')) {
+    print('DEBUG LIEU: Le prestataire contient des données lieux');
+    var lieuxData = widget.prestataire['lieux'];
+    print('DEBUG LIEU: Données lieux: ${lieuxData?.runtimeType}');
+    
+    // Objet Map directement 
+    if (lieuxData is Map<String, dynamic>) {
+      print('DEBUG LIEU: Données lieux (Map): $lieuxData');
+      _processLieuData(lieuxData, features, services);
+    } 
+    // Si c'est une liste, essayer d'extraire le premier élément
+    else if (lieuxData is List && lieuxData.isNotEmpty) {
+      print('DEBUG LIEU: Données lieux (Liste): ${lieuxData.length} éléments');
+      final lieu = lieuxData[0];
+      if (lieu is Map<String, dynamic>) {
+        print('DEBUG LIEU: Premier lieu: $lieu');
+        _processLieuData(lieu, features, services);
       }
     }
-  } 
-  // Pour les traiteurs (type_id = 2)
-  else if (prestaTypeId == 2) {
-    // Ajouter des caractéristiques spécifiques aux traiteurs
-    features['Type de cuisine'] = {
-      'type': 'text',
-      'value': 'Cuisine française traditionnelle',
-      'icon': Icons.restaurant
-    };
-    
-    features['Personnel inclus'] = {
-      'type': 'boolean',
-      'value': true,
-      'icon': Icons.people
-    };
-    
-    services['Service à l\'assiette'] = Icons.restaurant_menu;
-    services['Vaisselle fournie'] = Icons.dining;
-    services['Menu dégustation'] = Icons.restaurant;
+  } else {
+    print('DEBUG LIEU: Aucune donnée lieux trouvée, utilisation des valeurs par défaut');
+    // Si aucune donnée n'est trouvée, ajoutons des valeurs par défaut
+    _addDefaultLieuFeatures(features, services);
   }
+}
+ // Pour les traiteurs (type_id = 2) - CARACTÉRISTIQUES FORCÉES
+else if (prestaTypeId == 2) {
+  print('Affichage des caractéristiques TRAITEUR');
+  
+  // Caractéristiques du traiteur
+  features['Type de cuisine'] = {
+    'type': 'text',
+    'value': 'Cuisine française traditionnelle',
+    'icon': Icons.restaurant
+  };
+  
+  features['Personnel inclus'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.people
+  };
+  
+  features['Capacité de service'] = {
+    'type': 'numeric',
+    'value': 150,
+    'unit': 'invités',
+    'icon': Icons.group
+  };
+  
+  features['Expérience'] = {
+    'type': 'text',
+    'value': '15 ans dans l\'événementiel',
+    'icon': Icons.star
+  };
+  
+  features['Options spéciales'] = {
+    'type': 'text',
+    'value': 'Menus végétariens, sans gluten et vegan disponibles',
+    'icon': Icons.spa
+  };
+  
+  // Services inclus du traiteur
+  services['Service à l\'assiette'] = Icons.restaurant_menu;
+  services['Vaisselle fournie'] = Icons.dining;
+  services['Menu dégustation'] = Icons.restaurant;
+  services['Pièce montée incluse'] = Icons.cake;
+  services['Bar à cocktails'] = Icons.local_bar;
+  services['Installation et nettoyage'] = Icons.cleaning_services;
+  services['Conseil personnalisé'] = Icons.support_agent;
+  services['Coordination avec le lieu'] = Icons.event_available;
+}
   // Pour les photographes (type_id = 3)
   else if (prestaTypeId == 3) {
     features['Style de photographie'] = {
@@ -2984,6 +3014,207 @@ Widget _buildOptionCheckbox(
       controlAffinity: ListTileControlAffinity.trailing,
     ),
   );
+}
+
+// Méthode pour traiter les données de lieu
+void _processLieuData(Map<String, dynamic> lieu, Map<String, dynamic> features, Map<String, IconData> services) {
+  print('Traitement des données lieu: ${lieu.keys}');
+  
+  // CARACTÉRISTIQUES NUMÉRIQUES
+  // Capacité maximale
+  if (lieu.containsKey('capacite_max') && lieu['capacite_max'] != null) {
+    features['Capacité maximale'] = {
+      'type': 'numeric',
+      'value': lieu['capacite_max'],
+      'unit': 'invités',
+      'icon': Icons.people
+    };
+  }
+  
+  // Capacité minimale
+  if (lieu.containsKey('capacite_min') && lieu['capacite_min'] != null) {
+    features['Capacité minimale'] = {
+      'type': 'numeric',
+      'value': lieu['capacite_min'],
+      'unit': 'invités',
+      'icon': Icons.people_outline
+    };
+  }
+  
+  // Capacité d'hébergement
+  if (lieu.containsKey('capacite_hebergement') && lieu['capacite_hebergement'] != null) {
+    features['Capacité d\'hébergement'] = {
+      'type': 'numeric',
+      'value': lieu['capacite_hebergement'],
+      'unit': 'couchages',
+      'icon': Icons.hotel
+    };
+  }
+  
+  // Nombre de chambres
+  if (lieu.containsKey('nombre_chambres') && lieu['nombre_chambres'] != null) {
+    features['Nombre de chambres'] = {
+      'type': 'numeric',
+      'value': lieu['nombre_chambres'],
+      'unit': '',
+      'icon': Icons.bed
+    };
+  }
+  
+  // Superficie intérieure
+  if (lieu.containsKey('superficie_interieur') && lieu['superficie_interieur'] != null) {
+    features['Superficie intérieure'] = {
+      'type': 'numeric',
+      'value': lieu['superficie_interieur'],
+      'unit': 'm²',
+      'icon': Icons.square_foot
+    };
+  }
+  
+  // Superficie extérieure
+  if (lieu.containsKey('superficie_exterieur') && lieu['superficie_exterieur'] != null) {
+    features['Superficie extérieure'] = {
+      'type': 'numeric',
+      'value': lieu['superficie_exterieur'],
+      'unit': 'm²',
+      'icon': Icons.grass
+    };
+  }
+  
+  // CARACTÉRISTIQUES TEXTUELLES
+  // Cadre
+  if (lieu.containsKey('cadre') && lieu['cadre'] != null && lieu['cadre'].toString().isNotEmpty) {
+    features['Cadre'] = {
+      'type': 'text',
+      'value': lieu['cadre'],
+      'icon': Icons.landscape
+    };
+  }
+  
+  // CARACTÉRISTIQUES BOOLÉENNES
+  Map<String, IconData> booleanFeatures = {
+    'parking': Icons.local_parking,
+    'exclusivite': Icons.verified_user,
+    'hebergement': Icons.hotel,
+    'feu_artifice': Icons.celebration,
+    'espace_exterieur': Icons.terrain,
+    'piscine': Icons.pool,
+    'jardin': Icons.park,
+    'parc': Icons.nature,
+    'terrasse': Icons.deck,
+    'cour': Icons.yard,
+    'espace_ceremonie': Icons.celebration,
+    'espace_cocktail': Icons.local_bar,
+    'accessibilite_pmr': Icons.accessible,
+    'disponibilite_weekend': Icons.weekend,
+    'disponibilite_semaine': Icons.work,
+  };
+  
+  // SERVICES
+  Map<String, IconData> booleanServices = {
+    'wifi': Icons.wifi,
+    'systeme_sonorisation': Icons.speaker,
+    'tables_fournies': Icons.table_bar,
+    'chaises_fournies': Icons.event_seat,
+    'nappes_fournies': Icons.table_restaurant,
+    'vaisselle_fournie': Icons.restaurant,
+    'eclairage': Icons.lightbulb,
+    'sonorisation': Icons.surround_sound,
+    'coordinateur_sur_place': Icons.people,
+    'vestiaire': Icons.checkroom,
+    'voiturier': Icons.car_rental,
+    'espace_enfants': Icons.child_care,
+    'climatisation': Icons.ac_unit,
+    'espace_lacher_lanternes': Icons.light,
+    'lieu_seance_photo': Icons.photo_camera,
+    'acces_bateau_helicoptere': Icons.flight,
+  };
+  
+  // Ajout des caractéristiques booléennes
+  booleanFeatures.forEach((key, iconData) {
+    if (lieu.containsKey(key) && lieu[key] == true) {
+      String displayName = key
+          .split('_')
+          .map((word) => word.substring(0, 1).toUpperCase() + word.substring(1))
+          .join(' ');
+      
+      features[displayName] = {
+        'type': 'boolean',
+        'value': true,
+        'icon': iconData
+      };
+    }
+  });
+  
+  // Ajout des services booléens
+  booleanServices.forEach((key, iconData) {
+    if (lieu.containsKey(key) && lieu[key] == true) {
+      String displayName = key
+          .split('_')
+          .map((word) => word.substring(0, 1).toUpperCase() + word.substring(1))
+          .join(' ');
+      
+      services[displayName] = iconData;
+    }
+  });
+  
+  // Log des caractéristiques et services trouvés
+  print('DEBUG LIEU: ${features.length} caractéristiques trouvées');
+  print('DEBUG SERVICES: ${services.length} services trouvés');
+}
+
+
+// Méthode pour ajouter des valeurs par défaut si aucune donnée n'est trouvée
+void _addDefaultLieuFeatures(Map<String, dynamic> features, Map<String, IconData> services) {
+  features['Capacité maximale'] = {
+    'type': 'numeric',
+    'value': 200,
+    'unit': 'invités',
+    'icon': Icons.people
+  };
+  
+  features['Capacité d\'hébergement'] = {
+    'type': 'numeric',
+    'value': 40,
+    'unit': 'couchages',
+    'icon': Icons.hotel
+  };
+  
+  features['Parking'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.local_parking
+  };
+  
+  features['Exclusivité du lieu'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.verified_user
+  };
+  
+  features['Hébergement sur place'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.hotel
+  };
+  
+  features['Feu d\'artifice autorisé'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.celebration
+  };
+  
+  features['Espace extérieur'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.terrain
+  };
+  
+  // Services par défaut
+  services['Wi-Fi'] = Icons.wifi;
+  services['Sonorisation'] = Icons.speaker;
+  services['Tables fournies'] = Icons.table_bar;
+  services['Chaises fournies'] = Icons.event_seat;
 }
   
 }

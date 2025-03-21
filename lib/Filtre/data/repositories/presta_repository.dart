@@ -392,7 +392,7 @@ Future<List<Map<String, dynamic>>> getLieuxByType(int typeId, {String? region}) 
   try {
     _logger.d('Fetching lieux by type: $typeId, region: $region');
     
-    // Construire la requête de base
+    // Requête modifiée pour récupérer TOUS les champs de services
     var request = _client.from('presta')
         .select('''
           id, 
@@ -404,16 +404,44 @@ Future<List<Map<String, dynamic>>> getLieuxByType(int typeId, {String? region}) 
           verifie, 
           actif,
           image_url,
-          lieux!inner(
+          lieux(
             id,
             capacite_max,
+            capacite_min,
+            capacite_hebergement,
+            nombre_chambres,
+            superficie_interieur,
+            superficie_exterieur,
+            cadre,
             espace_exterieur,
+            piscine,
             parking,
             hebergement,
-            capacite_hebergement,
             exclusivite,
             feu_artifice,
-            image_url
+            systeme_sonorisation,
+            tables_fournies,
+            chaises_fournies,
+            nappes_fournies,
+            vaisselle_fournie,
+            eclairage,
+            sonorisation,
+            wifi,
+            coordinateur_sur_place,
+            vestiaire,
+            voiturier,
+            espace_enfants,
+            climatisation,
+            espace_lacher_lanternes,
+            lieu_seance_photo,
+            acces_bateau_helicoptere,
+            image_url,
+            jardin,
+            parc,
+            terrasse,
+            cour,
+            espace_ceremonie,
+            espace_cocktail
           ),
           tarifs(
             id,
@@ -425,7 +453,6 @@ Future<List<Map<String, dynamic>>> getLieuxByType(int typeId, {String? region}) 
         .eq('presta_type_id', 1) // 1 = lieu
         .eq('lieux_type_id', typeId)
         .eq('actif', true);
-    
     // Ajouter le filtre par région si spécifié
     if (region != null && region.isNotEmpty) {
       request = request.eq('region', region);
