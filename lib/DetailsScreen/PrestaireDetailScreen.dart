@@ -42,6 +42,13 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     _loadFormules();
     _loadAvis();
     _loadGalleryImages(); // Ajoutez cette ligne
+    print('Prestataire complet: ${widget.prestataire}');
+    print('Type ID: ${widget.prestataire['presta_type_id']}');
+  
+  _scrollController.addListener(_onScroll);
+  _loadFormules();
+  _loadAvis();
+  _loadGalleryImages();
   }
 
   @override
@@ -65,19 +72,85 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     }
   }
 
+   
   void _loadGalleryImages() {
-    _galleryImages = [
-      'https://images.unsplash.com/photo-1550005809-91ad75fb315f?q=80&w=2949&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1482482097755-0b595893ba63?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1507504031003-b417219a0fde?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1537633552985-df8429e8048b?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?q=80&w=2787&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=2787&auto=format&fit=crop',
-    ];
+    // Récupérer proprement le type de prestataire
+  var prestaTypeId = widget.prestataire['presta_type_id'];
+  
+  // Debug pour voir ce que nous avons
+  print('===== DEBUG GALLERY IMAGES =====');
+  print('Prestataire: ${widget.prestataire['nom_entreprise']}');
+  print('Type ID: $prestaTypeId (${prestaTypeId?.runtimeType})');
+  
+  // Vérifier le nom pour corriger les traiteurs sans ID correct
+  String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
+  String description = widget.prestataire['description'] ?? '';
+  
+  // Si c'est clairement un traiteur par le nom ou la description
+  if (nomEntreprise.toLowerCase().contains('traiteur') || 
+      description.toLowerCase().contains('traiteur') ||
+      nomEntreprise.toLowerCase().contains('food') ||
+      nomEntreprise.toLowerCase().contains('cuisine') ||
+      widget.prestataire['traiteur_type_id'] != null) {
+    print('Détecté comme TRAITEUR par le nom/description');
+    prestaTypeId = 2;
   }
+  
+  // Si c'est une chaîne, convertir en entier
+  if (prestaTypeId is String) {
+    prestaTypeId = int.tryParse(prestaTypeId) ?? 1;
+  } else if (prestaTypeId is! int) {
+    prestaTypeId = 1; // Valeur par défaut si pas de type
+  }
+  
+  print('Type final utilisé: $prestaTypeId');
+  
+
+  // Sélection des images selon le type
+  switch (prestaTypeId) {
+    case 2: // Traiteur
+      _galleryImages = [
+        'https://images.unsplash.com/photo-1525151498231-bc059cfafa2b?q=80&w=2189&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1607403217872-27422b4ece0b?q=80&w=3131&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1580959375944-abd7e991f971?q=80&w=2205&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1621327017866-6fb07e6c96ea?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1625108956250-0497f690d867?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1520181973954-cf92f53359ff?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      ];
+      break;
+    case 3: // Photographe
+      _galleryImages = [
+        'https://images.unsplash.com/photo-1733759414886-6b3a5423ceb3?q=80&w=3008&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1561593367-66c79c2294e6?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1504716864043-384fcec48a3d?q=80&w=3174&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1532454781337-fc3edff34f91?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1503508961401-4f07813e63ed?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      ];
+      break;
+    case 4: // Wedding Planner
+      _galleryImages = [
+        'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1501139083538-0139583c060f?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?q=80&w=2940&auto=format&fit=crop',
+      ];
+      break;
+    case 1: // Lieu
+    default:
+      _galleryImages = [
+        'https://images.unsplash.com/photo-1624486853918-f7bd17d70321?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1515715709530-858f7bfa1b10?q=80&w=3003&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1485178075098-49f78b4b43b4?q=80&w=2449&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1629744418692-345355518e78?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://plus.unsplash.com/premium_photo-1674760219927-29d571ea20ec?q=80&w=3088&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1635996145160-54e6bb3c8341?q=80&w=2942&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      ];
+      break;
+  }
+}
 
   void _showAvailabilitySelector() {
   showModalBottomSheet(
@@ -2695,9 +2768,8 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
 }
 
   void _openGallery() {
-  // Récupérer l'URL de l'image principale de votre prestataire
-  final String imageUrl = widget.prestataire['photo_url'] ?? 
-      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+  // Utiliser la même méthode que pour l'image principale
+  final String imageUrl = _getMainImage();
       
   Navigator.push(
     context,
@@ -2708,7 +2780,71 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
       ),
     ),
   );
+}
+
+
+String _getMainImage() {
+  // Debug pour voir ce que nous avons
+  print('===== DEBUG MAIN IMAGE =====');
+  
+  // Récupérer proprement le type de prestataire
+  var prestaTypeId = widget.prestataire['presta_type_id'];
+  print('Type original: $prestaTypeId');
+  
+  // Vérifier le nom pour corriger les traiteurs sans ID correct
+  String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
+  String description = widget.prestataire['description'] ?? '';
+  
+  // Si c'est clairement un traiteur par le nom ou la description
+  if (nomEntreprise.toLowerCase().contains('traiteur') || 
+      description.toLowerCase().contains('traiteur') ||
+      nomEntreprise.toLowerCase().contains('food') ||
+      nomEntreprise.toLowerCase().contains('cuisine') ||
+      widget.prestataire['traiteur_type_id'] != null) {
+    print('Détecté comme TRAITEUR par le nom/description');
+    prestaTypeId = 2;
   }
+  
+  // Si c'est une chaîne, convertir en entier
+  if (prestaTypeId is String) {
+    prestaTypeId = int.tryParse(prestaTypeId) ?? 1;
+  } else if (prestaTypeId is! int) {
+    prestaTypeId = 1; // Valeur par défaut si pas de type
+  }
+  
+  print('Type final utilisé: $prestaTypeId');
+  
+  // Vérifier si le prestataire a une image spécifique
+  if (widget.prestataire['image_url'] != null && widget.prestataire['image_url'].toString().isNotEmpty) {
+    print('Utilisation de l\'image spécifique du prestataire');
+    return widget.prestataire['image_url'];
+  }
+  
+  // Vérifier si c'est un lieu avec des images
+  if (widget.prestataire.containsKey('lieux') && 
+      widget.prestataire['lieux'] is List && 
+      widget.prestataire['lieux'].isNotEmpty && 
+      widget.prestataire['lieux'][0].containsKey('image_url') &&
+      widget.prestataire['lieux'][0]['image_url'] != null) {
+    print('Utilisation de l\'image du lieu');
+    return widget.prestataire['lieux'][0]['image_url'];
+  }
+  
+  // Si aucune image spécifique, utiliser une image par défaut selon le type
+  print('Utilisation d\'une image par défaut pour le type $prestaTypeId');
+  
+  switch (prestaTypeId) {
+    case 2: // Traiteur
+      return 'https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=2940&auto=format&fit=crop';
+    case 3: // Photographe
+      return 'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?q=80&w=2940&auto=format&fit=crop';
+    case 4: // Wedding Planner
+      return 'https://images.unsplash.com/photo-1501139083538-0139583c060f?q=80&w=2940&auto=format&fit=crop';
+    case 1: // Lieu
+    default:
+      return 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+  }
+}
 
   Widget buildLocationWidget(String address) {
     return Container(
