@@ -37,16 +37,30 @@ class _HomePageState extends State<HomePage> {
         children: [
           // Image de fond au lieu de la vidéo
           SizedBox.expand(
-            child: Image.asset(
-              'assets/images/wedding-background.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: beige.withOpacity(0.5),
-                );
-              },
+      child: Image.network(
+        'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: beige.withOpacity(0.5),
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+                color: accentColor,
+              ),
             ),
-          ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: beige.withOpacity(0.5),
+          );
+        },
+      ),
+    ),
           
           // Overlay pour lisibilité du texte
           Container(
