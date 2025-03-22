@@ -238,6 +238,23 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
                 ),
               ),
             ),
+
+            // Bouton pour accéder aux analyses avancées
+            const SizedBox(height: PartnerAdminStyles.paddingLarge),
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () => context.go(PartnerAdminRoutes.adminReports),
+                icon: const Icon(Icons.assessment),
+                label: const Text('Voir plus d\'analyses'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: PartnerAdminStyles.accentColor,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ),
+
             // Ajouter un espace supplémentaire en bas pour éviter tout problème
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
           ],

@@ -20,6 +20,10 @@ import 'Admin/screens/admin_partner_edit_screen.dart';
 import 'Admin/screens/admin_validations_screen.dart';
 import 'Admin/screens/admin_stats_screen.dart';
 import 'Admin/screens/admin_new_screen.dart';
+import 'Admin/screens/admin_reports_screen.dart';
+import 'Admin/screens/admin_user_analytics_screen.dart';
+import 'Admin/screens/admin_partner_analytics_screen.dart';
+import 'Admin/screens/admin_reservation_analytics_screen.dart';
 
 class PartnerAdminRoutes {
   // Routes pour les partenaires
@@ -47,6 +51,11 @@ class PartnerAdminRoutes {
   static const String adminValidations = '/admin/validations';
   static const String adminSettings = '/admin/settings';
   static const String adminAddNew = '/admin/admins/new';
+  static const String adminReports = '/admin/reports';
+  static const String adminUserAnalytics = '/admin/analytics/users';
+  static const String adminPartnerAnalytics = '/admin/analytics/partners';
+  static const String adminReservationAnalytics =
+      '/admin/analytics/reservations';
 
   // Route de test
   static const String testPage = '/test';
@@ -207,6 +216,30 @@ class PartnerAdminRoutes {
           body: Center(
               child: Text('Paramètres d\'administration - À implémenter')),
         );
+      },
+    ),
+    GoRoute(
+      path: adminReports,
+      builder: (BuildContext context, GoRouterState state) {
+        return const AdminReportsScreen();
+      },
+    ),
+    GoRoute(
+      path: adminUserAnalytics,
+      builder: (BuildContext context, GoRouterState state) {
+        return const AdminUserAnalyticsScreen();
+      },
+    ),
+    GoRoute(
+      path: adminPartnerAnalytics,
+      builder: (BuildContext context, GoRouterState state) {
+        return const AdminPartnerAnalyticsScreen();
+      },
+    ),
+    GoRoute(
+      path: adminReservationAnalytics,
+      builder: (BuildContext context, GoRouterState state) {
+        return const AdminReservationAnalyticsScreen();
       },
     ),
   ];

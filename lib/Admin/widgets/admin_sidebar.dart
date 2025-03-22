@@ -96,9 +96,9 @@ class AdminSidebar extends StatelessWidget {
                 _buildMenuItem(
                   context,
                   index: 4,
-                  icon: Icons.settings,
-                  title: 'Paramètres',
-                  route: '/admin/settings', // À ajouter dans routes
+                  icon: Icons.assessment,
+                  title: 'Rapports',
+                  route: PartnerAdminRoutes.adminReports,
                 ),
               ],
             ),
