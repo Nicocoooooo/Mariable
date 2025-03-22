@@ -4,8 +4,7 @@ import '../Filtre/prestataires_filter_screen.dart';
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
 import '../services/region_service.dart';
-import '../Widgets/lieu_selector_dialog.dart';
-import '../tests/test_button_overlay.dart';
+import '../routes_partner_admin.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -212,7 +211,6 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          const TestButtonOverlay(),
         ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(grisTexte, accentColor),
@@ -498,7 +496,12 @@ class _HomePageState extends State<HomePage> {
           _buildNavItem(Icons.favorite_border, 'Favoris', grisTexte),
           _buildNavItem(Icons.home, 'Accueil', accentColor, isSelected: true),
           _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte),
-          _buildNavItem(Icons.person_outline, 'Profil', grisTexte),
+          _buildNavItem(
+            Icons.person_outline,
+            'Profil',
+            grisTexte,
+            onTap: () => context.go(PartnerAdminRoutes.profileSelector),
+          ),
         ],
       ),
     );
@@ -506,25 +509,28 @@ class _HomePageState extends State<HomePage> {
 
   // Élément de la barre de navigation
   Widget _buildNavItem(IconData icon, String label, Color color,
-      {bool isSelected = false}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: isSelected ? color : color.withOpacity(0.5),
-          size: 22,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
+      {bool isSelected = false, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
             color: isSelected ? color : color.withOpacity(0.5),
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+            size: 22,
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? color : color.withOpacity(0.5),
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

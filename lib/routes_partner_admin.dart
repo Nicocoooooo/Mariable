@@ -24,6 +24,7 @@ import 'Admin/screens/admin_reports_screen.dart';
 import 'Admin/screens/admin_user_analytics_screen.dart';
 import 'Admin/screens/admin_partner_analytics_screen.dart';
 import 'Admin/screens/admin_reservation_analytics_screen.dart';
+import 'Profile/profile_selector_screen.dart';
 
 class PartnerAdminRoutes {
   // Routes pour les partenaires
@@ -57,6 +58,8 @@ class PartnerAdminRoutes {
   static const String adminReservationAnalytics =
       '/admin/analytics/reservations';
 
+  static const String profileSelector = '/profile-selector';
+
   // Route de test
   static const String testPage = '/test';
 
@@ -75,6 +78,12 @@ class PartnerAdminRoutes {
       path: partnerLogin,
       builder: (BuildContext context, GoRouterState state) {
         return const PartnerLoginScreen();
+      },
+    ),
+    GoRoute(
+      path: profileSelector,
+      builder: (BuildContext context, GoRouterState state) {
+        return const ProfileSelectorScreen();
       },
     ),
     GoRoute(
