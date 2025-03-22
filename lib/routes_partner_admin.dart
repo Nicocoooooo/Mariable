@@ -19,6 +19,7 @@ import 'Admin/screens/admin_partners_list_screen.dart';
 import 'Admin/screens/admin_partner_edit_screen.dart';
 import 'Admin/screens/admin_validations_screen.dart';
 import 'Admin/screens/admin_stats_screen.dart';
+import 'Admin/screens/admin_new_screen.dart';
 
 class PartnerAdminRoutes {
   // Routes pour les partenaires
@@ -45,6 +46,7 @@ class PartnerAdminRoutes {
   static const String adminStats = '/admin/stats';
   static const String adminValidations = '/admin/validations';
   static const String adminSettings = '/admin/settings';
+  static const String adminAddNew = '/admin/admins/new';
 
   // Route de test
   static const String testPage = '/test';
@@ -163,6 +165,12 @@ class PartnerAdminRoutes {
       },
     ),
     GoRoute(
+      path: adminAddNew,
+      builder: (BuildContext context, GoRouterState state) {
+        return const AdminNewScreen();
+      },
+    ),
+    GoRoute(
       path: adminPartnersList,
       builder: (BuildContext context, GoRouterState state) {
         return const AdminPartnersListScreen();
@@ -172,7 +180,12 @@ class PartnerAdminRoutes {
       path: '/admin/partners/:id',
       builder: (BuildContext context, GoRouterState state) {
         final partnerId = state.pathParameters['id']!;
-        return AdminPartnerEditScreen(partnerId: partnerId);
+        // Si l'ID est "new", on est en mode création
+        final isNewPartner = partnerId == 'new';
+        return AdminPartnerEditScreen(
+          partnerId: partnerId,
+          isNewPartner: isNewPartner,
+        );
       },
     ),
     GoRoute(

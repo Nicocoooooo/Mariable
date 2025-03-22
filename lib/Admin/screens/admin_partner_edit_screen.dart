@@ -10,10 +10,14 @@ import '../../shared/widgets/error_view.dart';
 
 class AdminPartnerEditScreen extends StatefulWidget {
   final String partnerId;
+  // Ajouter un booléen pour indiquer s'il s'agit d'un nouveau prestataire
+  final bool isNewPartner;
 
   const AdminPartnerEditScreen({
     Key? key,
     required this.partnerId,
+    // Par défaut, c'est false
+    this.isNewPartner = false,
   }) : super(key: key);
 
   @override
@@ -47,7 +51,16 @@ class _AdminPartnerEditScreenState extends State<AdminPartnerEditScreen> {
   void initState() {
     super.initState();
     _checkAuthentication();
-    _loadPartner();
+    // Ne pas charger le prestataire si on est en mode création
+    if (!widget.isNewPartner) {
+      _loadPartner();
+    } else {
+      // Initialiser avec des valeurs par défaut pour un nouveau prestataire
+      _initializeNewPartner();
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -62,6 +75,23 @@ class _AdminPartnerEditScreenState extends State<AdminPartnerEditScreen> {
     _descriptionController.dispose();
     _imageUrlController.dispose();
     super.dispose();
+  }
+
+  // Méthode pour initialiser les valeurs par défaut d'un nouveau prestataire
+  void _initializeNewPartner() {
+    // Pas besoin d'assigner _partner car nous allons travailler directement avec les contrôleurs
+    _nomEntrepriseController.text = '';
+    _nomContactController.text = '';
+    _emailController.text = '';
+    _telephoneController.text = '';
+    _telephoneSecondaireController.text = '';
+    _adresseController.text = '';
+    _regionController.text = 'Paris'; // Valeur par défaut
+    _descriptionController.text = '';
+    _imageUrlController.text = '';
+    _typeBudget = 'abordable'; // Valeur par défaut
+    _isVerified = false;
+    _isActive = true;
   }
 
   Future<void> _checkAuthentication() async {
@@ -125,41 +155,85 @@ class _AdminPartnerEditScreenState extends State<AdminPartnerEditScreen> {
     });
 
     try {
-      final updatedPartner = _partner!.copyWith(
-        nomEntreprise: _nomEntrepriseController.text,
-        nomContact: _nomContactController.text,
-        email: _emailController.text,
-        telephone: _telephoneController.text,
-        telephoneSecondaire: _telephoneSecondaireController.text.isEmpty
-            ? null
-            : _telephoneSecondaireController.text,
-        adresse: _adresseController.text,
-        region: _regionController.text,
-        description: _descriptionController.text,
-        imageUrl:
-            _imageUrlController.text.isEmpty ? null : _imageUrlController.text,
-        typeBudget: _typeBudget,
-        isVerified: _isVerified,
-        actif: _isActive,
-      );
-
-      final success = await _adminService.updatePartner(updatedPartner);
-
-      if (success) {
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Prestataire mis à jour avec succès'),
-            backgroundColor: PartnerAdminStyles.successColor,
-          ),
+      if (widget.isNewPartner) {
+        // Création d'un nouveau prestataire
+        final success = await _adminService.createPartner(
+          nomEntreprise: _nomEntrepriseController.text,
+          nomContact: _nomContactController.text,
+          email: _emailController.text,
+          telephone: _telephoneController.text,
+          telephoneSecondaire: _telephoneSecondaireController.text.isEmpty
+              ? null
+              : _telephoneSecondaireController.text,
+          adresse: _adresseController.text,
+          region: _regionController.text,
+          description: _descriptionController.text,
+          imageUrl: _imageUrlController.text.isEmpty
+              ? null
+              : _imageUrlController.text,
+          typeBudget: _typeBudget,
+          isVerified: _isVerified,
+          actif: _isActive,
         );
-        // ignore: use_build_context_synchronously
-        context.go(PartnerAdminRoutes.adminPartnersList);
+
+        if (success) {
+          // ignore: use_build_context_synchronously
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Prestataire créé avec succès. Note: Ceci crée uniquement l\'entrée dans la base de données. '
+                  'Pour que le prestataire puisse se connecter, vous devez créer un compte utilisateur dans Supabase avec le même ID.'),
+              backgroundColor: PartnerAdminStyles.successColor,
+              duration: Duration(seconds: 6),
+            ),
+          );
+          // ignore: use_build_context_synchronously
+          context.go(PartnerAdminRoutes.adminPartnersList);
+        } else {
+          setState(() {
+            _errorMessage = 'Erreur lors de la création du prestataire';
+            _isSaving = false;
+          });
+        }
       } else {
-        setState(() {
-          _errorMessage = 'Erreur lors de la mise à jour du prestataire';
-          _isSaving = false;
-        });
+        // Mise à jour d'un prestataire existant
+        final updatedPartner = _partner!.copyWith(
+          nomEntreprise: _nomEntrepriseController.text,
+          nomContact: _nomContactController.text,
+          email: _emailController.text,
+          telephone: _telephoneController.text,
+          telephoneSecondaire: _telephoneSecondaireController.text.isEmpty
+              ? null
+              : _telephoneSecondaireController.text,
+          adresse: _adresseController.text,
+          region: _regionController.text,
+          description: _descriptionController.text,
+          imageUrl: _imageUrlController.text.isEmpty
+              ? null
+              : _imageUrlController.text,
+          typeBudget: _typeBudget,
+          isVerified: _isVerified,
+          actif: _isActive,
+        );
+
+        final success = await _adminService.updatePartner(updatedPartner);
+
+        if (success) {
+          // ignore: use_build_context_synchronously
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Prestataire mis à jour avec succès'),
+              backgroundColor: PartnerAdminStyles.successColor,
+            ),
+          );
+          // ignore: use_build_context_synchronously
+          context.go(PartnerAdminRoutes.adminPartnersList);
+        } else {
+          setState(() {
+            _errorMessage = 'Erreur lors de la mise à jour du prestataire';
+            _isSaving = false;
+          });
+        }
       }
     } catch (e) {
       setState(() {
@@ -173,9 +247,11 @@ class _AdminPartnerEditScreenState extends State<AdminPartnerEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_partner != null
-            ? 'Modifier ${_partner!.nomEntreprise}'
-            : 'Modifier prestataire'),
+        title: Text(widget.isNewPartner
+            ? 'Ajouter un prestataire'
+            : (_partner != null
+                ? 'Modifier ${_partner!.nomEntreprise}'
+                : 'Modifier prestataire')),
         backgroundColor: PartnerAdminStyles.accentColor,
         foregroundColor: Colors.white,
         actions: [
@@ -186,9 +262,9 @@ class _AdminPartnerEditScreenState extends State<AdminPartnerEditScreen> {
           ),
         ],
       ),
-      body: _isLoading
+      body: _isLoading && !widget.isNewPartner
           ? const LoadingIndicator(message: 'Chargement du prestataire...')
-          : _errorMessage.isNotEmpty
+          : _errorMessage.isNotEmpty && !widget.isNewPartner
               ? ErrorView(
                   message: _errorMessage,
                   onAction: _loadPartner,
@@ -499,6 +575,55 @@ class _AdminPartnerEditScreenState extends State<AdminPartnerEditScreen> {
   }
 
   Widget _buildPartnerHeader() {
+    if (widget.isNewPartner) {
+      return Card(
+        elevation: PartnerAdminStyles.elevationSmall,
+        child: Padding(
+          padding: const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
+          child: Row(
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: PartnerAdminStyles.secondaryColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.add_business,
+                  color: PartnerAdminStyles.accentColor,
+                  size: 40,
+                ),
+              ),
+              const SizedBox(width: PartnerAdminStyles.paddingMedium),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Nouveau prestataire',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Remplissez le formulaire pour créer un nouveau prestataire',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Card(
       elevation: PartnerAdminStyles.elevationSmall,
       child: Padding(

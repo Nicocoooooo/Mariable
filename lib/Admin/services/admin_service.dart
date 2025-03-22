@@ -2,6 +2,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../utils/logger.dart';
 import '../models/admin_model.dart';
 import '../../Partner/models/partner_model.dart';
+import 'dart:math';
+import 'package:uuid/uuid.dart';
 
 /// Service pour gérer les opérations administratives
 class AdminService {
@@ -30,32 +32,26 @@ class AdminService {
     required String email,
     required String nom,
     String role = 'admin',
-    required String password,
+    required String password, // Non utilisé, mais gardé pour compatibilité
   }) async {
     try {
-      // 1. Créer un compte utilisateur
-      final authResponse = await _client.auth.admin.createUser(
-        AdminUserAttributes(
-          email: email,
-          password: password,
-          emailConfirm: true,
-        ),
-      );
+      // Générer un UUID pour l'administrateur
+      final String adminId = const Uuid().v4();
 
-      if (authResponse.user == null) {
-        throw Exception('Échec de la création du compte utilisateur');
-      }
-
-      // 2. Ajouter l'administrateur dans la table admins
+      // Insérer directement dans la table admins
       final response = await _client.from('admins').insert({
-        'id': authResponse.user!.id,
+        'id': adminId,
         'email': email,
         'nom': nom,
         'role': role,
         'created_at': DateTime.now().toIso8601String(),
       }).select();
 
-      return AdminModel.fromMap(response[0]);
+      if (response != null && response.isNotEmpty) {
+        return AdminModel.fromMap(response[0]);
+      }
+
+      return null;
     } catch (e) {
       AppLogger.error('Erreur lors de la création de l\'administrateur', e);
       return null;
@@ -160,6 +156,65 @@ class AdminService {
       AppLogger.error('Erreur lors de la mise à jour du prestataire', e);
       return false;
     }
+  }
+
+  /// Crée un nouveau prestataire
+  Future<bool> createPartner({
+    required String nomEntreprise,
+    required String nomContact,
+    required String email,
+    required String telephone,
+    String? telephoneSecondaire,
+    required String adresse,
+    required String region,
+    required String description,
+    String? imageUrl,
+    required String typeBudget,
+    required bool isVerified,
+    required bool actif,
+  }) async {
+    try {
+      // Générer un UUID pour le prestataire
+      final String prestaId =
+          const Uuid().v4(); // Assurez-vous d'importer package:uuid
+
+      // Insérer directement dans la table presta
+      await _client.from('presta').insert({
+        'id': prestaId,
+        'nom_entreprise': nomEntreprise,
+        'nom_contact': nomContact,
+        'email': email,
+        'telephone': telephone,
+        'telephone_secondaire': telephoneSecondaire,
+        'adresse': adresse,
+        'region': region,
+        'description': description,
+        'image_url': imageUrl,
+        'type_budget': typeBudget,
+        'is_verified': isVerified,
+        'actif': actif,
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+
+      return true;
+    } catch (e) {
+      AppLogger.error('Erreur lors de la création du prestataire', e);
+      return false;
+    }
+  }
+
+// Fonction utilitaire pour générer un mot de passe aléatoire
+  String generateRandomPassword() {
+    final random = Random();
+    const chars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    return String.fromCharCodes(
+      Iterable.generate(
+        12, // Longueur du mot de passe
+        (_) => chars.codeUnitAt(random.nextInt(chars.length)),
+      ),
+    );
   }
 
   /// Récupère les statistiques globales de la plateforme

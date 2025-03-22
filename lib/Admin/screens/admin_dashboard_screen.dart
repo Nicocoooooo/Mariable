@@ -206,7 +206,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       icon: Icons.add_business,
                       title: 'Ajouter un nouveau prestataire',
                       description: 'Créer un nouvel espace prestataire',
-                      onTap: () => context.go('/admin/partners/new'),
+                      onTap: () => context.go(
+                          '${PartnerAdminRoutes.adminPartnerEdit.replaceAll(':id', '')}new'),
                     ),
                     const Divider(),
                     _buildQuickActionButton(
@@ -214,7 +215,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       icon: Icons.person_add,
                       title: 'Ajouter un nouvel administrateur',
                       description: 'Créer un compte administrateur',
-                      onTap: () => context.go('/admin/admins/new'),
+                      onTap: () => context.go(PartnerAdminRoutes.adminAddNew),
                     ),
                   ],
                 ),
