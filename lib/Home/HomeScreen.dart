@@ -5,7 +5,7 @@ import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
 import '../services/region_service.dart';
 import '../Widgets/lieu_selector_dialog.dart';
-
+import '../Filtre/traiteur_types_screen.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -13,6 +13,7 @@ class HomePage extends StatefulWidget {
 
   @override
   State<HomePage> createState() => _HomePageState();
+ 
 }
 
 class _HomePageState extends State<HomePage> {
@@ -36,16 +37,30 @@ class _HomePageState extends State<HomePage> {
         children: [
           // Image de fond au lieu de la vidéo
           SizedBox.expand(
-            child: Image.asset(
-              'assets/images/wedding-background.jpg',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: beige.withOpacity(0.5),
-                );
-              },
+      child: Image.network(
+        'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: beige.withOpacity(0.5),
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+                color: accentColor,
+              ),
             ),
-          ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: beige.withOpacity(0.5),
+          );
+        },
+      ),
+    ),
           
           // Overlay pour lisibilité du texte
           Container(
@@ -214,69 +229,70 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Fonction de recherche qui utilise les sélections
   void _search() {
-    // Vérifier qu'au moins un critère est rempli
-    if (_selectedPrestaType == null && _selectedSubType == null && _lieuText == 'Lieu' && _startDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez sélectionner au moins un critère de recherche'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-
-    // Si un sous-type est sélectionné, naviguer vers la liste des prestataires de ce sous-type
-    if (_selectedSubType != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PrestatairesListScreen(
-            prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
-            subType: _selectedSubType,
-            location: _lieuText != 'Lieu' ? _lieuText : null,
-            startDate: _startDate,
-            endDate: _endDate,
-          ),
-        ),
-      );
-    }
-    // Si seulement un type de prestataire est sélectionné
-    else if (_selectedPrestaType != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PrestatairesListScreen(
-            prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
-            location: _lieuText != 'Lieu' ? _lieuText : null,
-            startDate: _startDate,
-            endDate: _endDate,
-          ),
-        ),
-      );
-    }
-    // Si seul le lieu est renseigné
-    else if (_lieuText != 'Lieu') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Recherche par lieu : $_lieuText'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      // Ici vous pourriez naviguer vers une liste de tous les prestataires filtrés par lieu
-    }
-    // Si seules les dates sont renseignées
-    else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Recherche par date'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      // Ici vous pourriez naviguer vers une liste de tous les prestataires disponibles à ces dates
-    }
+  // Vérifier qu'au moins un critère est rempli
+  if (_selectedPrestaType == null && _selectedSubType == null && _lieuText == 'Lieu' && _startDate == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Veuillez sélectionner au moins un critère de recherche'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    return;
   }
+
+  // Si un sous-type est sélectionné, naviguer vers la liste des prestataires de ce sous-type
+  if (_selectedSubType != null) {
+    print('Navigation avec sous-type: ${_selectedSubType!['name']}');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PrestatairesListScreen(
+          prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
+          subType: _selectedSubType,
+          location: _lieuText != 'Lieu' ? _lieuText : null,
+          startDate: _startDate,
+          endDate: _endDate,
+        ),
+      ),
+    );
+  }
+  // Si seulement un type de prestataire est sélectionné
+  else if (_selectedPrestaType != null) {
+    print('Navigation avec type principal: ${_selectedPrestaType!['name']}');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PrestatairesListScreen(
+          prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
+          location: _lieuText != 'Lieu' ? _lieuText : null,
+          startDate: _startDate,
+          endDate: _endDate,
+        ),
+      ),
+    );
+  }
+  // Si seul le lieu est renseigné
+  else if (_lieuText != 'Lieu') {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Recherche par lieu : $_lieuText'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+    // Ici vous pourriez naviguer vers une liste de tous les prestataires filtrés par lieu
+  }
+  // Si seules les dates sont renseignées
+  else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Recherche par date'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    // Ici vous pourriez naviguer vers une liste de tous les prestataires disponibles à ces dates
+  }
+}
 
   // Fonction pour sélectionner un lieu
   
@@ -393,43 +409,50 @@ Future<void> _selectDate(BuildContext context, {required bool isStartDate}) asyn
 }
   // Ouvre le modal des filtres prestataires
   Future<void> _showPrestatairesFilter(BuildContext context) async {
-    final result = await showModalBottomSheet<dynamic>(
-      context: context,
-      isScrollControlled: true, // Pour permettre au modal de prendre plus de place
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.75, // Prend 75% de l'écran par défaut
-        minChildSize: 0.5, // Minimum 50%
-        maxChildSize: 0.95, // Maximum 95%
-        builder: (_, scrollController) {
-          return const PrestatairesFilterScreen();
-        },
-      ),
-    );
+  final result = await showModalBottomSheet<dynamic>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (_, scrollController) {
+        return const PrestatairesFilterScreen();
+      },
+    ),
+  );
 
-    // Traiter le résultat selon ce qui a été sélectionné
-    if (result != null) {
-      // Si le résultat contient à la fois un type de prestataire et un sous-type
-      if (result is Map<String, dynamic> && result.containsKey('prestaType') && result.containsKey('subType')) {
-        final prestaType = result['prestaType'];
-        final subType = result['subType'];
-        
-        setState(() {
-          _selectedPrestaType = prestaType;
-          _selectedSubType = subType;
+  // Traiter le résultat selon ce qui a été sélectionné
+  if (result != null) {
+    print("Selected result: $result"); // Ajoutez ce debug
+    
+    // Si le résultat contient à la fois un type de prestataire et un sous-type
+    if (result is Map<String, dynamic> && result.containsKey('prestaType') && result.containsKey('subType')) {
+      final prestaType = result['prestaType'];
+      final subType = result['subType'];
+      
+      setState(() {
+        _selectedPrestaType = prestaType;
+        _selectedSubType = subType;
+        // Personnaliser le texte en fonction du type
+        if (prestaType['name'].toString().toLowerCase() == 'traiteur') {
           _prestaireText = '${prestaType['name']}: ${subType['name']}';
-        });
-      } 
-      // Si le résultat est juste un type de prestataire
-      else {
-        setState(() {
-          _selectedPrestaType = result;
-          _selectedSubType = null;
-          _prestaireText = result['name'];
-        });
-      }
+        } else {
+          _prestaireText = '${prestaType['name']}: ${subType['name']}';
+        }
+      });
+    } 
+    // Si le résultat est juste un type de prestataire
+    else {
+      setState(() {
+        _selectedPrestaType = result;
+        _selectedSubType = null;
+        _prestaireText = result['name'];
+      });
     }
   }
+}
 
   Widget _buildSearchField({
     required IconData icon,

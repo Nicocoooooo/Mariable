@@ -1,90 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../Filtre/data/repositories/presta_repository.dart';
-import '../Filtre/data/models/presta_type_model.dart';
 import '../widgets/empty_state.dart';
-import 'lieu_types_screen.dart';
-import 'traiteur_types_screen.dart';
 
-class PrestatairesFilterScreen extends StatefulWidget {
-  const PrestatairesFilterScreen({Key? key}) : super(key: key);
+class TraiteurTypesScreen extends StatefulWidget {
+  const TraiteurTypesScreen({Key? key}) : super(key: key);
 
   @override
-  State<PrestatairesFilterScreen> createState() => _PrestatairesFilterScreenState();
+  State<TraiteurTypesScreen> createState() => _TraiteurTypesScreenState();
 }
 
-class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
+
+class _TraiteurTypesScreenState extends State<TraiteurTypesScreen> {
   final _searchController = TextEditingController();
   final PrestaRepository _repository = PrestaRepository();
   
-  List<Map<String, dynamic>> _prestaTypes = [];
-  List<Map<String, dynamic>> _filteredPrestaTypes = [];
+  List<Map<String, dynamic>> _traiteurTypes = [];
+  List<Map<String, dynamic>> _filteredTraiteurTypes = [];
   bool _isLoading = true;
   String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    _fetchPrestaTypes();
-    _searchController.addListener(_filterPrestaTypes);
+    _fetchTraiteurTypes();
+    _searchController.addListener(_filterTraiteurTypes);
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(_filterPrestaTypes);
+    _searchController.removeListener(_filterTraiteurTypes);
     _searchController.dispose();
     super.dispose();
   }
 
-  void _filterPrestaTypes() {
+  void _filterTraiteurTypes() {
     final query = _searchController.text.toLowerCase();
     setState(() {
       if (query.isEmpty) {
-        _filteredPrestaTypes = List.from(_prestaTypes);
+        _filteredTraiteurTypes = List.from(_traiteurTypes);
       } else {
-        _filteredPrestaTypes = _prestaTypes
+        _filteredTraiteurTypes = _traiteurTypes
             .where((type) => type['name'].toString().toLowerCase().contains(query))
             .toList();
       }
     });
   }
-
-
-Future<void> _fetchPrestaTypes() async {
-  try {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-    
-    // Utilisez la méthode existante si elle existe
-    List<Map<String, dynamic>> typesData = [];
-    
-    try {
-      // Utilisez le repository au lieu d'accéder directement à Supabase
-      typesData = await _repository.getPrestaTypesAsMap();
-      print('Got ${typesData.length} presta types from repository');
-    } catch (innerError) {
-      print('Error fetching presta types from repository: $innerError');
-      // Utiliser des données factices si la requête échoue
-      typesData = [
-        {'id': 1, 'name': 'Lieu', 'description': 'Lieux pour votre mariage'},
-        {'id': 2, 'name': 'Traiteur', 'description': 'Services de restauration'},
-        {'id': 3, 'name': 'Photographe', 'description': 'Capture de vos souvenirs'},
-        {'id': 4, 'name': 'Wedding Planner', 'description': 'Organisation complète de votre mariage'},
-      ];
-    }
-    
-    setState(() {
-      _prestaTypes = typesData;
-      _filteredPrestaTypes = List.from(_prestaTypes);
-      _isLoading = false;
-    });
-  } catch (e) {
-    // Gestion d'erreur...
-  }
-}
-
-
+ 
+  
   @override
   Widget build(BuildContext context) {
     // Use theme colors from the main app
@@ -130,13 +93,13 @@ Future<void> _fetchPrestaTypes() async {
                 ),
                 // Title
                 Text(
-                  'Types de prestataires',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: grisTexte,
-                  ),
+                'Types de traiteurs',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: grisTexte,
                 ),
+              ),
                 // Close button
                 IconButton(
                   icon: Icon(Icons.close, color: grisTexte),
@@ -152,7 +115,7 @@ Future<void> _fetchPrestaTypes() async {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Rechercher un type de prestataire',
+                hintText: 'Rechercher un type de traiteur',
                 hintStyle: TextStyle(color: grisTexte.withOpacity(0.5)),
                 prefixIcon: Icon(Icons.search, color: grisTexte.withOpacity(0.6)),
                 filled: true,
@@ -169,7 +132,7 @@ Future<void> _fetchPrestaTypes() async {
           // Divider
           Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.2)),
           
-          // List of prestataire types
+          // List of traiteur types
           Expanded(
             child: _isLoading 
                 ? const Center(child: CircularProgressIndicator())
@@ -177,31 +140,52 @@ Future<void> _fetchPrestaTypes() async {
                     ? Center(
                         child: Padding(
                           padding: const EdgeInsets.all(20),
-                          child: Text(
-                            _errorMessage,
-                            style: TextStyle(color: Colors.red[700]),
-                            textAlign: TextAlign.center,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 48,
+                                color: Colors.red[300],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _errorMessage,
+                                style: TextStyle(color: Colors.red[700]),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton.icon(
+                                onPressed: _fetchTraiteurTypes,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Réessayer'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: accentColor,
+                                  foregroundColor: Colors.white,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       )
-                    : _filteredPrestaTypes.isEmpty
+                    : _filteredTraiteurTypes.isEmpty
                         ? EmptyState(
-                            title: 'Aucun type de prestataire trouvé',
-                            message: 'Essayez de modifier votre recherche ou consultez tous les prestataires disponibles.',
+                            title: 'Aucun type de traiteur trouvé',
+                            message: 'Les types de traiteurs ne sont pas disponibles pour le moment ou n\'ont pas encore été configurés dans la base de données.',
                             icon: Icons.search_off,
-                            actionLabel: 'Voir tous les prestataires',
+                            actionLabel: 'Réinitialiser la recherche',
                             onActionPressed: () {
                               _searchController.clear();
-                              _filterPrestaTypes();
+                              _filterTraiteurTypes();
                             },
                           )
                         : ListView.separated(
                             padding: const EdgeInsets.all(20),
-                            itemCount: _filteredPrestaTypes.length,
+                            itemCount: _filteredTraiteurTypes.length,
                             separatorBuilder: (context, index) => const SizedBox(height: 16),
                             itemBuilder: (context, index) {
-                              final prestaType = _filteredPrestaTypes[index];
-                              return _buildPrestaTypeCard(prestaType, accentColor, grisTexte);
+                              final traiteurType = _filteredTraiteurTypes[index];
+                              return _buildTraiteurTypeCard(traiteurType, accentColor, grisTexte);
                             },
                           ),
           ),
@@ -210,11 +194,11 @@ Future<void> _fetchPrestaTypes() async {
     );
   }
 
-  Widget _buildPrestaTypeCard(Map<String, dynamic> prestaType, Color accentColor, Color grisTexte) {
+  Widget _buildTraiteurTypeCard(Map<String, dynamic> traiteurType, Color accentColor, Color grisTexte) {
     return InkWell(
       onTap: () {
-        // Handle tap based on the type of prestataire
-        _handlePrestaTypeSelection(prestaType);
+        // Return the selected traiteur type to the previous screen
+        Navigator.pop(context, traiteurType);
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
@@ -237,9 +221,9 @@ Future<void> _fetchPrestaTypes() async {
                 topLeft: Radius.circular(12),
                 bottomLeft: Radius.circular(12),
               ),
-              child: prestaType['image_url'] != null
+              child: traiteurType['image_url'] != null
                   ? Image.network(
-                      prestaType['image_url'],
+                      traiteurType['image_url'],
                       width: 100,
                       height: 80,
                       fit: BoxFit.cover,
@@ -260,7 +244,7 @@ Future<void> _fetchPrestaTypes() async {
                       height: 80,
                       color: accentColor.withOpacity(0.1),
                       child: Icon(
-                        Icons.business_outlined,
+                        Icons.restaurant,
                         color: accentColor.withOpacity(0.5),
                       ),
                     ),
@@ -274,7 +258,7 @@ Future<void> _fetchPrestaTypes() async {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      prestaType['name'] ?? 'Sans nom',
+                      traiteurType['name'] ?? 'Sans nom',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -283,7 +267,7 @@ Future<void> _fetchPrestaTypes() async {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      prestaType['description'] ?? 'Aucune description',
+                      traiteurType['description'] ?? 'Aucune description',
                       style: TextStyle(
                         fontSize: 13,
                         color: grisTexte.withOpacity(0.7),
@@ -310,77 +294,36 @@ Future<void> _fetchPrestaTypes() async {
       ),
     );
   }
-// Dans PrestatairesFilterScreen.dart
-Future<void> _handlePrestaTypeSelection(Map<String, dynamic> prestaType) async {
-  // Get the name of the prestataire type
-  final String typeName = prestaType['name'].toString().toLowerCase();
-  final int? typeId = prestaType['id'];
-  
-  // Ajoutez un print pour déboguer
-  print('Selected prestaType: $typeName with ID: $typeId');
-  
-  // Handle different types of prestataires
-  switch (typeName) {
-    case 'lieu':
-      // Show lieu types screen
-      final result = await showModalBottomSheet<Map<String, dynamic>>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => DraggableScrollableSheet(
-          initialChildSize: 0.75,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (_, scrollController) {
-            return const LieuTypesScreen();
-          },
-        ),
-      );
+  // Dans _TraiteurTypesScreenState, ajoutez cette méthode:
+Future<void> _fetchTraiteurTypes() async {
+  try {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      // Appel à la méthode du repository
+      final traiteurTypes = await _repository.getTraiteurTypes();
       
-      if (result != null) {
-        // Return both presta type and lieu type
-        Navigator.pop(context, {
-          'prestaType': prestaType,
-          'subType': result,
-        });
-      }
-      break;
-      
-    case 'traiteur':
-      // Show traiteur types screen
-      final result = await showModalBottomSheet<Map<String, dynamic>>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => DraggableScrollableSheet(
-          initialChildSize: 0.75,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (_, scrollController) {
-            return const TraiteurTypesScreen();
-          },
-        ),
-      );
-      
-      if (result != null) {
-        // Return both presta type and traiteur type
-        Navigator.pop(context, {
-          'prestaType': prestaType,
-          'subType': result,
-        });
-      }
-      break;
-      
-    case 'photographe':
-    case 'wedding planner':
-      // For now, just return the selected prestataire type
-      Navigator.pop(context, prestaType);
-      break;
-      
-    default:
-      // For all other types, just return the selected type
-      Navigator.pop(context, prestaType);
-      break;
+      setState(() {
+        _traiteurTypes = traiteurTypes;
+        _filteredTraiteurTypes = List.from(_traiteurTypes);
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching traiteur types: $e');
+      setState(() {
+        _errorMessage = 'Erreur lors du chargement des types de traiteurs: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  } catch (e) {
+    setState(() {
+      _errorMessage = 'Erreur inattendue: ${e.toString()}';
+      _isLoading = false;
+    });
   }
 }
+
 }
