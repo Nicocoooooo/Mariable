@@ -244,7 +244,6 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
             Center(
               child: ElevatedButton.icon(
                 onPressed: () => context.go(PartnerAdminRoutes.adminReports),
-                icon: const Icon(Icons.assessment),
                 label: const Text('Voir plus d\'analyses'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: PartnerAdminStyles.accentColor,

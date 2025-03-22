@@ -362,7 +362,6 @@ class _AdminReservationAnalyticsScreenState
             Center(
               child: ElevatedButton.icon(
                 onPressed: () => context.go(PartnerAdminRoutes.adminReports),
-                icon: const Icon(Icons.arrow_back),
                 label: const Text('Retour aux rapports'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: PartnerAdminStyles.accentColor,
