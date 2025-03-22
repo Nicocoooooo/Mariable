@@ -80,36 +80,8 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
    
   void _loadGalleryImages() {
     // Récupérer proprement le type de prestataire
-  var prestaTypeId = widget.prestataire['presta_type_id'];
-  
-  // Debug pour voir ce que nous avons
-  print('===== DEBUG GALLERY IMAGES =====');
-  print('Prestataire: ${widget.prestataire['nom_entreprise']}');
-  print('Type ID: $prestaTypeId (${prestaTypeId?.runtimeType})');
-  
-  // Vérifier le nom pour corriger les traiteurs sans ID correct
-  String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
-  String description = widget.prestataire['description'] ?? '';
-  
-  // Si c'est clairement un traiteur par le nom ou la description
-  if (nomEntreprise.toLowerCase().contains('traiteur') || 
-      description.toLowerCase().contains('traiteur') ||
-      nomEntreprise.toLowerCase().contains('food') ||
-      nomEntreprise.toLowerCase().contains('cuisine') ||
-      widget.prestataire['traiteur_type_id'] != null) {
-    print('Détecté comme TRAITEUR par le nom/description');
-    prestaTypeId = 2;
-  }
-  
-  // Si c'est une chaîne, convertir en entier
-  if (prestaTypeId is String) {
-    prestaTypeId = int.tryParse(prestaTypeId) ?? 1;
-  } else if (prestaTypeId is! int) {
-    prestaTypeId = 1; // Valeur par défaut si pas de type
-  }
-  
-  print('Type final utilisé: $prestaTypeId');
-  
+  final int prestaTypeId = _getActualPrestaireType();
+  print('Type pour galerie: $prestaTypeId');
 
   // Sélection des images selon le type
   switch (prestaTypeId) {
@@ -159,38 +131,55 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
 
 List<Map<String, dynamic>> _recommendedPrestataires = [];
 bool _isLoadingRecommendations = true;
-
-// Méthode pour déterminer le type de prestataire actuel
 int _getActualPrestaireType() {
-  // Récupérer proprement le type de prestataire
-  var prestaTypeId = widget.prestataire['presta_type_id'];
+  // Si le prestataire a un presta_type_id explicite, l'utiliser d'abord
+  if (widget.prestataire.containsKey('presta_type_id') && 
+      widget.prestataire['presta_type_id'] != null) {
+    
+    var typeId = widget.prestataire['presta_type_id'];
+    if (typeId is int) {
+      return typeId;
+    } else if (typeId is String) {
+      return int.tryParse(typeId) ?? 1;
+    }
+  }
   
-  // Debug pour voir ce que nous avons
-  print('===== DEBUG PRESTATAIRE TYPE =====');
-  print('Type original: $prestaTypeId (${prestaTypeId?.runtimeType})');
+  // Détection par l'ID de sous-type
+  if (widget.prestataire.containsKey('traiteur_type_id') && 
+      widget.prestataire['traiteur_type_id'] != null) {
+    return 2; // C'est un traiteur
+  }
   
-  // Vérifier le nom pour corriger les traiteurs sans ID correct
+  if (widget.prestataire.containsKey('lieux_type_id') && 
+      widget.prestataire['lieux_type_id'] != null) {
+    return 1; // C'est un lieu
+  }
+  
+  // Détection par le nom ou la description
   String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
   String description = widget.prestataire['description'] ?? '';
   
-  // Si c'est clairement un traiteur par le nom ou la description
   if (nomEntreprise.toLowerCase().contains('traiteur') || 
       description.toLowerCase().contains('traiteur') ||
       nomEntreprise.toLowerCase().contains('food') ||
-      nomEntreprise.toLowerCase().contains('cuisine') ||
-      widget.prestataire['traiteur_type_id'] != null) {
-    print('Détecté comme TRAITEUR par le nom/description');
-    return 2; // Type traiteur
+      description.toLowerCase().contains('cuisine')) {
+    return 2; // C'est un traiteur
   }
   
-  // Si c'est une chaîne, convertir en entier
-  if (prestaTypeId is String) {
-    return int.tryParse(prestaTypeId) ?? 1;
-  } else if (prestaTypeId is int) {
-    return prestaTypeId;
-  } else {
-    return 1; // Valeur par défaut si pas de type
+  if (nomEntreprise.toLowerCase().contains('photo') || 
+      description.toLowerCase().contains('photo') ||
+      description.toLowerCase().contains('photographe')) {
+    return 3; // C'est un photographe
   }
+  
+  if (nomEntreprise.toLowerCase().contains('planner') || 
+      description.toLowerCase().contains('planner') ||
+      description.toLowerCase().contains('wedding planner')) {
+    return 4; // C'est un wedding planner
+  }
+  
+  // Par défaut, considérer comme un lieu
+  return 1;
 }
 
   void _showAvailabilitySelector() {
@@ -322,12 +311,21 @@ Widget build(BuildContext context) {
       ? '$region, France' 
       : (region.isNotEmpty ? '$region, France' : 'France');
   final String description = widget.prestataire['description'] ?? 'Aucune description disponible';
-  final int? capaciteMax = widget.prestataire.containsKey('lieux') && 
-                          widget.prestataire['lieux'] is List && 
-                          widget.prestataire['lieux'].isNotEmpty && 
-                          widget.prestataire['lieux'][0].containsKey('capacite_max') 
-                            ? widget.prestataire['lieux'][0]['capacite_max'] 
-                            : null;
+  
+  // Récupérer les données spécifiques au type de prestataire
+  final int prestaTypeId = _getActualPrestaireType();
+  
+  // Pour les lieux, récupérer les données de la table lieux
+  int? capaciteMax;
+  if (prestaTypeId == 1 && widget.prestataire.containsKey('lieux')) {
+    var lieuxData = widget.prestataire['lieux'];
+    if (lieuxData is List && lieuxData.isNotEmpty) {
+      capaciteMax = lieuxData[0]['capacite_max'];
+    } else if (lieuxData is Map) {
+      capaciteMax = lieuxData['capacite_max'];
+    }
+  }
+  
   final double? prixBase = widget.prestataire['prix_base'] != null 
       ? (widget.prestataire['prix_base'] is double 
           ? widget.prestataire['prix_base'] 
@@ -338,8 +336,7 @@ Widget build(BuildContext context) {
           ? widget.prestataire['note_moyenne'] 
           : double.tryParse(widget.prestataire['note_moyenne'].toString()))
       : null;
-  final bool isFavorite = false; // À implémenter avec la gestion des favoris
-   
+  final bool isFavorite = false;
    // ici 
 
   // Formules/Packages (à partir de tarifs)
@@ -1198,11 +1195,25 @@ if (prestaTypeId == 1) {
     // Si c'est une liste, essayer d'extraire le premier élément
     else if (lieuxData is List && lieuxData.isNotEmpty) {
       print('DEBUG LIEU: Données lieux (Liste): ${lieuxData.length} éléments');
+      
+      // Convertir l'élément de la liste en Map<String, dynamic>
+      final Map<String, dynamic> lieuMap = {};
       final lieu = lieuxData[0];
-      if (lieu is Map<String, dynamic>) {
-        print('DEBUG LIEU: Premier lieu: $lieu');
-        _processLieuData(lieu, features, services);
+      
+      if (lieu is Map) {
+        lieu.forEach((key, value) {
+          lieuMap[key.toString()] = value;
+        });
+        
+        print('DEBUG LIEU: Premier lieu converti: $lieuMap');
+        _processLieuData(lieuMap, features, services);
+      } else {
+        print('DEBUG LIEU: Format de lieu invalide: $lieu');
+        _addDefaultLieuFeatures(features, services);
       }
+    } else {
+      print('DEBUG LIEU: Format des données lieux invalide: $lieuxData');
+      _addDefaultLieuFeatures(features, services);
     }
   } else {
     print('DEBUG LIEU: Aucune donnée lieux trouvée, utilisation des valeurs par défaut');
@@ -1560,21 +1571,159 @@ Widget _buildRecommendedPrestataires() {
   );
 }
 
-void _navigateToPrestaireDetail(Map<String, dynamic> prestataire) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => PrestaireDetailScreen(
-        prestataire: prestataire,
+void _navigateToPrestaireDetail(Map<String, dynamic> prestataire) async {
+  try {
+    // Récupérer l'ID du prestataire
+    final String prestaId = prestataire['id'] ?? '';
+    if (prestaId.isEmpty) {
+      print('Erreur: ID du prestataire manquant');
+      return;
+    }
+    
+    // Déterminer le type de prestataire
+    int prestaTypeId = 1; // Par défaut: lieu
+    if (prestataire.containsKey('presta_type_id') && prestataire['presta_type_id'] != null) {
+      prestaTypeId = prestataire['presta_type_id'] is int 
+        ? prestataire['presta_type_id'] 
+        : int.tryParse(prestataire['presta_type_id'].toString()) ?? 1;
+    }
+    
+    print('Navigation vers le prestataire $prestaId de type $prestaTypeId');
+    
+    // Enrichir les données en fonction du type
+    var enrichedData = Map<String, dynamic>.from(prestataire);
+    
+    // Si c'est un lieu (type 1), récupérer les données complètes de la table lieux
+    if (prestaTypeId == 1) {
+      try {
+        // Requête pour obtenir les données complètes du prestataire avec les informations de lieu
+        final response = await Supabase.instance.client
+            .from('presta')
+            .select('''
+              id, 
+              nom_entreprise, 
+              description, 
+              region, 
+              adresse, 
+              note_moyenne, 
+              verifie, 
+              actif,
+              presta_type_id,
+              image_url,
+              lieux!inner(
+                id, 
+                capacite_max,
+                capacite_min,
+                nombre_chambres,
+                espace_exterieur, 
+                piscine,
+                parking, 
+                hebergement, 
+                capacite_hebergement,
+                exclusivite, 
+                feu_artifice,
+                image_url,
+                systeme_sonorisation,
+                tables_fournies,
+                chaises_fournies,
+                nappes_fournies,
+                vaisselle_fournie,
+                eclairage,
+                sonorisation,
+                wifi,
+                coordinateur_sur_place,
+                vestiaire,
+                voiturier,
+                espace_enfants,
+                climatisation,
+                espace_lacher_lanternes,
+                lieu_seance_photo,
+                acces_bateau_helicoptere,
+                jardin,
+                parc,
+                terrasse,
+                cour,
+                espace_ceremonie,
+                espace_cocktail,
+                superficie_interieur,
+                superficie_exterieur,
+                cadre
+              ),
+              tarifs(
+                id,
+                nom_formule,
+                prix_base,
+                description
+              )
+            ''')
+            .eq('id', prestaId)
+            .limit(1)
+            .single();
+        
+        if (response != null) {
+          print('Données enrichies récupérées avec succès');
+          enrichedData = response;
+        }
+      } catch (e) {
+        print('Erreur lors de la récupération des données enrichies: $e');
+      }
+    }
+    
+    // Naviguer vers la page de détail avec les données enrichies
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PrestaireDetailScreen(
+          prestataire: enrichedData,
+        ),
       ),
-    ),
-  );
+    );
+  } catch (e) {
+    print('Erreur de navigation: $e');
+    // Naviguer quand même avec les données existantes en cas d'erreur
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PrestaireDetailScreen(
+          prestataire: prestataire,
+        ),
+      ),
+    );
+  }
 }
 
 
-
-// Widget pour construire une carte de prestataire recommandé
 Widget _buildRecommendedCard(Map<String, dynamic> prestataire) {
+  // Déterminer le type et l'URL de l'image
+  int prestaTypeId = prestataire['presta_type_id'] ?? 1;
+  String imageUrl;
+  
+  // Pour les lieux (type 1), chercher dans la table lieux
+  if (prestaTypeId == 1 && prestataire.containsKey('lieux')) {
+    var lieuxData = prestataire['lieux'];
+    
+    if (lieuxData is List && lieuxData.isNotEmpty) {
+      var premierLieu = lieuxData[0];
+      if (premierLieu is Map && 
+          premierLieu.containsKey('image_url') && 
+          premierLieu['image_url'] != null) {
+        imageUrl = premierLieu['image_url'];
+      } else {
+        imageUrl = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+      }
+    } else if (lieuxData is Map && 
+               lieuxData.containsKey('image_url') && 
+               lieuxData['image_url'] != null) {
+      imageUrl = lieuxData['image_url'];
+    } else {
+      imageUrl = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+    }
+  } 
+  // Pour les autres types, utiliser l'image de presta
+  else {
+    imageUrl = prestataire['image_url'] ?? _getDefaultImageByType(prestaTypeId);
+  }
+  
   return GestureDetector(
     onTap: () => _navigateToPrestaireDetail(prestataire),
     child: Container(
@@ -1594,11 +1743,11 @@ Widget _buildRecommendedCard(Map<String, dynamic> prestataire) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Image
+          // Image avec l'URL déterminée
           ClipRRect(
             borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
             child: CachedNetworkImage(
-              imageUrl: prestataire['image_url'] ?? '',
+              imageUrl: imageUrl,
               height: 160,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -1669,55 +1818,51 @@ Widget _buildRecommendedCard(Map<String, dynamic> prestataire) {
     ),
   );
 }
-
-
 Future<void> _loadRecommendedPrestataires() async {
   try {
     setState(() {
       _isLoadingRecommendations = true;
     });
 
-    // Obtenir le type de prestataire actuel
     final int currentPrestaType = _getActualPrestaireType();
-    print('Type de prestataire actuel: $currentPrestaType');
-
-    // Récupérer l'ID actuel pour l'exclure des résultats
     final String currentId = widget.prestataire['id'] ?? '';
     
-    // Construire la requête pour récupérer des prestataires du même type
-    var query = Supabase.instance.client
-        .from('presta')
-        .select('id, nom_entreprise, region, note_moyenne, image_url')
-        .eq('presta_type_id', currentPrestaType)
-        .eq('actif', true)
-        .neq('id', currentId) // Exclure le prestataire actuel
-        .limit(10); // Récupérer plus que nécessaire pour l'aléatoire
+    // Construire la requête selon le type
+    var response;
+    if (currentPrestaType == 1) {
+      // Pour les lieux, inclure les données de la table lieux
+      response = await Supabase.instance.client
+          .from('presta')
+          .select('id, nom_entreprise, region, note_moyenne, image_url, presta_type_id, lieux(id, image_url)')
+          .eq('presta_type_id', currentPrestaType)
+          .eq('actif', true)
+          .neq('id', currentId)
+          .limit(10);
+    } else {
+      // Pour les autres types, pas besoin d'inclure lieux
+      response = await Supabase.instance.client
+          .from('presta')
+          .select('id, nom_entreprise, region, note_moyenne, image_url, presta_type_id')
+          .eq('presta_type_id', currentPrestaType)
+          .eq('actif', true)
+          .neq('id', currentId)
+          .limit(10);
+    }
     
-    final response = await query;
-    
-    // Debug
     print('Réponse recommandations: ${response?.length} résultats');
     
     if (response != null && response.isNotEmpty) {
-      // Convertir en liste typée
       final List<Map<String, dynamic>> prestataires = [];
       for (var item in response) {
         if (item is Map) {
-          final Map<String, dynamic> prestataire = {};
+          Map<String, dynamic> prestataire = {};
           item.forEach((key, value) {
             prestataire[key.toString()] = value;
           });
-          
-          // Ajouter une image par défaut si nécessaire
-          if (!prestataire.containsKey('image_url') || prestataire['image_url'] == null) {
-            prestataire['image_url'] = _getDefaultImageByType(currentPrestaType);
-          }
-          
           prestataires.add(prestataire);
         }
       }
       
-      // Mélanger la liste et prendre 4 prestataires au maximum
       prestataires.shuffle();
       final recommendedList = prestataires.take(4).toList();
       
@@ -3108,115 +3253,105 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
     ),
   );
 }
-
-
 String _getMainImage() {
-  // Debug pour voir ce que nous avons
-  print('===== DEBUG MAIN IMAGE =====');
+  // Récupérer le type de prestataire
+  int prestaTypeId = _getActualPrestaireType();
+  print('Type de prestataire pour image principale: $prestaTypeId');
   
-  // Récupérer proprement le type de prestataire
-  var prestaTypeId = widget.prestataire['presta_type_id'];
-  print('Type original: $prestaTypeId');
-  
-  // Vérifier le nom pour corriger les traiteurs sans ID correct
-  String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
-  String description = widget.prestataire['description'] ?? '';
-  
-  // Si c'est clairement un traiteur par le nom ou la description
-  if (nomEntreprise.toLowerCase().contains('traiteur') || 
-      description.toLowerCase().contains('traiteur') ||
-      nomEntreprise.toLowerCase().contains('food') ||
-      nomEntreprise.toLowerCase().contains('cuisine') ||
-      widget.prestataire['traiteur_type_id'] != null) {
-    print('Détecté comme TRAITEUR par le nom/description');
-    prestaTypeId = 2;
-  }
-  
-  // Si c'est une chaîne, convertir en entier
-  if (prestaTypeId is String) {
-    prestaTypeId = int.tryParse(prestaTypeId) ?? 1;
-  } else if (prestaTypeId is! int) {
-    prestaTypeId = 1; // Valeur par défaut si pas de type
-  }
-  
-  print('Type final utilisé: $prestaTypeId');
-  
-  // Vérifier si le prestataire a une image spécifique
-  if (widget.prestataire['image_url'] != null && widget.prestataire['image_url'].toString().isNotEmpty) {
-    print('Utilisation de l\'image spécifique du prestataire');
-    return widget.prestataire['image_url'];
-  }
-  
-  // Vérifier si c'est un lieu avec des images
-  if (widget.prestataire.containsKey('lieux') && 
-      widget.prestataire['lieux'] is List && 
-      widget.prestataire['lieux'].isNotEmpty && 
-      widget.prestataire['lieux'][0].containsKey('image_url') &&
-      widget.prestataire['lieux'][0]['image_url'] != null) {
-    print('Utilisation de l\'image du lieu');
-    return widget.prestataire['lieux'][0]['image_url'];
-  }
-  
-  // Si aucune image spécifique, utiliser une image par défaut selon le type
-  print('Utilisation d\'une image par défaut pour le type $prestaTypeId');
-  
-  switch (prestaTypeId) {
-    case 2: // Traiteur
-      return 'https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=2940&auto=format&fit=crop';
-    case 3: // Photographe
-      return 'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?q=80&w=2940&auto=format&fit=crop';
-    case 4: // Wedding Planner
-      return 'https://images.unsplash.com/photo-1501139083538-0139583c060f?q=80&w=2940&auto=format&fit=crop';
-    case 1: // Lieu
-    default:
-      return 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+  // Pour les lieux (type_id = 1), chercher EXCLUSIVEMENT dans la table lieux
+  if (prestaTypeId == 1) {
+    if (widget.prestataire.containsKey('lieux')) {
+      var lieuxData = widget.prestataire['lieux'];
+      
+      // Si lieuxData est une liste
+      if (lieuxData is List && lieuxData.isNotEmpty) {
+        for (var lieu in lieuxData) {
+          if (lieu is Map && 
+              lieu.containsKey('image_url') && 
+              lieu['image_url'] != null && 
+              lieu['image_url'].toString().isNotEmpty) {
+            print('Utilisation image du lieu (liste): ${lieu['image_url']}');
+            return lieu['image_url'];
+          }
+        }
+      } 
+      // Si lieuxData est un Map (objet direct)
+      else if (lieuxData is Map && 
+               lieuxData.containsKey('image_url') && 
+               lieuxData['image_url'] != null && 
+               lieuxData['image_url'].toString().isNotEmpty) {
+        print('Utilisation image du lieu (map): ${lieuxData['image_url']}');
+        return lieuxData['image_url'];
+      }
+    }
+    
+    // Si aucune image n'est trouvée dans lieux, utiliser l'image par défaut pour les lieux
+    return 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+  } 
+  // Pour les autres types (2, 3, etc.), chercher EXCLUSIVEMENT dans la table presta
+  else {
+    if (widget.prestataire['image_url'] != null && 
+        widget.prestataire['image_url'].toString().isNotEmpty) {
+      print('Utilisation image du prestataire: ${widget.prestataire['image_url']}');
+      return widget.prestataire['image_url'];
+    }
+    
+    // Si aucune image n'est trouvée, utiliser l'image par défaut selon le type
+    return _getDefaultImageByType(prestaTypeId);
   }
 }
-
-  Widget buildLocationWidget(String address) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Titre "Adresse"
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              "Adresse",
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2B2B2B),
-              ),
+Widget buildLocationWidget(String address) {
+  // Vérifier si l'adresse est véritablement non disponible
+  bool isAddressAvailable = address.isNotEmpty && 
+                            address != 'Adresse non disponible' && 
+                            address != 'null';
+  
+  String displayAddress = isAddressAvailable ? address : 'Adresse non disponible';
+  
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.08),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Titre "Adresse"
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            "Adresse",
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2B2B2B),
             ),
           ),
-          
-          // Contenu (adresse)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Text(
-              address,
-              style: TextStyle(
-                color: Colors.grey[800],
-                fontSize: 16,
-                height: 1.5,
-              ),
+        ),
+        
+        // Contenu (adresse)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Text(
+            displayAddress,
+            style: TextStyle(
+              color: Colors.grey[800],
+              fontSize: 16,
+              height: 1.5,
             ),
           ),
-          
-          // Bouton "Voir sur la carte"
+        ),
+        
+        // Bouton "Voir sur la carte" (seulement si l'adresse est disponible)
+        if (isAddressAvailable)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: OutlinedButton.icon(
@@ -3246,11 +3381,13 @@ String _getMainImage() {
                   if (await canLaunchUrl(url)) {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   } else {
+                    // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Impossible d\'ouvrir la carte')),
                     );
                   }
                 } catch (e) {
+                  // ignore: use_build_context_synchronously
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Erreur: ${e.toString()}')),
                   );
@@ -3258,10 +3395,10 @@ String _getMainImage() {
               },
             ),
           ),
-        ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
     
 
 
@@ -3317,147 +3454,177 @@ Widget _buildOptionCheckbox(
 void _processLieuData(Map<String, dynamic> lieu, Map<String, dynamic> features, Map<String, IconData> services) {
   print('Traitement des données lieu: ${lieu.keys}');
   
-  // CARACTÉRISTIQUES NUMÉRIQUES
-  // Capacité maximale
-  if (lieu.containsKey('capacite_max') && lieu['capacite_max'] != null) {
-    features['Capacité maximale'] = {
-      'type': 'numeric',
-      'value': lieu['capacite_max'],
-      'unit': 'invités',
-      'icon': Icons.people
-    };
-  }
-  
-  // Capacité minimale
-  if (lieu.containsKey('capacite_min') && lieu['capacite_min'] != null) {
-    features['Capacité minimale'] = {
-      'type': 'numeric',
-      'value': lieu['capacite_min'],
-      'unit': 'invités',
-      'icon': Icons.people_outline
-    };
-  }
-  
-  // Capacité d'hébergement
-  if (lieu.containsKey('capacite_hebergement') && lieu['capacite_hebergement'] != null) {
-    features['Capacité d\'hébergement'] = {
-      'type': 'numeric',
-      'value': lieu['capacite_hebergement'],
-      'unit': 'couchages',
-      'icon': Icons.hotel
-    };
-  }
-  
-  // Nombre de chambres
-  if (lieu.containsKey('nombre_chambres') && lieu['nombre_chambres'] != null) {
-    features['Nombre de chambres'] = {
-      'type': 'numeric',
-      'value': lieu['nombre_chambres'],
-      'unit': '',
-      'icon': Icons.bed
-    };
-  }
-  
-  // Superficie intérieure
-  if (lieu.containsKey('superficie_interieur') && lieu['superficie_interieur'] != null) {
-    features['Superficie intérieure'] = {
-      'type': 'numeric',
-      'value': lieu['superficie_interieur'],
-      'unit': 'm²',
-      'icon': Icons.square_foot
-    };
-  }
-  
-  // Superficie extérieure
-  if (lieu.containsKey('superficie_exterieur') && lieu['superficie_exterieur'] != null) {
-    features['Superficie extérieure'] = {
-      'type': 'numeric',
-      'value': lieu['superficie_exterieur'],
-      'unit': 'm²',
-      'icon': Icons.grass
-    };
-  }
-  
-  // CARACTÉRISTIQUES TEXTUELLES
-  // Cadre
-  if (lieu.containsKey('cadre') && lieu['cadre'] != null && lieu['cadre'].toString().isNotEmpty) {
-    features['Cadre'] = {
-      'type': 'text',
-      'value': lieu['cadre'],
-      'icon': Icons.landscape
-    };
-  }
-  
-  // CARACTÉRISTIQUES BOOLÉENNES
-  Map<String, IconData> booleanFeatures = {
-    'parking': Icons.local_parking,
-    'exclusivite': Icons.verified_user,
-    'hebergement': Icons.hotel,
-    'feu_artifice': Icons.celebration,
-    'espace_exterieur': Icons.terrain,
-    'piscine': Icons.pool,
-    'jardin': Icons.park,
-    'parc': Icons.nature,
-    'terrasse': Icons.deck,
-    'cour': Icons.yard,
-    'espace_ceremonie': Icons.celebration,
-    'espace_cocktail': Icons.local_bar,
-    'accessibilite_pmr': Icons.accessible,
-    'disponibilite_weekend': Icons.weekend,
-    'disponibilite_semaine': Icons.work,
-  };
-  
-  // SERVICES
-  Map<String, IconData> booleanServices = {
-    'wifi': Icons.wifi,
-    'systeme_sonorisation': Icons.speaker,
-    'tables_fournies': Icons.table_bar,
-    'chaises_fournies': Icons.event_seat,
-    'nappes_fournies': Icons.table_restaurant,
-    'vaisselle_fournie': Icons.restaurant,
-    'eclairage': Icons.lightbulb,
-    'sonorisation': Icons.surround_sound,
-    'coordinateur_sur_place': Icons.people,
-    'vestiaire': Icons.checkroom,
-    'voiturier': Icons.car_rental,
-    'espace_enfants': Icons.child_care,
-    'climatisation': Icons.ac_unit,
-    'espace_lacher_lanternes': Icons.light,
-    'lieu_seance_photo': Icons.photo_camera,
-    'acces_bateau_helicoptere': Icons.flight,
-  };
-  
-  // Ajout des caractéristiques booléennes
-  booleanFeatures.forEach((key, iconData) {
-    if (lieu.containsKey(key) && lieu[key] == true) {
-      String displayName = key
-          .split('_')
-          .map((word) => word.substring(0, 1).toUpperCase() + word.substring(1))
-          .join(' ');
-      
-      features[displayName] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': iconData
+  try {
+    // CARACTÉRISTIQUES NUMÉRIQUES
+    // Capacité maximale
+    if (lieu.containsKey('capacite_max') && lieu['capacite_max'] != null) {
+      features['Capacité maximale'] = {
+        'type': 'numeric',
+        'value': lieu['capacite_max'],
+        'unit': 'invités',
+        'icon': Icons.people
       };
     }
-  });
-  
-  // Ajout des services booléens
-  booleanServices.forEach((key, iconData) {
-    if (lieu.containsKey(key) && lieu[key] == true) {
-      String displayName = key
-          .split('_')
-          .map((word) => word.substring(0, 1).toUpperCase() + word.substring(1))
-          .join(' ');
-      
-      services[displayName] = iconData;
+    
+    // Capacité minimale
+    if (lieu.containsKey('capacite_min') && lieu['capacite_min'] != null) {
+      features['Capacité minimale'] = {
+        'type': 'numeric',
+        'value': lieu['capacite_min'],
+        'unit': 'invités',
+        'icon': Icons.people_outline
+      };
     }
-  });
-  
-  // Log des caractéristiques et services trouvés
-  print('DEBUG LIEU: ${features.length} caractéristiques trouvées');
-  print('DEBUG SERVICES: ${services.length} services trouvés');
+    
+    // Capacité d'hébergement
+    if (lieu.containsKey('capacite_hebergement') && lieu['capacite_hebergement'] != null) {
+      features['Capacité d\'hébergement'] = {
+        'type': 'numeric',
+        'value': lieu['capacite_hebergement'],
+        'unit': 'couchages',
+        'icon': Icons.hotel
+      };
+    }
+    
+    // Nombre de chambres
+    if (lieu.containsKey('nombre_chambres') && lieu['nombre_chambres'] != null) {
+      features['Nombre de chambres'] = {
+        'type': 'numeric',
+        'value': lieu['nombre_chambres'],
+        'unit': '',
+        'icon': Icons.bed
+      };
+    }
+    
+    // Superficie intérieure
+    if (lieu.containsKey('superficie_interieur') && lieu['superficie_interieur'] != null) {
+      features['Superficie intérieure'] = {
+        'type': 'numeric',
+        'value': lieu['superficie_interieur'],
+        'unit': 'm²',
+        'icon': Icons.square_foot
+      };
+    }
+    
+    // Superficie extérieure
+    if (lieu.containsKey('superficie_exterieur') && lieu['superficie_exterieur'] != null) {
+      features['Superficie extérieure'] = {
+        'type': 'numeric',
+        'value': lieu['superficie_exterieur'],
+        'unit': 'm²',
+        'icon': Icons.grass
+      };
+    }
+    
+    // CARACTÉRISTIQUES TEXTUELLES
+    // Cadre
+    if (lieu.containsKey('cadre') && lieu['cadre'] != null && lieu['cadre'].toString().isNotEmpty) {
+      features['Cadre'] = {
+        'type': 'text',
+        'value': lieu['cadre'],
+        'icon': Icons.landscape
+      };
+    }
+    
+    // CARACTÉRISTIQUES BOOLÉENNES - Traiter toutes les clés possibles
+    Map<String, IconData> booleanFeatures = {
+      'parking': Icons.local_parking,
+      'exclusivite': Icons.verified_user,
+      'hebergement': Icons.hotel,
+      'feu_artifice': Icons.celebration,
+      'espace_exterieur': Icons.terrain,
+      'piscine': Icons.pool,
+      'jardin': Icons.park,
+      'parc': Icons.nature,
+      'terrasse': Icons.deck,
+      'cour': Icons.yard,
+      'espace_ceremonie': Icons.celebration,
+      'espace_cocktail': Icons.local_bar,
+      'accessibilite_pmr': Icons.accessible,
+      'disponibilite_weekend': Icons.weekend,
+      'disponibilite_semaine': Icons.work,
+      'espace_enfants': Icons.child_care,
+      'climatisation': Icons.ac_unit,
+      'espace_lacher_lanternes': Icons.light,
+      'lieu_seance_photo': Icons.photo_camera,
+      'acces_bateau_helicoptere': Icons.flight,
+    };
+    
+    // SERVICES INCLUS - Traiter toutes les clés possibles
+    Map<String, IconData> booleanServices = {
+      'wifi': Icons.wifi,
+      'systeme_sonorisation': Icons.speaker,
+      'tables_fournies': Icons.table_bar,
+      'chaises_fournies': Icons.event_seat,
+      'nappes_fournies': Icons.table_restaurant,
+      'vaisselle_fournie': Icons.restaurant,
+      'eclairage': Icons.lightbulb,
+      'sonorisation': Icons.surround_sound,
+      'coordinateur_sur_place': Icons.people,
+      'vestiaire': Icons.checkroom,
+      'voiturier': Icons.car_rental,
+    };
+    
+    // Ajouter les caractéristiques booléennes - avec vérification explicite de la valeur booléenne
+    booleanFeatures.forEach((key, iconData) {
+      // Vérifier que la clé existe et a une valeur booléenne true
+      if (lieu.containsKey(key) && lieu[key] != null) {
+        bool isEnabled = false;
+        if (lieu[key] is bool) {
+          isEnabled = lieu[key];
+        } else if (lieu[key] is String) {
+          isEnabled = lieu[key].toLowerCase() == 'true';
+        } else if (lieu[key] is num) {
+          isEnabled = lieu[key] > 0;
+        }
+        
+        if (isEnabled) {
+          String displayName = key
+              .split('_')
+              .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
+              .join(' ');
+          
+          features[displayName] = {
+            'type': 'boolean',
+            'value': true,
+            'icon': iconData
+          };
+        }
+      }
+    });
+    
+    // Ajouter les services booléens - avec vérification explicite de la valeur booléenne
+    booleanServices.forEach((key, iconData) {
+      // Vérifier que la clé existe et a une valeur booléenne true
+      if (lieu.containsKey(key) && lieu[key] != null) {
+        bool isEnabled = false;
+        if (lieu[key] is bool) {
+          isEnabled = lieu[key];
+        } else if (lieu[key] is String) {
+          isEnabled = lieu[key].toLowerCase() == 'true';
+        } else if (lieu[key] is num) {
+          isEnabled = lieu[key] > 0;
+        }
+        
+        if (isEnabled) {
+          String displayName = key
+              .split('_')
+              .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
+              .join(' ');
+          
+          services[displayName] = iconData;
+        }
+      }
+    });
+    
+    // Log des caractéristiques et services trouvés
+    print('DEBUG LIEU: ${features.length} caractéristiques trouvées');
+    print('DEBUG SERVICES: ${services.length} services trouvés');
+  } catch (e) {
+    print('Erreur lors du traitement des données lieu: $e');
+    // En cas d'erreur, ajouter des valeurs par défaut
+    _addDefaultLieuFeatures(features, services);
+  }
 }
 
 
