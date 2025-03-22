@@ -7,11 +7,35 @@ class PartnerAdminStyles {
   static const Color textColor = Color(0xFF2B2B2B);
   static const Color beige = Color(0xFFFFF3E4);
   static const Color accentColor = Color(0xFF524B46);
+  static const Color secondaryColor = Color(0xFFFFF3E4);
+
+  // Espacements
+  static const double paddingSmall = 8.0;
+  static const double paddingMedium = 16.0;
+  static const double paddingLarge = 24.0;
+
+  // Rayons de bordure
+  static const double borderRadiusSmall = 4.0;
+  static const double borderRadiusMedium = 8.0;
+  static const double borderRadiusLarge = 12.0;
+
+  // Élévations
+  static const double elevationSmall = 2.0;
+  static const double elevationMedium = 4.0;
+  static const double elevationLarge = 8.0;
+
+  // Animation
+  static const Duration animationDuration = Duration(milliseconds: 300);
+
+  // Tailles des cartes
+  static const double cardWidth = 300.0;
+  static const double cardHeight = 200.0;
 
   // Couleurs spécifiques aux modules
   static const Color successColor = Color(0xFF3CB371);
   static const Color warningColor = Color(0xFFFFA500);
   static const Color errorColor = Color(0xFFDC3545);
+  static const Color infoColor = Color(0xFF2196F3);
 
   // Text styles
   static const TextStyle headingStyle = TextStyle(

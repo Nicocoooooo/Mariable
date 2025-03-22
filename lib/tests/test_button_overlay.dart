@@ -31,6 +31,16 @@ class TestButtonOverlay extends StatelessWidget {
             child: const Icon(Icons.business, color: Colors.white),
             tooltip: 'Espace partenaire',
           ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            onPressed: () {
+              context.go(PartnerAdminRoutes
+                  .adminLogin); // Accès à l'espace administrateur
+            },
+            backgroundColor: Colors.purple,
+            child: const Icon(Icons.admin_panel_settings, color: Colors.white),
+            tooltip: 'Espace administrateur',
+          ),
         ],
       ),
     );

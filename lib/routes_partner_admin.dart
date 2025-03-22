@@ -13,6 +13,12 @@ import 'Partner/screens/partner_messages_screen.dart';
 import 'Partner/screens/partner_stats_screen.dart';
 import 'Partner/screens/partner_offers_screen.dart';
 import 'Partner/screens/partner_offer_form_screen.dart';
+import 'Admin/screens/admin_login_screen.dart';
+import 'Admin/screens/admin_dashboard_screen.dart';
+import 'Admin/screens/admin_partners_list_screen.dart';
+import 'Admin/screens/admin_partner_edit_screen.dart';
+import 'Admin/screens/admin_validations_screen.dart';
+import 'Admin/screens/admin_stats_screen.dart';
 
 class PartnerAdminRoutes {
   // Routes pour les partenaires
@@ -37,6 +43,8 @@ class PartnerAdminRoutes {
   static const String adminPartnersList = '/admin/partners';
   static const String adminPartnerEdit = '/admin/partners/:id';
   static const String adminStats = '/admin/stats';
+  static const String adminValidations = '/admin/validations';
+  static const String adminSettings = '/admin/settings';
 
   // Route de test
   static const String testPage = '/test';
@@ -145,15 +153,47 @@ class PartnerAdminRoutes {
     GoRoute(
       path: adminLogin,
       builder: (BuildContext context, GoRouterState state) {
-        return const Scaffold(
-            body: Center(child: Text('Écran de connexion admin')));
+        return const AdminLoginScreen();
       },
     ),
     GoRoute(
       path: adminDashboard,
       builder: (BuildContext context, GoRouterState state) {
+        return const AdminDashboardScreen();
+      },
+    ),
+    GoRoute(
+      path: adminPartnersList,
+      builder: (BuildContext context, GoRouterState state) {
+        return const AdminPartnersListScreen();
+      },
+    ),
+    GoRoute(
+      path: '/admin/partners/:id',
+      builder: (BuildContext context, GoRouterState state) {
+        final partnerId = state.pathParameters['id']!;
+        return AdminPartnerEditScreen(partnerId: partnerId);
+      },
+    ),
+    GoRoute(
+      path: adminValidations,
+      builder: (BuildContext context, GoRouterState state) {
+        return const AdminValidationsScreen();
+      },
+    ),
+    GoRoute(
+      path: adminStats,
+      builder: (BuildContext context, GoRouterState state) {
+        return const AdminStatsScreen();
+      },
+    ),
+    GoRoute(
+      path: adminSettings,
+      builder: (BuildContext context, GoRouterState state) {
         return const Scaffold(
-            body: Center(child: Text('Tableau de bord admin')));
+          body: Center(
+              child: Text('Paramètres d\'administration - À implémenter')),
+        );
       },
     ),
   ];

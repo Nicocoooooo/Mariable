@@ -36,17 +36,19 @@ class AuthService {
   }
 
   /// Vérifie si l'utilisateur est un administrateur
+  /// Vérifie si l'utilisateur est un administrateur
   Future<bool> isAdmin() async {
-    // Remplacer la condition currentUser == null par:
     if (!isLoggedIn) return false;
 
     try {
+      // Utiliser une requête simplifiée pour éviter la récursion
       final response = await _client
           .from('admins')
-          .select('id')
+          .select('email')
           .eq('id', currentUser!.id)
           .single();
 
+      // Si la requête réussit, c'est un admin
       return response != null;
     } catch (e) {
       AppLogger.error(
