@@ -211,7 +211,7 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: PartnerAdminStyles.paddingMedium),
+                    const SizedBox(height: PartnerAdminStyles.paddingSmall),
                     _buildRapportItem(
                       title: 'Prestataires vérifiés',
                       value: _statsData['prestatairesVerifies'],
@@ -238,6 +238,8 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
                 ),
               ),
             ),
+            // Ajouter un espace supplémentaire en bas pour éviter tout problème
+            const SizedBox(height: PartnerAdminStyles.paddingLarge),
           ],
         ),
       ),
@@ -289,9 +291,9 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.5,
+        crossAxisSpacing: 12, // Réduit pour éviter overflow
+        mainAxisSpacing: 12, // Réduit pour éviter overflow
+        childAspectRatio: 1.7, // Augmenté pour réduire la hauteur des cartes
       ),
       itemCount: stats.length,
       itemBuilder: (context, index) {
@@ -299,7 +301,8 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
         return Card(
           elevation: PartnerAdminStyles.elevationSmall,
           child: Padding(
-            padding: const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
+            padding:
+                const EdgeInsets.all(PartnerAdminStyles.paddingSmall), // Réduit
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -307,22 +310,25 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
                 Icon(
                   stat['icon'] as IconData,
                   color: stat['color'] as Color,
-                  size: 24,
+                  size: 22, // Légèrement plus petit
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6), // Réduit
                 Text(
                   stat['value'] as String,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 20, // Légèrement plus petit
                     fontWeight: FontWeight.bold,
                     color: PartnerAdminStyles.textColor,
                   ),
+                  overflow: TextOverflow.ellipsis, // Évite les débordements
                 ),
                 Text(
                   stat['title'] as String,
                   style: TextStyle(
+                    fontSize: 13, // Plus petit
                     color: PartnerAdminStyles.textColor.withOpacity(0.7),
                   ),
+                  overflow: TextOverflow.ellipsis, // Évite les débordements
                 ),
               ],
             ),
@@ -348,8 +354,9 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
       percentage = value / total * 100;
       displayValue = '${percentage.toStringAsFixed(1)}$suffix';
     } else if (divisor != null && divisor > 0) {
-      percentage = (value / divisor) * 100;
-      displayValue = (value / divisor).toStringAsFixed(1);
+      double ratio = value / divisor;
+      percentage = ratio * 100; // Pour la barre de progression
+      displayValue = ratio.toStringAsFixed(1);
     } else {
       displayValue = '0$suffix';
     }
@@ -360,7 +367,13 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title),
+            Expanded(
+              child: Text(
+                title,
+                overflow: TextOverflow.ellipsis, // Évite les débordements
+              ),
+            ),
+            const SizedBox(width: 4),
             Text(
               displayValue,
               style: TextStyle(
@@ -370,11 +383,13 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2), // Réduit
         LinearProgressIndicator(
-          value: percentage / 100,
+          value: (percentage / 100)
+              .clamp(0.0, 1.0), // Assurer que la valeur est entre 0 et 1
           backgroundColor: color.withOpacity(0.2),
           valueColor: AlwaysStoppedAnimation<Color>(color),
+          minHeight: 6, // Légèrement plus petite
         ),
       ],
     );

@@ -127,8 +127,10 @@ class PartnerCard extends StatelessWidget {
             const Divider(height: 24),
 
             // Boutons d'action
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              spacing: 8, // espace horizontal entre les éléments
+              runSpacing: 8, // espace vertical entre les lignes
+              alignment: WrapAlignment.spaceBetween,
               children: [
                 // Bouton pour voir les détails
                 OutlinedButton.icon(
@@ -136,23 +138,27 @@ class PartnerCard extends StatelessWidget {
                     context.go(
                         '${PartnerAdminRoutes.adminPartnerEdit.replaceAll(':id', '')}${partner.id}');
                   },
-                  icon: const Icon(Icons.visibility),
+                  icon: const Icon(Icons.visibility, size: 16),
                   label: const Text('Détails'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: PartnerAdminStyles.accentColor,
                     side:
                         const BorderSide(color: PartnerAdminStyles.accentColor),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
 
-                // Bouton pour basculer la vérification
+                // Bouton pour basculer la vérification - avec taille réduite
                 OutlinedButton.icon(
                   onPressed: onVerifyToggle,
                   icon: Icon(
                     partner.isVerified ? Icons.cancel : Icons.verified_user,
+                    size: 16,
                   ),
                   label: Text(
-                    partner.isVerified ? 'Annuler vérification' : 'Vérifier',
+                    partner.isVerified ? 'Annuler' : 'Vérifier',
+                    style: const TextStyle(fontSize: 12),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: partner.isVerified
@@ -163,17 +169,21 @@ class PartnerCard extends StatelessWidget {
                           ? PartnerAdminStyles.warningColor
                           : PartnerAdminStyles.successColor,
                     ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
 
-                // Bouton pour basculer l'activation
+                // Bouton pour basculer l'activation - avec taille réduite
                 OutlinedButton.icon(
                   onPressed: onActiveToggle,
                   icon: Icon(
                     partner.actif ? Icons.block : Icons.check_circle,
+                    size: 16,
                   ),
                   label: Text(
                     partner.actif ? 'Désactiver' : 'Activer',
+                    style: const TextStyle(fontSize: 12),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: partner.actif
@@ -184,6 +194,8 @@ class PartnerCard extends StatelessWidget {
                           ? PartnerAdminStyles.errorColor
                           : PartnerAdminStyles.infoColor,
                     ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
               ],
