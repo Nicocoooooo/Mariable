@@ -1175,8 +1175,6 @@ Widget _buildFeaturesAndServices() {
   final LinkedHashMap<String, dynamic> features = LinkedHashMap<String, dynamic>();
   final LinkedHashMap<String, IconData> services = LinkedHashMap<String, IconData>();
 
-  // Pour les lieux uniquement (type_id = 1)
-  // Pour les lieux uniquement (type_id = 1)
 // Pour les lieux uniquement (type_id = 1)
 if (prestaTypeId == 1) {
   print('DEBUG LIEU: Récupération des données lieu pour: ${widget.prestataire['nom_entreprise']}');
@@ -1221,7 +1219,7 @@ if (prestaTypeId == 1) {
     _addDefaultLieuFeatures(features, services);
   }
 }
- // Pour les traiteurs (type_id = 2) - CARACTÉRISTIQUES FORCÉES
+ 
 else if (prestaTypeId == 2) {
   print('Affichage des caractéristiques TRAITEUR');
   
@@ -1232,40 +1230,40 @@ else if (prestaTypeId == 2) {
     'icon': Icons.restaurant
   };
   
-  features['Personnel inclus'] = {
+  features['Menu personnalisable'] = {
     'type': 'boolean',
     'value': true,
-    'icon': Icons.people
+    'icon': Icons.edit_note
   };
   
   features['Capacité de service'] = {
     'type': 'numeric',
-    'value': 150,
+    'value': 200,
     'unit': 'invités',
     'icon': Icons.group
   };
   
   features['Expérience'] = {
     'type': 'text',
-    'value': '15 ans dans l\'événementiel',
+    'value': 'Plus de 10 ans dans l\'événementiel',
     'icon': Icons.star
   };
   
-  features['Options spéciales'] = {
+  features['Options diététiques'] = {
     'type': 'text',
-    'value': 'Menus végétariens, sans gluten et vegan disponibles',
+    'value': 'Végétarien, Végan, Sans gluten',
     'icon': Icons.spa
   };
   
   // Services inclus du traiteur
   services['Service à l\'assiette'] = Icons.restaurant_menu;
-  services['Vaisselle fournie'] = Icons.dining;
-  services['Menu dégustation'] = Icons.restaurant;
-  services['Pièce montée incluse'] = Icons.cake;
-  services['Bar à cocktails'] = Icons.local_bar;
-  services['Installation et nettoyage'] = Icons.cleaning_services;
-  services['Conseil personnalisé'] = Icons.support_agent;
-  services['Coordination avec le lieu'] = Icons.event_available;
+  services['Vaisselle et verrerie'] = Icons.dining;
+  services['Menu dégustation offert'] = Icons.restaurant;
+  services['Gâteau personnalisé'] = Icons.cake;
+  services['Boissons et cocktails'] = Icons.local_bar;
+  services['Installation et débarrassage'] = Icons.cleaning_services;
+  services['Maître d\'hôtel dédié'] = Icons.support_agent;
+  services['Personnel de service'] = Icons.people;
 }
   // Pour les photographes (type_id = 3)
   else if (prestaTypeId == 3) {
