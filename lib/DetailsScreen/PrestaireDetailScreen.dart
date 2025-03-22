@@ -36,7 +36,7 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   List<String> _galleryImages = [];
   bool _isLoadingAvis = true;
   List<Map<String, dynamic>> _formules = [];
-  final LieuRepository _lieuRepository = LieuRepository(); // Ajoutez cette ligne
+  final LieuRepository _lieuRepository = LieuRepository(); 
 
 
   @override
@@ -45,7 +45,8 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     _scrollController.addListener(_onScroll);
     _loadFormules();
     _loadAvis();
-    _loadGalleryImages(); // Ajoutez cette ligne
+    _loadGalleryImages();
+    _loadRecommendedPrestataires();
     print('Prestataire complet: ${widget.prestataire}');
     print('Type ID: ${widget.prestataire['presta_type_id']}');
   
@@ -153,6 +154,42 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
         'https://images.unsplash.com/photo-1635996145160-54e6bb3c8341?q=80&w=2942&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
       ];
       break;
+  }
+}
+
+List<Map<String, dynamic>> _recommendedPrestataires = [];
+bool _isLoadingRecommendations = true;
+
+// Méthode pour déterminer le type de prestataire actuel
+int _getActualPrestaireType() {
+  // Récupérer proprement le type de prestataire
+  var prestaTypeId = widget.prestataire['presta_type_id'];
+  
+  // Debug pour voir ce que nous avons
+  print('===== DEBUG PRESTATAIRE TYPE =====');
+  print('Type original: $prestaTypeId (${prestaTypeId?.runtimeType})');
+  
+  // Vérifier le nom pour corriger les traiteurs sans ID correct
+  String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
+  String description = widget.prestataire['description'] ?? '';
+  
+  // Si c'est clairement un traiteur par le nom ou la description
+  if (nomEntreprise.toLowerCase().contains('traiteur') || 
+      description.toLowerCase().contains('traiteur') ||
+      nomEntreprise.toLowerCase().contains('food') ||
+      nomEntreprise.toLowerCase().contains('cuisine') ||
+      widget.prestataire['traiteur_type_id'] != null) {
+    print('Détecté comme TRAITEUR par le nom/description');
+    return 2; // Type traiteur
+  }
+  
+  // Si c'est une chaîne, convertir en entier
+  if (prestaTypeId is String) {
+    return int.tryParse(prestaTypeId) ?? 1;
+  } else if (prestaTypeId is int) {
+    return prestaTypeId;
+  } else {
+    return 1; // Valeur par défaut si pas de type
   }
 }
 
@@ -1479,48 +1516,26 @@ double _calculateAverageRating() {
   return total / _avis.length;
 }
 
-
 Widget _buildRecommendedPrestataires() {
-  // Récupérer le type du prestataire actuel
-  var prestaTypeId = widget.prestataire['presta_type_id'];
-  
-  // Conversion et détection plus robuste du type
-  String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
-  String description = widget.prestataire['description'] ?? '';
-  
-  // Si c'est clairement un traiteur par le nom ou la description
-  if (nomEntreprise.toLowerCase().contains('traiteur') || 
-      description.toLowerCase().contains('traiteur') ||
-      widget.prestataire['traiteur_type_id'] != null) {
-    print('Prestataire détecté comme TRAITEUR par le nom/description');
-    prestaTypeId = 2;
+  if (_isLoadingRecommendations) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
   }
   
-  // Si c'est une chaîne, convertir en entier
-  if (prestaTypeId is String) {
-    prestaTypeId = int.tryParse(prestaTypeId) ?? 1;
-  } else if (prestaTypeId is! int) {
-    prestaTypeId = 1; // Valeur par défaut si pas de type
+  if (_recommendedPrestataires.isEmpty) {
+    return SizedBox(); // Ne rien afficher s'il n'y a pas de recommandations
   }
   
-  print('Type final utilisé pour les recommandations: $prestaTypeId');
-  
-  // Si pas de type défini, ne pas afficher la section
-  if (prestaTypeId == null) {
-    return const SizedBox(); // Widget invisible
-  }
-  // Si pas de type défini, ne pas afficher la section
-  if (prestaTypeId == null) {
-    return const SizedBox(); // Widget invisible
-  }
-  
-  return FutureBuilder<List<Map<String, dynamic>>>(
-    future: _loadRecommendedPrestataires(prestaTypeId),
-    builder: (context, snapshot) {
-      // Toujours commencer par afficher le titre
-      Widget titleWidget = const Padding(
-        padding: EdgeInsets.fromLTRB(20, 32, 20, 16),
-        child: Text(
+  return Padding(
+    padding: const EdgeInsets.all(20),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
           'Vous allez aimer',
           style: TextStyle(
             fontSize: 24,
@@ -1528,97 +1543,42 @@ Widget _buildRecommendedPrestataires() {
             color: Color(0xFF2B2B2B),
           ),
         ),
-      );
-      
-      // En attente de chargement
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            titleWidget,
-            const SizedBox(height: 16),
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20.0),
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          ],
-        );
-      }
-      
-      // Cas d'erreur ou pas de données
-      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            titleWidget,
-            const SizedBox(height: 16),
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  children: [
-                    Icon(Icons.search_off, size: 48, color: Colors.grey[300]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Nous n\'avons pas d\'autres prestataires similaires à vous proposer pour le moment',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        );
-      }
-      
-      // Cas avec des recommandations
-      final recommendations = snapshot.data!;
-      
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          titleWidget,
-          SizedBox(
-            height: 280,
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              itemCount: recommendations.length,
-              itemBuilder: (context, index) {
-                final presta = recommendations[index];
-                return _buildRecommendationCard(presta);
-              },
-            ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 280, // Hauteur fixe pour le carrousel
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _recommendedPrestataires.length,
+            itemBuilder: (context, index) {
+              final prestataire = _recommendedPrestataires[index];
+              return _buildRecommendedCard(prestataire);
+            },
           ),
-          const SizedBox(height: 24),
-        ],
-      );
-    },
+        ),
+      ],
+    ),
   );
 }
 
-Widget _buildRecommendationCard(Map<String, dynamic> prestataire) {
-  final String nom = prestataire['nom_entreprise'] ?? 'Sans nom';
-  final String region = prestataire['region'] ?? '';
-  final double? rating = prestataire['note_moyenne'] != null 
-      ? (prestataire['note_moyenne'] is double 
-          ? prestataire['note_moyenne'] 
-          : double.tryParse(prestataire['note_moyenne'].toString()))
-      : null;
-  final String imageUrl = prestataire['image_url'] ?? 
-      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
-  
+void _navigateToPrestaireDetail(Map<String, dynamic> prestataire) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => PrestaireDetailScreen(
+        prestataire: prestataire,
+      ),
+    ),
+  );
+}
+
+
+
+// Widget pour construire une carte de prestataire recommandé
+Widget _buildRecommendedCard(Map<String, dynamic> prestataire) {
   return GestureDetector(
-    onTap: () => _navigateToDetails(prestataire),
+    onTap: () => _navigateToPrestaireDetail(prestataire),
     child: Container(
-      width: 250,
+      width: 220,
       margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1626,8 +1586,8 @@ Widget _buildRecommendationCard(Map<String, dynamic> prestataire) {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -1636,22 +1596,20 @@ Widget _buildRecommendationCard(Map<String, dynamic> prestataire) {
         children: [
           // Image
           ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12),
-              topRight: Radius.circular(12),
-            ),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
             child: CachedNetworkImage(
-              imageUrl: imageUrl,
-              height: 150,
+              imageUrl: prestataire['image_url'] ?? '',
+              height: 160,
               width: double.infinity,
               fit: BoxFit.cover,
               placeholder: (context, url) => Container(
                 color: Colors.grey[300],
-                child: const Center(child: CircularProgressIndicator()),
+                child: Center(child: CircularProgressIndicator()),
               ),
               errorWidget: (context, url, error) => Container(
                 color: Colors.grey[300],
-                child: const Icon(Icons.error),
+                height: 160,
+                child: Icon(Icons.image_not_supported, color: Colors.grey[500]),
               ),
             ),
           ),
@@ -1662,43 +1620,42 @@ Widget _buildRecommendationCard(Map<String, dynamic> prestataire) {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  nom,
+                  prestataire['nom_entreprise'] ?? 'Nom inconnu',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
-                    color: Color(0xFF2B2B2B),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                if (region.isNotEmpty)
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, size: 14, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Text(
-                        region,
-                        style: const TextStyle(color: Colors.grey, fontSize: 14),
-                      ),
-                    ],
-                  ),
-                const SizedBox(height: 8),
-                if (rating != null)
-                  Row(
-                    children: [
-                      for (int i = 1; i <= 5; i++)
-                        Icon(
-                          i <= rating ? Icons.star : 
-                          (i - 0.5 <= rating ? Icons.star_half : Icons.star_border),
-                          color: Colors.amber,
-                          size: 16,
+                Row(
+                  children: [
+                    Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        prestataire['region'] ?? 'Région inconnue',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                if (prestataire['note_moyenne'] != null)
+                  Row(
+                    children: [
+                      Icon(Icons.star, size: 14, color: Colors.amber),
                       const SizedBox(width: 4),
                       Text(
-                        rating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          fontSize: 14,
+                        '${prestataire['note_moyenne']}',
+                        style: TextStyle(
+                          fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1713,70 +1670,87 @@ Widget _buildRecommendationCard(Map<String, dynamic> prestataire) {
   );
 }
 
-Future<List<Map<String, dynamic>>> _loadRecommendedPrestataires(int prestaTypeId) async {
+
+Future<void> _loadRecommendedPrestataires() async {
   try {
-    print("Chargement des recommandations pour le type: $prestaTypeId");
+    setState(() {
+      _isLoadingRecommendations = true;
+    });
+
+    // Obtenir le type de prestataire actuel
+    final int currentPrestaType = _getActualPrestaireType();
+    print('Type de prestataire actuel: $currentPrestaType');
+
+    // Récupérer l'ID actuel pour l'exclure des résultats
+    final String currentId = widget.prestataire['id'] ?? '';
     
-    // L'ID du prestataire actuel pour l'exclure des recommandations
-    final String currentPrestaId = widget.prestataire['id'] ?? '';
-    
-    // Récupérer tous les prestataires actifs du même type
-    final response = await Supabase.instance.client
+    // Construire la requête pour récupérer des prestataires du même type
+    var query = Supabase.instance.client
         .from('presta')
-        .select('id, nom_entreprise, region, note_moyenne, image_url, presta_type_id')
+        .select('id, nom_entreprise, region, note_moyenne, image_url')
+        .eq('presta_type_id', currentPrestaType)
         .eq('actif', true)
-        .not('id', 'eq', currentPrestaId);
+        .neq('id', currentId) // Exclure le prestataire actuel
+        .limit(10); // Récupérer plus que nécessaire pour l'aléatoire
     
-    // Vérifier la réponse
-    print("Nombre total de prestataires trouvés: ${response.length}");
+    final response = await query;
     
-    // Convertir en format standard et filtrer par type
-    final List<Map<String, dynamic>> allPrestataires = [];
-    for (var item in response) {
-      if (item is Map) {
-        final Map<String, dynamic> presta = {};
-        item.forEach((key, value) {
-          presta[key.toString()] = value;
-        });
-        
-        // Vérifier si le type correspond
-        // Vérifier si le type correspond
-        var itemType = presta['presta_type_id'];
-        int? parsedType;
-
-        if (itemType is String) {
-          parsedType = int.tryParse(itemType);
-        } else if (itemType is int) {
-          parsedType = itemType;
-        } else if (itemType is double) {
-          parsedType = itemType.toInt();
-        } else {
-          parsedType = null;
-        }
-
-        if (parsedType == prestaTypeId) {
-          allPrestataires.add(presta);
+    // Debug
+    print('Réponse recommandations: ${response?.length} résultats');
+    
+    if (response != null && response.isNotEmpty) {
+      // Convertir en liste typée
+      final List<Map<String, dynamic>> prestataires = [];
+      for (var item in response) {
+        if (item is Map) {
+          final Map<String, dynamic> prestataire = {};
+          item.forEach((key, value) {
+            prestataire[key.toString()] = value;
+          });
+          
+          // Ajouter une image par défaut si nécessaire
+          if (!prestataire.containsKey('image_url') || prestataire['image_url'] == null) {
+            prestataire['image_url'] = _getDefaultImageByType(currentPrestaType);
+          }
+          
+          prestataires.add(prestataire);
         }
       }
+      
+      // Mélanger la liste et prendre 4 prestataires au maximum
+      prestataires.shuffle();
+      final recommendedList = prestataires.take(4).toList();
+      
+      setState(() {
+        _recommendedPrestataires = recommendedList;
+        _isLoadingRecommendations = false;
+      });
+    } else {
+      setState(() {
+        _recommendedPrestataires = [];
+        _isLoadingRecommendations = false;
+      });
     }
-    
-    print("Prestataires du même type: ${allPrestataires.length}");
-    
-    // S'il n'y a pas assez de prestataires, retourner une liste vide
-    if (allPrestataires.length < 2) {
-      print("Pas assez de prestataires pour afficher des recommandations");
-      return [];
-    }
-    
-    // Mélanger et prendre max 4
-    allPrestataires.shuffle();
-    final int count = math.min(4, allPrestataires.length);
-    
-    print("Nombre de recommandations à afficher: $count");
-    return allPrestataires.take(count).toList();
   } catch (e) {
     print('Erreur lors du chargement des prestataires recommandés: $e');
-    return [];
+    setState(() {
+      _recommendedPrestataires = [];
+      _isLoadingRecommendations = false;
+    });
+  }
+}
+
+String _getDefaultImageByType(int prestaTypeId) {
+  switch (prestaTypeId) {
+    case 2: // Traiteur
+      return 'https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=2940&auto=format&fit=crop';
+    case 3: // Photographe
+      return 'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?q=80&w=2940&auto=format&fit=crop';
+    case 4: // Wedding Planner
+      return 'https://images.unsplash.com/photo-1501139083538-0139583c060f?q=80&w=2940&auto=format&fit=crop';
+    case 1: // Lieu
+    default:
+      return 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
   }
 }
 
