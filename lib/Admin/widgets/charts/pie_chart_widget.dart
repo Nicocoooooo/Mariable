@@ -28,7 +28,7 @@ class AdminPieChartWidget extends StatelessWidget {
     ],
     this.showLegend = true,
     this.showValues = true,
-    this.radius = 100,
+    this.radius = 50,
   }) : super(key: key);
 
   @override
