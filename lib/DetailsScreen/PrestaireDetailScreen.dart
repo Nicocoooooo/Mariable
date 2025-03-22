@@ -1570,7 +1570,6 @@ Widget _buildRecommendedPrestataires() {
     ),
   );
 }
-
 void _navigateToPrestaireDetail(Map<String, dynamic> prestataire) async {
   try {
     // Récupérer l'ID du prestataire
@@ -1593,80 +1592,100 @@ void _navigateToPrestaireDetail(Map<String, dynamic> prestataire) async {
     // Enrichir les données en fonction du type
     var enrichedData = Map<String, dynamic>.from(prestataire);
     
-    // Si c'est un lieu (type 1), récupérer les données complètes de la table lieux
-    if (prestaTypeId == 1) {
-      try {
-        // Requête pour obtenir les données complètes du prestataire avec les informations de lieu
-        final response = await Supabase.instance.client
-            .from('presta')
-            .select('''
-              id, 
-              nom_entreprise, 
-              description, 
-              region, 
-              adresse, 
-              note_moyenne, 
-              verifie, 
-              actif,
-              presta_type_id,
-              image_url,
-              lieux!inner(
-                id, 
-                capacite_max,
-                capacite_min,
-                nombre_chambres,
-                espace_exterieur, 
-                piscine,
-                parking, 
-                hebergement, 
-                capacite_hebergement,
-                exclusivite, 
-                feu_artifice,
-                image_url,
-                systeme_sonorisation,
-                tables_fournies,
-                chaises_fournies,
-                nappes_fournies,
-                vaisselle_fournie,
-                eclairage,
-                sonorisation,
-                wifi,
-                coordinateur_sur_place,
-                vestiaire,
-                voiturier,
-                espace_enfants,
-                climatisation,
-                espace_lacher_lanternes,
-                lieu_seance_photo,
-                acces_bateau_helicoptere,
-                jardin,
-                parc,
-                terrasse,
-                cour,
-                espace_ceremonie,
-                espace_cocktail,
-                superficie_interieur,
-                superficie_exterieur,
-                cadre
-              ),
-              tarifs(
-                id,
-                nom_formule,
-                prix_base,
-                description
-              )
-            ''')
-            .eq('id', prestaId)
-            .limit(1)
-            .single();
-        
-        if (response != null) {
-          print('Données enrichies récupérées avec succès');
-          enrichedData = response;
-        }
-      } catch (e) {
-        print('Erreur lors de la récupération des données enrichies: $e');
+    try {
+      // Requête pour obtenir les données complètes selon le type de prestataire
+      var query = Supabase.instance.client.from('presta').select('''
+        id, 
+        nom_entreprise, 
+        description, 
+        region, 
+        adresse, 
+        note_moyenne, 
+        verifie, 
+        actif,
+        presta_type_id,
+        image_url,
+        tarifs(
+          id,
+          nom_formule,
+          prix_base,
+          description
+        )
+      ''');
+      
+      // Si c'est un lieu (type 1), inclure les données de la table lieux
+      if (prestaTypeId == 1) {
+        query = Supabase.instance.client.from('presta').select('''
+          id, 
+          nom_entreprise, 
+          description, 
+          region, 
+          adresse, 
+          note_moyenne, 
+          verifie, 
+          actif,
+          presta_type_id,
+          image_url,
+          lieux(
+            id, 
+            capacite_max,
+            capacite_min,
+            nombre_chambres,
+            espace_exterieur, 
+            piscine,
+            parking, 
+            hebergement, 
+            capacite_hebergement,
+            exclusivite, 
+            feu_artifice,
+            image_url,
+            systeme_sonorisation,
+            tables_fournies,
+            chaises_fournies,
+            nappes_fournies,
+            vaisselle_fournie,
+            eclairage,
+            sonorisation,
+            wifi,
+            coordinateur_sur_place,
+            vestiaire,
+            voiturier,
+            espace_enfants,
+            climatisation,
+            espace_lacher_lanternes,
+            lieu_seance_photo,
+            acces_bateau_helicoptere,
+            jardin,
+            parc,
+            terrasse,
+            cour,
+            espace_ceremonie,
+            espace_cocktail,
+            superficie_interieur,
+            superficie_exterieur,
+            cadre
+          ),
+          tarifs(
+            id,
+            nom_formule,
+            prix_base,
+            description
+          )
+        ''');
       }
+      
+      // Finaliser la requête
+      final response = await query
+        .eq('id', prestaId)
+        .limit(1)
+        .single();
+      
+      if (response != null) {
+        print('Données complètes récupérées avec succès');
+        enrichedData = response;
+      }
+    } catch (e) {
+      print('Erreur lors de la récupération des données complètes: $e');
     }
     
     // Naviguer vers la page de détail avec les données enrichies
