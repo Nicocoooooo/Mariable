@@ -85,6 +85,10 @@ class _AdminUserAnalyticsScreenState extends State<AdminUserAnalyticsScreen> {
         title: const Text('Analyse des Utilisateurs'),
         backgroundColor: PartnerAdminStyles.accentColor,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(PartnerAdminRoutes.adminReports),
+        ),
       ),
       drawer: AdminSidebar(
         currentIndex:
@@ -105,126 +109,156 @@ class _AdminUserAnalyticsScreenState extends State<AdminUserAnalyticsScreen> {
     );
   }
 
+// Données codées en dur pour les graphiques
   Widget _buildAnalyticsContent() {
-    if (_userAnalytics == null) {
-      return const Center(
-        child: Text('Aucune donnée disponible'),
-      );
-    }
+    // Données codées en dur pour les utilisateurs
+    final Map<String, int> usersByStatus = {
+      'prospect': 245,
+      'client': 187,
+      'premium': 62,
+      'VIP': 28,
+    };
+
+    final Map<String, int> newUsersByMonth = {
+      '2024-10': 35,
+      '2024-11': 42,
+      '2024-12': 38,
+      '2025-01': 67,
+      '2025-02': 53,
+      '2025-03': 71,
+    };
 
     return RefreshIndicator(
-      onRefresh: _loadUserAnalytics,
+      onRefresh: () async {
+        // Simuler un rechargement pour la vidéo
+        await Future.delayed(const Duration(milliseconds: 800));
+        setState(() {});
+      },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // En-tête
-            Text(
-              'Analyse des Utilisateurs',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: PartnerAdminStyles.textColor,
-                  ),
+            // En-tête avec animation simple
+            AnimatedOpacity(
+              opacity: 1.0,
+              duration: const Duration(milliseconds: 800),
+              child: Text(
+                'Analyse des Utilisateurs',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: PartnerAdminStyles.textColor,
+                    ),
+              ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingSmall),
-            Text(
-              'Statistiques détaillées sur les utilisateurs de la plateforme',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: PartnerAdminStyles.textColor.withOpacity(0.7),
-                  ),
+            AnimatedOpacity(
+              opacity: 1.0,
+              duration: const Duration(milliseconds: 1000),
+              child: Text(
+                'Statistiques détaillées sur les utilisateurs de la plateforme',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                    ),
+              ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Carte récapitulative
-            Card(
-              elevation: PartnerAdminStyles.elevationMedium,
-              child: Padding(
-                padding: const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.people,
-                          color: PartnerAdminStyles.infoColor,
-                          size: 24,
-                        ),
-                        const SizedBox(width: PartnerAdminStyles.paddingSmall),
-                        Text(
-                          'Résumé des Utilisateurs',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+            AnimatedOpacity(
+              opacity: 1.0,
+              duration: const Duration(milliseconds: 1200),
+              child: Card(
+                elevation: PartnerAdminStyles.elevationMedium,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.people,
+                            color: PartnerAdminStyles.infoColor,
+                            size: 24,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: PartnerAdminStyles.paddingMedium),
-                    Text(
-                      'Nombre total d\'utilisateurs: ${_userAnalytics!.total}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: PartnerAdminStyles.paddingSmall),
-                    const Text(
-                      'Répartition par statut:',
-                      style: TextStyle(
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: PartnerAdminStyles.paddingSmall),
-                    Wrap(
-                      spacing: PartnerAdminStyles.paddingSmall,
-                      runSpacing: PartnerAdminStyles.paddingSmall,
-                      children: _userAnalytics!.byStatus.entries.map((entry) {
-                        return Chip(
-                          label: Text(
-                            '${entry.key}: ${entry.value}',
+                          const SizedBox(
+                              width: PartnerAdminStyles.paddingSmall),
+                          Text(
+                            'Résumé des Utilisateurs',
                             style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          backgroundColor: PartnerAdminStyles.infoColor,
-                        );
-                      }).toList(),
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: PartnerAdminStyles.paddingMedium),
+                      Text(
+                        'Nombre total d\'utilisateurs: ${usersByStatus.values.fold(0, (a, b) => a + b)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: PartnerAdminStyles.paddingSmall),
+                      const Text(
+                        'Répartition par statut:',
+                        style: TextStyle(
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: PartnerAdminStyles.paddingSmall),
+                      Wrap(
+                        spacing: PartnerAdminStyles.paddingSmall,
+                        runSpacing: PartnerAdminStyles.paddingSmall,
+                        children: usersByStatus.entries.map((entry) {
+                          return Chip(
+                            label: Text(
+                              '${entry.key}: ${entry.value}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                            backgroundColor: PartnerAdminStyles.infoColor,
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Graphique des nouveaux utilisateurs par mois
-            if (_userAnalytics!.newUsersByMonth.isNotEmpty)
-              AdminBarChartWidget(
+            AnimatedOpacity(
+              opacity: 1.0,
+              duration: const Duration(milliseconds: 1400),
+              child: AdminBarChartWidget(
                 title: 'Nouveaux Utilisateurs par Mois',
                 subtitle: 'Derniers 6 mois',
-                data: _userAnalytics!.newUsersByMonth,
-                maxY: (_userAnalytics!.newUsersByMonth.values.fold<int>(
-                            0,
-                            (prev, element) =>
-                                prev > (element as int) ? prev : element) *
-                        1.2)
-                    .toDouble(),
+                data: newUsersByMonth,
+                maxY: 100,
                 gradientColors: const [
                   PartnerAdminStyles.infoColor,
                   Color(0xFF7FC8F8),
                 ],
               ),
+            ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Distribution des utilisateurs par statut
-            if (_userAnalytics!.byStatus.isNotEmpty)
-              AdminPieChartWidget(
+            AnimatedOpacity(
+              opacity: 1.0,
+              duration: const Duration(milliseconds: 1600),
+              child: AdminPieChartWidget(
                 title: 'Distribution des Utilisateurs par Statut',
-                subtitle: 'Répartition des utilisateurs selon leur statut',
-                data: _userAnalytics!.byStatus,
+                subtitle: '',
+                data: usersByStatus,
                 colors: const [
                   PartnerAdminStyles.infoColor,
                   PartnerAdminStyles.warningColor,
@@ -233,6 +267,22 @@ class _AdminUserAnalyticsScreenState extends State<AdminUserAnalyticsScreen> {
                   PartnerAdminStyles.accentColor,
                 ],
               ),
+            ),
+            const SizedBox(height: PartnerAdminStyles.paddingLarge),
+
+            // Bouton de retour
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () => context.go(PartnerAdminRoutes.adminReports),
+                label: const Text('Retour aux rapports'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: PartnerAdminStyles.accentColor,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
           ],
         ),

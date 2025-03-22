@@ -84,10 +84,13 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
 
             // Cartes des rapports disponibles
             GridView.count(
-              crossAxisCount: 2,
-              childAspectRatio: 1.1,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
+              crossAxisCount: MediaQuery.of(context).size.width > 600
+                  ? 2
+                  : 1, // Responsive: 1 colonne sur petit écran
+              childAspectRatio:
+                  1.3, // Augmenter l'aspect ratio pour donner plus d'espace
+              crossAxisSpacing: 12, // Réduire l'espacement
+              mainAxisSpacing: 12, // Réduire l'espacement
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               children: [

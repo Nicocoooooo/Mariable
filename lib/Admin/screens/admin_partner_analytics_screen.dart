@@ -20,7 +20,8 @@ class AdminPartnerAnalyticsScreen extends StatefulWidget {
 }
 
 class _AdminPartnerAnalyticsScreenState
-    extends State<AdminPartnerAnalyticsScreen> {
+    extends State<AdminPartnerAnalyticsScreen>
+    with SingleTickerProviderStateMixin {
   final AdminService _adminService = AdminService();
   final AuthService _authService = AuthService();
   bool _isLoading = true;
@@ -28,12 +29,24 @@ class _AdminPartnerAnalyticsScreenState
   PartnerAnalytics? _partnerAnalytics;
   String _adminName = '';
   String _adminEmail = '';
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
     _checkAuthentication();
-    _loadPartnerAnalytics();
+    _loadFakeData();
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkAuthentication() async {
@@ -58,16 +71,59 @@ class _AdminPartnerAnalyticsScreenState
     }
   }
 
-  Future<void> _loadPartnerAnalytics() async {
+  Future<void> _loadFakeData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
+    // Simuler un chargement
+    await Future.delayed(const Duration(milliseconds: 800));
+
     try {
-      final analytics = await _adminService.getPartnersAnalytics();
+      // Données codées en dur pour les prestataires
+      final Map<String, int> partnersByType = {
+        'Lieux': 42,
+        'Traiteurs': 38,
+        'Photographes': 25,
+        'DJ': 18,
+        'Wedding Planners': 12,
+        'Fleuristes': 15,
+      };
+
+      final Map<String, int> partnersByRegion = {
+        'Paris': 58,
+        'Lyon': 32,
+        'Marseille': 27,
+        'Bordeaux': 19,
+        'Lille': 14,
+      };
+
+      final Map<String, int> partnersByBudget = {
+        'abordable': 65,
+        'premium': 45,
+        'luxe': 40,
+      };
+
+      final Map<String, Map<String, dynamic>> verificationRateByType = {
+        'Lieux': {'total': 42, 'verified': 32, 'rate': '76.2'},
+        'Traiteurs': {'total': 38, 'verified': 28, 'rate': '73.7'},
+        'Photographes': {'total': 25, 'verified': 17, 'rate': '68.0'},
+        'DJ': {'total': 18, 'verified': 11, 'rate': '61.1'},
+        'Wedding Planners': {'total': 12, 'verified': 9, 'rate': '75.0'},
+        'Fleuristes': {'total': 15, 'verified': 10, 'rate': '66.7'},
+      };
+
+      final fakeAnalytics = {
+        'total': partnersByType.values.fold(0, (a, b) => a + b),
+        'byType': partnersByType,
+        'byRegion': partnersByRegion,
+        'byBudget': partnersByBudget,
+        'verificationRateByType': verificationRateByType,
+      };
+
       setState(() {
-        _partnerAnalytics = PartnerAnalytics.fromMap(analytics);
+        _partnerAnalytics = PartnerAnalytics.fromMap(fakeAnalytics);
         _isLoading = false;
       });
     } catch (e) {
@@ -86,10 +142,13 @@ class _AdminPartnerAnalyticsScreenState
         title: const Text('Analyse des Prestataires'),
         backgroundColor: PartnerAdminStyles.accentColor,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(PartnerAdminRoutes.adminReports),
+        ),
       ),
       drawer: AdminSidebar(
-        currentIndex:
-            3, // 3 pour Statistiques (à adapter selon votre navigation)
+        currentIndex: 3,
         adminName: _adminName,
         adminEmail: _adminEmail,
       ),
@@ -99,7 +158,7 @@ class _AdminPartnerAnalyticsScreenState
           : _errorMessage.isNotEmpty
               ? ErrorView(
                   message: _errorMessage,
-                  onAction: _loadPartnerAnalytics,
+                  onAction: _loadFakeData,
                   actionLabel: 'Réessayer',
                 )
               : _buildAnalyticsContent(),
@@ -114,7 +173,7 @@ class _AdminPartnerAnalyticsScreenState
     }
 
     return RefreshIndicator(
-      onRefresh: _loadPartnerAnalytics,
+      onRefresh: _loadFakeData,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
@@ -122,110 +181,137 @@ class _AdminPartnerAnalyticsScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // En-tête
-            Text(
-              'Analyse des Prestataires',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: PartnerAdminStyles.textColor,
-                  ),
+            FadeTransition(
+              opacity:
+                  _animationController.drive(CurveTween(curve: Curves.easeIn)),
+              child: Text(
+                'Analyse des Prestataires',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: PartnerAdminStyles.textColor,
+                    ),
+              ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingSmall),
-            Text(
-              'Statistiques détaillées sur les prestataires de la plateforme',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: PartnerAdminStyles.textColor.withOpacity(0.7),
-                  ),
+            FadeTransition(
+              opacity:
+                  _animationController.drive(CurveTween(curve: Curves.easeIn)),
+              child: Text(
+                'Statistiques détaillées sur les prestataires de la plateforme',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                    ),
+              ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Carte récapitulative
-            Card(
-              elevation: PartnerAdminStyles.elevationMedium,
-              child: Padding(
-                padding: const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.business,
-                          color: PartnerAdminStyles.accentColor,
-                          size: 24,
-                        ),
-                        const SizedBox(width: PartnerAdminStyles.paddingSmall),
-                        Text(
-                          'Résumé des Prestataires',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+            SlideTransition(
+              position: _animationController.drive(Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOut))),
+              child: Card(
+                elevation: PartnerAdminStyles.elevationMedium,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.business,
+                            color: PartnerAdminStyles.accentColor,
+                            size: 24,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: PartnerAdminStyles.paddingMedium),
-                    Text(
-                      'Nombre total de prestataires: ${_partnerAnalytics!.total}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                          const SizedBox(
+                              width: PartnerAdminStyles.paddingSmall),
+                          Text(
+                            'Résumé des Prestataires',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: PartnerAdminStyles.paddingSmall),
-                    Row(
-                      children: [
-                        _buildSummaryCard(
-                          title: 'Types',
-                          value: _partnerAnalytics!.byType.length.toString(),
-                          icon: Icons.category,
-                          color: PartnerAdminStyles.accentColor,
+                      const SizedBox(height: PartnerAdminStyles.paddingMedium),
+                      Text(
+                        'Nombre total de prestataires: ${_partnerAnalytics!.total}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(width: PartnerAdminStyles.paddingSmall),
-                        _buildSummaryCard(
-                          title: 'Régions',
-                          value: _partnerAnalytics!.byRegion.length.toString(),
-                          icon: Icons.location_on,
-                          color: PartnerAdminStyles.infoColor,
-                        ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: PartnerAdminStyles.paddingSmall),
+                      Row(
+                        children: [
+                          _buildSummaryCard(
+                            title: 'Types',
+                            value: _partnerAnalytics!.byType.length.toString(),
+                            icon: Icons.category,
+                            color: PartnerAdminStyles.accentColor,
+                          ),
+                          const SizedBox(
+                              width: PartnerAdminStyles.paddingSmall),
+                          _buildSummaryCard(
+                            title: 'Régions',
+                            value:
+                                _partnerAnalytics!.byRegion.length.toString(),
+                            icon: Icons.location_on,
+                            color: PartnerAdminStyles.infoColor,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Distribution des prestataires par type
-            if (_partnerAnalytics!.byType.isNotEmpty)
-              AdminPieChartWidget(
+            SlideTransition(
+              position: _animationController.drive(Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOut))),
+              child: AdminPieChartWidget(
                 title: 'Distribution des Prestataires par Type',
                 subtitle: 'Répartition selon les catégories de service',
                 data: _partnerAnalytics!.byType,
               ),
+            ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Distribution des prestataires par région
-            if (_partnerAnalytics!.byRegion.isNotEmpty)
-              AdminBarChartWidget(
+            SlideTransition(
+              position: _animationController.drive(Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOut))),
+              child: AdminBarChartWidget(
                 title: 'Prestataires par Région',
                 subtitle: 'Nombre de prestataires dans chaque région',
                 data: _partnerAnalytics!.byRegion,
-                maxY: (_partnerAnalytics!.byRegion.values.fold<int>(
-                            0,
-                            (prev, element) =>
-                                prev > (element as int) ? prev : element) *
-                        1.2)
-                    .toDouble(),
+                maxY: 70,
                 gradientColors: const [
                   PartnerAdminStyles.infoColor,
                   Color(0xFF7FC8F8),
                 ],
               ),
+            ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Distribution par budget
-            if (_partnerAnalytics!.byBudget.isNotEmpty)
-              AdminPieChartWidget(
+            SlideTransition(
+              position: _animationController.drive(Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOut))),
+              child: AdminPieChartWidget(
                 title: 'Distribution par Budget',
                 subtitle:
                     'Répartition des prestataires selon leur niveau de prix',
@@ -236,10 +322,33 @@ class _AdminPartnerAnalyticsScreenState
                   PartnerAdminStyles.errorColor,
                 ],
               ),
+            ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Taux de vérification par type de prestataire
-            _buildVerificationRatesCard(),
+            SlideTransition(
+              position: _animationController.drive(Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOut))),
+              child: _buildVerificationRatesCard(),
+            ),
+            const SizedBox(height: PartnerAdminStyles.paddingLarge),
+
+            // Bouton de retour
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () => context.go(PartnerAdminRoutes.adminReports),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Retour aux rapports'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: PartnerAdminStyles.accentColor,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
           ],
         ),

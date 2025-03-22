@@ -21,7 +21,8 @@ class AdminReservationAnalyticsScreen extends StatefulWidget {
 }
 
 class _AdminReservationAnalyticsScreenState
-    extends State<AdminReservationAnalyticsScreen> {
+    extends State<AdminReservationAnalyticsScreen>
+    with SingleTickerProviderStateMixin {
   final AdminService _adminService = AdminService();
   final AuthService _authService = AuthService();
   bool _isLoading = true;
@@ -29,12 +30,24 @@ class _AdminReservationAnalyticsScreenState
   ReservationAnalytics? _reservationAnalytics;
   String _adminName = '';
   String _adminEmail = '';
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
     _checkAuthentication();
-    _loadReservationAnalytics();
+    _loadFakeData();
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _checkAuthentication() async {
@@ -59,16 +72,69 @@ class _AdminReservationAnalyticsScreenState
     }
   }
 
-  Future<void> _loadReservationAnalytics() async {
+  Future<void> _loadFakeData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
+    // Simuler un chargement
+    await Future.delayed(const Duration(milliseconds: 800));
+
     try {
-      final analytics = await _adminService.getReservationsAnalytics();
+      // Données codées en dur pour les réservations
+      final Map<String, dynamic> reservationsByMonth = {
+        '2024-10': 42,
+        '2024-11': 48,
+        '2024-12': 35,
+        '2025-01': 52,
+        '2025-02': 68,
+        '2025-03': 75,
+      };
+
+      final Map<String, dynamic> revenueByMonth = {
+        '2024-10': 84000.0,
+        '2024-11': 96000.0,
+        '2024-12': 70000.0,
+        '2025-01': 104000.0,
+        '2025-02': 136000.0,
+        '2025-03': 150000.0,
+      };
+
+      final Map<String, int> reservationsByStatus = {
+        'Confirmée': 121,
+        'En attente': 56,
+        'Terminée': 85,
+        'Annulée': 8,
+      };
+
+      final Map<String, int> reservationsByPartnerType = {
+        'Lieux': 96,
+        'Traiteurs': 78,
+        'Photographes': 42,
+        'DJ': 32,
+        'Wedding Planners': 22,
+      };
+
+      final Map<String, int> topPartners = {
+        'Château des Roses': 18,
+        'Traiteur Deluxe': 15,
+        'Studio Photo Elite': 12,
+        'Domaine des Cèdres': 10,
+        'Wedding Planners Paris': 8,
+      };
+
+      final fakeAnalytics = {
+        'total': reservationsByStatus.values.fold(0, (a, b) => a + b),
+        'byMonth': reservationsByMonth,
+        'revenueByMonth': revenueByMonth,
+        'byStatus': reservationsByStatus,
+        'byPartnerType': reservationsByPartnerType,
+        'topPartners': topPartners,
+      };
+
       setState(() {
-        _reservationAnalytics = ReservationAnalytics.fromMap(analytics);
+        _reservationAnalytics = ReservationAnalytics.fromMap(fakeAnalytics);
         _isLoading = false;
       });
     } catch (e) {
@@ -87,10 +153,13 @@ class _AdminReservationAnalyticsScreenState
         title: const Text('Analyse des Réservations'),
         backgroundColor: PartnerAdminStyles.accentColor,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(PartnerAdminRoutes.adminReports),
+        ),
       ),
       drawer: AdminSidebar(
-        currentIndex:
-            3, // 3 pour Statistiques (à adapter selon votre navigation)
+        currentIndex: 3,
         adminName: _adminName,
         adminEmail: _adminEmail,
       ),
@@ -100,7 +169,7 @@ class _AdminReservationAnalyticsScreenState
           : _errorMessage.isNotEmpty
               ? ErrorView(
                   message: _errorMessage,
-                  onAction: _loadReservationAnalytics,
+                  onAction: _loadFakeData,
                   actionLabel: 'Réessayer',
                 )
               : _buildAnalyticsContent(),
@@ -115,7 +184,7 @@ class _AdminReservationAnalyticsScreenState
     }
 
     return RefreshIndicator(
-      onRefresh: _loadReservationAnalytics,
+      onRefresh: _loadFakeData,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
@@ -123,121 +192,132 @@ class _AdminReservationAnalyticsScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // En-tête
-            Text(
-              'Analyse des Réservations',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: PartnerAdminStyles.textColor,
-                  ),
+            FadeTransition(
+              opacity:
+                  _animationController.drive(CurveTween(curve: Curves.easeIn)),
+              child: Text(
+                'Analyse des Réservations',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: PartnerAdminStyles.textColor,
+                    ),
+              ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingSmall),
-            Text(
-              'Statistiques détaillées sur les réservations de la plateforme',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: PartnerAdminStyles.textColor.withOpacity(0.7),
-                  ),
+            FadeTransition(
+              opacity:
+                  _animationController.drive(CurveTween(curve: Curves.easeIn)),
+              child: Text(
+                'Statistiques détaillées sur les réservations de la plateforme',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                    ),
+              ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Carte récapitulative
-            Card(
-              elevation: PartnerAdminStyles.elevationMedium,
-              child: Padding(
-                padding: const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          color: PartnerAdminStyles.warningColor,
-                          size: 24,
-                        ),
-                        const SizedBox(width: PartnerAdminStyles.paddingSmall),
-                        Text(
-                          'Résumé des Réservations',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+            SlideTransition(
+              position: _animationController.drive(Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOut))),
+              child: Card(
+                elevation: PartnerAdminStyles.elevationMedium,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            color: PartnerAdminStyles.warningColor,
+                            size: 24,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: PartnerAdminStyles.paddingMedium),
-                    Text(
-                      'Nombre total de réservations: ${_reservationAnalytics!.total}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: PartnerAdminStyles.paddingSmall),
-                    const Text(
-                      'Répartition par statut:',
-                      style: TextStyle(
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: PartnerAdminStyles.paddingSmall),
-                    Wrap(
-                      spacing: PartnerAdminStyles.paddingSmall,
-                      runSpacing: PartnerAdminStyles.paddingSmall,
-                      children:
-                          _reservationAnalytics!.byStatus.entries.map((entry) {
-                        return Chip(
-                          label: Text(
-                            '${entry.key}: ${entry.value}',
+                          const SizedBox(
+                              width: PartnerAdminStyles.paddingSmall),
+                          Text(
+                            'Résumé des Réservations',
                             style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          backgroundColor: PartnerAdminStyles.warningColor,
-                        );
-                      }).toList(),
-                    ),
-                  ],
+                        ],
+                      ),
+                      const SizedBox(height: PartnerAdminStyles.paddingMedium),
+                      Text(
+                        'Nombre total de réservations: ${_reservationAnalytics!.total}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: PartnerAdminStyles.paddingSmall),
+                      const Text(
+                        'Répartition par statut:',
+                        style: TextStyle(
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: PartnerAdminStyles.paddingSmall),
+                      Wrap(
+                        spacing: PartnerAdminStyles.paddingSmall,
+                        runSpacing: PartnerAdminStyles.paddingSmall,
+                        children: _reservationAnalytics!.byStatus.entries
+                            .map((entry) {
+                          return Chip(
+                            label: Text(
+                              '${entry.key}: ${entry.value}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                              ),
+                            ),
+                            backgroundColor: PartnerAdminStyles.warningColor,
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Réservations par mois
-            if (_reservationAnalytics!.byMonth.isNotEmpty)
-              AdminBarChartWidget(
+            SlideTransition(
+              position: _animationController.drive(Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOut))),
+              child: AdminBarChartWidget(
                 title: 'Réservations par Mois',
-                subtitle: 'Derniers 12 mois',
+                subtitle: 'Derniers 6 mois',
                 data: _reservationAnalytics!.byMonth,
-                maxY: (_reservationAnalytics!.byMonth.values.fold<int>(
-                            0,
-                            (prev, element) =>
-                                prev > (element as int) ? prev : element) *
-                        1.2)
-                    .toDouble(),
+                maxY: 100,
                 gradientColors: const [
                   PartnerAdminStyles.warningColor,
                   Color(0xFFFFD580),
                 ],
               ),
+            ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Revenus par mois
-            if (_reservationAnalytics!.revenueByMonth.isNotEmpty)
-              AdminLineChartWidget(
+            SlideTransition(
+              position: _animationController.drive(Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOut))),
+              child: AdminLineChartWidget(
                 title: 'Revenus par Mois (€)',
-                subtitle: 'Derniers 12 mois',
+                subtitle: 'Derniers 6 mois',
                 data: _reservationAnalytics!.revenueByMonth,
-                maxY: (_reservationAnalytics!.revenueByMonth.values
-                        .fold<double>(0.0, (prev, element) {
-                      final double value = element is int
-                          ? element.toDouble()
-                          : element is double
-                              ? element
-                              : 0.0;
-                      return prev > value ? prev : value;
-                    }) *
-                    1.2),
+                maxY: 200000,
                 gradientColors: const [
                   PartnerAdminStyles.successColor,
                   Color(0xFF8FECC0),
@@ -245,16 +325,26 @@ class _AdminReservationAnalyticsScreenState
                 filled: true,
                 curved: true,
               ),
+            ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Top 5 des prestataires
-            if (_reservationAnalytics!.topPartners.isNotEmpty)
-              _buildTopPartnersCard(),
+            SlideTransition(
+              position: _animationController.drive(Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOut))),
+              child: _buildTopPartnersCard(),
+            ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
 
             // Distribution par statut
-            if (_reservationAnalytics!.byStatus.isNotEmpty)
-              AdminPieChartWidget(
+            SlideTransition(
+              position: _animationController.drive(Tween<Offset>(
+                begin: const Offset(0.05, 0),
+                end: Offset.zero,
+              ).chain(CurveTween(curve: Curves.easeOut))),
+              child: AdminPieChartWidget(
                 title: 'Distribution par Statut',
                 subtitle: 'Répartition des réservations selon leur statut',
                 data: _reservationAnalytics!.byStatus,
@@ -262,10 +352,26 @@ class _AdminReservationAnalyticsScreenState
                   PartnerAdminStyles.successColor,
                   PartnerAdminStyles.warningColor,
                   PartnerAdminStyles.infoColor,
-                  PartnerAdminStyles.accentColor,
                   PartnerAdminStyles.errorColor,
                 ],
               ),
+            ),
+            const SizedBox(height: PartnerAdminStyles.paddingLarge),
+
+            // Bouton de retour
+            Center(
+              child: ElevatedButton.icon(
+                onPressed: () => context.go(PartnerAdminRoutes.adminReports),
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Retour aux rapports'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: PartnerAdminStyles.accentColor,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
           ],
         ),
