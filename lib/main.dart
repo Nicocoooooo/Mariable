@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'utils/logger.dart';
 import 'utils/supabase_test.dart';
+import 'routes_partner_admin.dart';
 // Import des écrans
 import 'Home/HomeScreen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -11,24 +12,25 @@ import 'package:intl/intl.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
- 
+
   // Initialiser Supabase
   AppLogger.info('Initializing Supabase...');
   try {
     await Supabase.initialize(
       url: 'https://wrdychfyhctekddzysen.supabase.co',
-      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZHljaGZ5aGN0ZWtkZHp5c2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg1OTgwNDQsImV4cCI6MjA1NDE3NDA0NH0.8GVSqkqq0se3BhXO47hgZkaI4zUF5cmKPQso11jdWSk',
+      anonKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndyZHljaGZ5aGN0ZWtkZHp5c2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg1OTgwNDQsImV4cCI6MjA1NDE3NDA0NH0.8GVSqkqq0se3BhXO47hgZkaI4zUF5cmKPQso11jdWSk',
     );
 
     await Future.delayed(const Duration(seconds: 1)); // Ajout d'un délai
 
     AppLogger.info('Supabase initialized successfully');
-    
+
     // Tester la connexion à Supabase
     final isConnected = await SupabaseTest.testConnection();
     if (isConnected) {
       AppLogger.info('Supabase connection test successful');
-      
+
       // Tester l'accès aux tables
       final tableResults = await SupabaseTest.testTables();
       tableResults.forEach((table, isAccessible) {
@@ -44,7 +46,7 @@ void main() async {
   } catch (e) {
     AppLogger.error('Failed to initialize Supabase', e);
   }
- 
+
   runApp(const MyApp());
 }
 
@@ -54,7 +56,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Création d'un TextTheme de base avec Lato
     final TextTheme latoTextTheme = GoogleFonts.latoTextTheme();
-    
+
     // Création d'un TextTheme personnalisé avec Playfair Display pour les titres
     final TextTheme customTextTheme = latoTextTheme.copyWith(
       // Utiliser Playfair Display pour les titres principaux
@@ -63,7 +65,7 @@ class MyApp extends StatelessWidget {
         color: const Color(0xFF2B2B2B),
       ),
       displayMedium: GoogleFonts.playfairDisplay(
-        fontWeight: FontWeight.bold, 
+        fontWeight: FontWeight.bold,
         color: const Color(0xFF2B2B2B),
       ),
       displaySmall: GoogleFonts.playfairDisplay(
@@ -72,7 +74,7 @@ class MyApp extends StatelessWidget {
       ),
       headlineLarge: GoogleFonts.playfairDisplay(
         fontWeight: FontWeight.bold,
-        color: const Color(0xFF2B2B2B), 
+        color: const Color(0xFF2B2B2B),
       ),
       headlineMedium: GoogleFonts.playfairDisplay(
         fontWeight: FontWeight.bold,
@@ -84,19 +86,19 @@ class MyApp extends StatelessWidget {
         color: const Color(0xFF2B2B2B),
       ),
     );
-    
+
     return MaterialApp.router(
       title: 'Mariable',
       localizationsDelegates: const [
-      GlobalMaterialLocalizations.delegate,
-      GlobalWidgetsLocalizations.delegate,
-      GlobalCupertinoLocalizations.delegate,
-    ],
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       supportedLocales: const [
         Locale('fr', 'FR'),
         Locale('en', 'US'),
       ],
-      
+
       theme: ThemeData(
         // Couleurs selon la DA
         colorScheme: ColorScheme.fromSeed(
@@ -151,5 +153,6 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const HomePage(),
     ),
     // Vous pourrez ajouter d'autres routes plus tard
+    ...PartnerAdminRoutes.routes,
   ],
 );

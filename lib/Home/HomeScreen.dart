@@ -7,13 +7,13 @@ import '../services/region_service.dart';
 import '../Widgets/lieu_selector_dialog.dart';
 import '../Filtre/traiteur_types_screen.dart';
 
+import '../routes_partner_admin.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
- 
 }
 
 class _HomePageState extends State<HomePage> {
@@ -31,42 +31,43 @@ class _HomePageState extends State<HomePage> {
     const Color grisTexte = Color(0xFF2B2B2B);
     const Color accentColor = Color(0xFF524B46);
     const Color beige = Color(0xFFFFF3E4);
-    
+
     return Scaffold(
       body: Stack(
         children: [
           // Image de fond au lieu de la vidéo
           SizedBox.expand(
-      child: Image.network(
-        'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            color: beige.withOpacity(0.5),
-            child: Center(
-              child: CircularProgressIndicator(
-                value: loadingProgress.expectedTotalBytes != null
-                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                    : null,
-                color: accentColor,
-              ),
+            child: Image.network(
+              'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  color: beige.withOpacity(0.5),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
+                          : null,
+                      color: accentColor,
+                    ),
+                  ),
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: beige.withOpacity(0.5),
+                );
+              },
             ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: beige.withOpacity(0.5),
-          );
-        },
-      ),
-    ),
-          
+          ),
+
           // Overlay pour lisibilité du texte
           Container(
             color: Colors.black.withOpacity(0.2),
           ),
-          
+
           // Contenu principal
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 80, 20, 20),
@@ -102,7 +103,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 30),
-                
+
                 // Carte de recherche
                 Card(
                   margin: EdgeInsets.zero,
@@ -124,9 +125,9 @@ class _HomePageState extends State<HomePage> {
                           isSelected: _prestaireText != 'Prestataire',
                         ),
                       ),
-                      
+
                       const Divider(height: 1, thickness: 1),
-                      
+
                       // Champ Lieu
                       InkWell(
                         onTap: () => _showLieuSelector(context),
@@ -137,18 +138,19 @@ class _HomePageState extends State<HomePage> {
                           isSelected: _lieuText != 'Lieu',
                         ),
                       ),
-                      
+
                       const Divider(height: 1, thickness: 1),
-                      
+
                       // Champs Date double
                       Row(
                         children: [
                           Expanded(
                             child: InkWell(
-                              onTap: () => _selectDate(context, isStartDate: true),
+                              onTap: () =>
+                                  _selectDate(context, isStartDate: true),
                               child: _buildSearchField(
                                 icon: Icons.calendar_today,
-                                hint: _startDate != null 
+                                hint: _startDate != null
                                     ? '${_startDate!.day}/${_startDate!.month}/${_startDate!.year}'
                                     : 'Date',
                                 grisTexte: grisTexte,
@@ -163,19 +165,23 @@ class _HomePageState extends State<HomePage> {
                           ),
                           Expanded(
                             child: InkWell(
-                              onTap: () => _selectDate(context, isStartDate: false),
+                              onTap: () =>
+                                  _selectDate(context, isStartDate: false),
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
                                 child: Text(
-                                  _endDate != null 
+                                  _endDate != null
                                       ? '${_endDate!.day}/${_endDate!.month}/${_endDate!.year}'
                                       : 'Date',
                                   style: TextStyle(
-                                    color: _endDate != null 
-                                        ? grisTexte 
+                                    color: _endDate != null
+                                        ? grisTexte
                                         : grisTexte.withOpacity(0.5),
                                     fontSize: 14,
-                                    fontWeight: _endDate != null ? FontWeight.bold : FontWeight.normal,
+                                    fontWeight: _endDate != null
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
                                   ),
                                 ),
                               ),
@@ -183,7 +189,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ],
                       ),
-                      
+
                       // Bouton Rechercher
                       Container(
                         width: double.infinity,
@@ -218,7 +224,7 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-                
+
                 const Spacer(), // Pousse la barre de navigation vers le bas
               ],
             ),
@@ -230,77 +236,81 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _search() {
-  // Vérifier qu'au moins un critère est rempli
-  if (_selectedPrestaType == null && _selectedSubType == null && _lieuText == 'Lieu' && _startDate == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Veuillez sélectionner au moins un critère de recherche'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-    return;
-  }
+    // Vérifier qu'au moins un critère est rempli
+    if (_selectedPrestaType == null &&
+        _selectedSubType == null &&
+        _lieuText == 'Lieu' &&
+        _startDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Veuillez sélectionner au moins un critère de recherche'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
-  // Si un sous-type est sélectionné, naviguer vers la liste des prestataires de ce sous-type
-  if (_selectedSubType != null) {
-    print('Navigation avec sous-type: ${_selectedSubType!['name']}');
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PrestatairesListScreen(
-          prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
-          subType: _selectedSubType,
-          location: _lieuText != 'Lieu' ? _lieuText : null,
-          startDate: _startDate,
-          endDate: _endDate,
+    // Si un sous-type est sélectionné, naviguer vers la liste des prestataires de ce sous-type
+    if (_selectedSubType != null) {
+      print('Navigation avec sous-type: ${_selectedSubType!['name']}');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PrestatairesListScreen(
+            prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
+            subType: _selectedSubType,
+            location: _lieuText != 'Lieu' ? _lieuText : null,
+            startDate: _startDate,
+            endDate: _endDate,
+          ),
         ),
-      ),
-    );
-  }
-  // Si seulement un type de prestataire est sélectionné
-  else if (_selectedPrestaType != null) {
-    print('Navigation avec type principal: ${_selectedPrestaType!['name']}');
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PrestatairesListScreen(
-          prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
-          location: _lieuText != 'Lieu' ? _lieuText : null,
-          startDate: _startDate,
-          endDate: _endDate,
+      );
+    }
+    // Si seulement un type de prestataire est sélectionné
+    else if (_selectedPrestaType != null) {
+      print('Navigation avec type principal: ${_selectedPrestaType!['name']}');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PrestatairesListScreen(
+            prestaType: PrestaTypeModel.fromMap(_selectedPrestaType!),
+            location: _lieuText != 'Lieu' ? _lieuText : null,
+            startDate: _startDate,
+            endDate: _endDate,
+          ),
         ),
-      ),
-    );
+      );
+    }
+    // Si seul le lieu est renseigné
+    else if (_lieuText != 'Lieu') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Recherche par lieu : $_lieuText'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      // Ici vous pourriez naviguer vers une liste de tous les prestataires filtrés par lieu
+    }
+    // Si seules les dates sont renseignées
+    else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Recherche par date'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      // Ici vous pourriez naviguer vers une liste de tous les prestataires disponibles à ces dates
+    }
   }
-  // Si seul le lieu est renseigné
-  else if (_lieuText != 'Lieu') {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Recherche par lieu : $_lieuText'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-    // Ici vous pourriez naviguer vers une liste de tous les prestataires filtrés par lieu
-  }
-  // Si seules les dates sont renseignées
-  else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Recherche par date'),
-        duration: Duration(seconds: 2),
-      ),
-    );
-    // Ici vous pourriez naviguer vers une liste de tous les prestataires disponibles à ces dates
-  }
-}
 
   // Fonction pour sélectionner un lieu
-  
+
   Future<void> _showLieuSelector(BuildContext context) async {
     final regionService = RegionService();
     List<String> regions = [];
     bool isLoading = true;
-    
+
     // Récupérer les régions avant d'afficher le modal
     try {
       regions = await regionService.getAllRegions();
@@ -311,7 +321,7 @@ class _HomePageState extends State<HomePage> {
     } finally {
       isLoading = false;
     }
-    
+
     showDialog<String>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -322,17 +332,17 @@ class _HomePageState extends State<HomePage> {
             content: SizedBox(
               width: double.maxFinite,
               child: isLoading
-                ? Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: regions.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        title: Text(regions[index]),
-                        onTap: () => Navigator.pop(context, regions[index]),
-                      );
-                    },
-                  ),
+                  ? Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: regions.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(regions[index]),
+                          onTap: () => Navigator.pop(context, regions[index]),
+                        );
+                      },
+                    ),
             ),
           );
         },
@@ -347,112 +357,119 @@ class _HomePageState extends State<HomePage> {
   }
 
 // Modification de la fonction _selectDate dans lib/Home/HomeScreen.dart
-Future<void> _selectDate(BuildContext context, {required bool isStartDate}) async {
-  final DateTime now = DateTime.now();
-  
-  // Définir la bonne date initiale pour chaque cas
-  DateTime initialDate;
-  if (isStartDate) {
-    initialDate = _startDate ?? now;
-  } else {
-    // Pour la date de fin, utiliser la date de début + 1 jour ou aujourd'hui + 1 jour
-    initialDate = _endDate ?? (_startDate != null ? _startDate!.add(const Duration(days: 1)) : now.add(const Duration(days: 1)));
-  }
-  
-  // Assurer que la date initiale est dans la plage valide
-  if (initialDate.isBefore(now)) {
-    initialDate = now;
-  }
-  
-  final DateTime? picked = await showDatePicker(
-    context: context,
-    initialDate: initialDate,
-    // Pour la date de début, commencer à aujourd'hui
-    // Pour la date de fin, commencer à la date de début ou aujourd'hui
-    firstDate: isStartDate ? now : (_startDate ?? now),
-    lastDate: DateTime(now.year + 3), // Permettre jusqu'à 3 ans dans le futur
-    
-    // S'assurer qu'aucun jour n'est désactivé
-    selectableDayPredicate: (DateTime date) {
-      return true; // Permettre tous les jours, y compris les weekends
-    },
-    
-    // Peut-être ajouter des paramètres supplémentaires pour personnaliser l'apparence
-    builder: (context, child) {
-      return Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.light(
-            primary: const Color(0xFF524B46), // Couleur accent
-            onPrimary: Colors.white,
-            surface: Colors.white,
-            onSurface: const Color(0xFF2B2B2B),
-          ),
-        ),
-        child: child!,
-      );
-    },
-  );
+  Future<void> _selectDate(BuildContext context,
+      {required bool isStartDate}) async {
+    final DateTime now = DateTime.now();
 
-  if (picked != null) {
-    setState(() {
-      if (isStartDate) {
-        _startDate = picked;
-        // Réinitialiser la date de fin si elle est antérieure à la nouvelle date de début
-        if (_endDate != null && _endDate!.isBefore(_startDate!)) {
-          _endDate = null;
-        }
-      } else {
-        _endDate = picked;
-      }
-    });
-  }
-}
-  // Ouvre le modal des filtres prestataires
-  Future<void> _showPrestatairesFilter(BuildContext context) async {
-  final result = await showModalBottomSheet<dynamic>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => DraggableScrollableSheet(
-      initialChildSize: 0.75,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      builder: (_, scrollController) {
-        return const PrestatairesFilterScreen();
+    // Définir la bonne date initiale pour chaque cas
+    DateTime initialDate;
+    if (isStartDate) {
+      initialDate = _startDate ?? now;
+    } else {
+      // Pour la date de fin, utiliser la date de début + 1 jour ou aujourd'hui + 1 jour
+      initialDate = _endDate ??
+          (_startDate != null
+              ? _startDate!.add(const Duration(days: 1))
+              : now.add(const Duration(days: 1)));
+    }
+
+    // Assurer que la date initiale est dans la plage valide
+    if (initialDate.isBefore(now)) {
+      initialDate = now;
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      // Pour la date de début, commencer à aujourd'hui
+      // Pour la date de fin, commencer à la date de début ou aujourd'hui
+      firstDate: isStartDate ? now : (_startDate ?? now),
+      lastDate: DateTime(now.year + 3), // Permettre jusqu'à 3 ans dans le futur
+
+      // S'assurer qu'aucun jour n'est désactivé
+      selectableDayPredicate: (DateTime date) {
+        return true; // Permettre tous les jours, y compris les weekends
       },
-    ),
-  );
 
-  // Traiter le résultat selon ce qui a été sélectionné
-  if (result != null) {
-    print("Selected result: $result"); // Ajoutez ce debug
-    
-    // Si le résultat contient à la fois un type de prestataire et un sous-type
-    if (result is Map<String, dynamic> && result.containsKey('prestaType') && result.containsKey('subType')) {
-      final prestaType = result['prestaType'];
-      final subType = result['subType'];
-      
+      // Peut-être ajouter des paramètres supplémentaires pour personnaliser l'apparence
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: const Color(0xFF524B46), // Couleur accent
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: const Color(0xFF2B2B2B),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
       setState(() {
-        _selectedPrestaType = prestaType;
-        _selectedSubType = subType;
-        // Personnaliser le texte en fonction du type
-        if (prestaType['name'].toString().toLowerCase() == 'traiteur') {
-          _prestaireText = '${prestaType['name']}: ${subType['name']}';
+        if (isStartDate) {
+          _startDate = picked;
+          // Réinitialiser la date de fin si elle est antérieure à la nouvelle date de début
+          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+            _endDate = null;
+          }
         } else {
-          _prestaireText = '${prestaType['name']}: ${subType['name']}';
+          _endDate = picked;
         }
-      });
-    } 
-    // Si le résultat est juste un type de prestataire
-    else {
-      setState(() {
-        _selectedPrestaType = result;
-        _selectedSubType = null;
-        _prestaireText = result['name'];
       });
     }
   }
-}
+
+  // Ouvre le modal des filtres prestataires
+  Future<void> _showPrestatairesFilter(BuildContext context) async {
+    final result = await showModalBottomSheet<dynamic>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) {
+          return const PrestatairesFilterScreen();
+        },
+      ),
+    );
+
+    // Traiter le résultat selon ce qui a été sélectionné
+    if (result != null) {
+      print("Selected result: $result"); // Ajoutez ce debug
+
+      // Si le résultat contient à la fois un type de prestataire et un sous-type
+      if (result is Map<String, dynamic> &&
+          result.containsKey('prestaType') &&
+          result.containsKey('subType')) {
+        final prestaType = result['prestaType'];
+        final subType = result['subType'];
+
+        setState(() {
+          _selectedPrestaType = prestaType;
+          _selectedSubType = subType;
+          // Personnaliser le texte en fonction du type
+          if (prestaType['name'].toString().toLowerCase() == 'traiteur') {
+            _prestaireText = '${prestaType['name']}: ${subType['name']}';
+          } else {
+            _prestaireText = '${prestaType['name']}: ${subType['name']}';
+          }
+        });
+      }
+      // Si le résultat est juste un type de prestataire
+      else {
+        setState(() {
+          _selectedPrestaType = result;
+          _selectedSubType = null;
+          _prestaireText = result['name'];
+        });
+      }
+    }
+  }
 
   Widget _buildSearchField({
     required IconData icon,
@@ -482,7 +499,7 @@ Future<void> _selectDate(BuildContext context, {required bool isStartDate}) asyn
       ),
     );
   }
-  
+
   // Barre de navigation
   Widget _buildBottomNavigationBar(Color grisTexte, Color accentColor) {
     return Container(
@@ -504,32 +521,41 @@ Future<void> _selectDate(BuildContext context, {required bool isStartDate}) asyn
           _buildNavItem(Icons.favorite_border, 'Favoris', grisTexte),
           _buildNavItem(Icons.home, 'Accueil', accentColor, isSelected: true),
           _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte),
-          _buildNavItem(Icons.person_outline, 'Profil', grisTexte),
+          _buildNavItem(
+            Icons.person_outline,
+            'Profil',
+            grisTexte,
+            onTap: () => context.go(PartnerAdminRoutes.profileSelector),
+          ),
         ],
       ),
     );
   }
-  
+
   // Élément de la barre de navigation
-  Widget _buildNavItem(IconData icon, String label, Color color, {bool isSelected = false}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: isSelected ? color : color.withOpacity(0.5),
-          size: 22,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
+  Widget _buildNavItem(IconData icon, String label, Color color,
+      {bool isSelected = false, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
             color: isSelected ? color : color.withOpacity(0.5),
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+            size: 22,
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? color : color.withOpacity(0.5),
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
