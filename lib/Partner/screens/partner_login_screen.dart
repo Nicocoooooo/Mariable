@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../shared/widgets/custom_app_bar.dart';
 import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/services/auth_service.dart';
 import '../../shared/constants/style_constants.dart';
 import '../../utils/logger.dart';
+import '../../routes_partner_admin.dart';
 
 class PartnerLoginScreen extends StatefulWidget {
   const PartnerLoginScreen({Key? key}) : super(key: key);
@@ -78,10 +78,14 @@ class _PartnerLoginScreenState extends State<PartnerLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(
-        title: 'Connexion Partenaire',
+      appBar: AppBar(
+        title: const Text('Connexion Partenaire'),
         backgroundColor: Colors.white,
         foregroundColor: PartnerAdminStyles.accentColor,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(PartnerAdminRoutes.profileSelector),
+        ),
       ),
       body: _isLoading
           ? const LoadingIndicator(message: 'Connexion en cours...')
