@@ -13,7 +13,7 @@ import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
 
 class AdminReservationAnalyticsScreen extends StatefulWidget {
-  const AdminReservationAnalyticsScreen({Key? key}) : super(key: key);
+  const AdminReservationAnalyticsScreen({super.key});
 
   @override
   State<AdminReservationAnalyticsScreen> createState() =>

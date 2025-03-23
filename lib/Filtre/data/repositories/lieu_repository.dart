@@ -131,7 +131,6 @@ class LieuRepository {
 
 Future<List<Map<String, dynamic>>> getTarifsByPrestaId(String prestaId) async {
   try {
-    print('DEBUG: Fetching tarifs for prestataire: $prestaId');
     
     final tarifsResponse = await _client
         .from('tarifs')
@@ -139,12 +138,12 @@ Future<List<Map<String, dynamic>>> getTarifsByPrestaId(String prestaId) async {
         .eq('presta_id', prestaId)
         .order('prix_base', ascending: true);
     
-    print('DEBUG: Raw response length: ${tarifsResponse.length}');
+
     
     // Afficher les IDs bruts pour déboguer
     for (var i = 0; i < tarifsResponse.length; i++) {
       if (tarifsResponse[i] is Map && tarifsResponse[i]['id'] != null) {
-        print('DEBUG: Tarif #$i - ID: ${tarifsResponse[i]['id']} - Nom: ${tarifsResponse[i]['nom_formule']}');
+        
       }
     }
     
@@ -168,15 +167,14 @@ Future<List<Map<String, dynamic>>> getTarifsByPrestaId(String prestaId) async {
           
           manuallyVerifiedTarifs.add(cleanTarif);
         } else {
-          print('DEBUG: Skipping duplicate tarif ID: $tarifId');
+
         }
       }
     }
     
-    print('DEBUG: Final unique tarifs count: ${manuallyVerifiedTarifs.length}');
     return manuallyVerifiedTarifs;
   } catch (e) {
-    print('ERROR: Error fetching tarifs for prestataire: $prestaId - $e');
+
     return [];
   }
 }
@@ -280,7 +278,6 @@ class AvisService {
     required String commentaire,
   }) async {
     try {
-      print('Adding avis for prestataire: $prestataireId by user: $userId');
       
       await _client.from('avis').insert({
         'prestataire_id': prestataireId,
@@ -289,11 +286,10 @@ class AvisService {
         'commentaire': commentaire,
         'status': 'en_attente', // L'avis sera modéré avant publication
       });
-      
-      print('Successfully added avis for prestataire: $prestataireId');
+
       return true;
     } catch (e) {
-      print('Error adding avis for prestataire: $prestataireId: $e');
+
       return false;
     }
   }

@@ -159,7 +159,7 @@ class _AdminUserAnalyticsScreenState extends State<AdminUserAnalyticsScreen> {
               child: Text(
                 'Statistiques détaillées sur les utilisateurs de la plateforme',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                      color: PartnerAdminStyles.textColor..withAlpha(179),
                     ),
               ),
             ),

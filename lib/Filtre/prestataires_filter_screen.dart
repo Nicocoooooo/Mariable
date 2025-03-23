@@ -61,9 +61,7 @@ Future<void> _fetchPrestaTypes() async {
     try {
       // Utilisez le repository au lieu d'accéder directement à Supabase
       typesData = await _repository.getPrestaTypesAsMap();
-      print('Got ${typesData.length} presta types from repository');
     } catch (innerError) {
-      print('Error fetching presta types from repository: $innerError');
       // Utiliser des données factices si la requête échoue
       typesData = [
         {'id': 1, 'name': 'Lieu', 'description': 'Lieux pour votre mariage'},

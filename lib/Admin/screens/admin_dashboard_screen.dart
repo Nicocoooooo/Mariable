@@ -10,7 +10,7 @@ import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({Key? key}) : super(key: key);
+  const AdminDashboardScreen({super.key});
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();

@@ -7,7 +7,7 @@ import '../shared/widgets/loading_indicator.dart';
 import '../utils/logger.dart';
 
 class TestPage extends StatefulWidget {
-  const TestPage({Key? key}) : super(key: key);
+  const TestPage({super.key});
 
   @override
   State<TestPage> createState() => _TestPageState();

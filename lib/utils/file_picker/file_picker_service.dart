@@ -1,6 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'dart:typed_data';
-
 import 'default_file_picker.dart';
 import 'ios_file_picker.dart';
 

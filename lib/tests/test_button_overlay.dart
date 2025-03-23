@@ -4,7 +4,7 @@ import '../routes_partner_admin.dart';
 
 /// Widget d'overlay pour accéder rapidement à la page de test
 class TestButtonOverlay extends StatelessWidget {
-  const TestButtonOverlay({Key? key}) : super(key: key);
+  const TestButtonOverlay({super.key});
 
   @override
   Widget build(BuildContext context) {

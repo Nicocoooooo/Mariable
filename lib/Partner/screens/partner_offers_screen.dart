@@ -14,7 +14,7 @@ import '../widgets/offers/offer_card.dart';
 import '../services/tarif_service.dart';
 
 class PartnerOffersScreen extends StatefulWidget {
-  const PartnerOffersScreen({Key? key}) : super(key: key);
+  const PartnerOffersScreen({super.key});
 
   @override
   State<PartnerOffersScreen> createState() => _PartnerOffersScreenState();

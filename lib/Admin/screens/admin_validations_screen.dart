@@ -11,7 +11,7 @@ import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
 
 class AdminValidationsScreen extends StatefulWidget {
-  const AdminValidationsScreen({Key? key}) : super(key: key);
+  const AdminValidationsScreen({super.key});
 
   @override
   State<AdminValidationsScreen> createState() => _AdminValidationsScreenState();

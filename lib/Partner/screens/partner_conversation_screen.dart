@@ -8,7 +8,6 @@ import '../../shared/models/message_model.dart';
 import '../../utils/logger.dart';
 import '../services/message_service.dart';
 import '../widgets/messages/message_bubble.dart';
-import 'package:realtime_client/src/types.dart'; 
 import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
 
 
@@ -75,7 +74,6 @@ void _setupRealtimeSubscription() {
       table: 'messages',
       callback: (dynamic payload) {
         // Debug pour voir la structure exacte du payload
-        print('Payload reçu: $payload');
         
         if (!mounted) return;
         
