@@ -127,10 +127,11 @@ class LieuRepository {
     }
   }
 
+// Remplacez complètement la fonction getTarifsByPrestaId dans lib/Filtre/data/repositories/lieu_repository.dart
 
 Future<List<Map<String, dynamic>>> getTarifsByPrestaId(String prestaId) async {
   try {
-    _logger.d('Fetching tarifs for prestataire: $prestaId');
+    print('DEBUG: Fetching tarifs for prestataire: $prestaId');
     
     final tarifsResponse = await _client
         .from('tarifs')
@@ -138,10 +139,44 @@ Future<List<Map<String, dynamic>>> getTarifsByPrestaId(String prestaId) async {
         .eq('presta_id', prestaId)
         .order('prix_base', ascending: true);
     
-    _logger.d('Found ${tarifsResponse.length} tarifs for prestataire: $prestaId');
-    return tarifsResponse;
+    print('DEBUG: Raw response length: ${tarifsResponse.length}');
+    
+    // Afficher les IDs bruts pour déboguer
+    for (var i = 0; i < tarifsResponse.length; i++) {
+      if (tarifsResponse[i] is Map && tarifsResponse[i]['id'] != null) {
+        print('DEBUG: Tarif #$i - ID: ${tarifsResponse[i]['id']} - Nom: ${tarifsResponse[i]['nom_formule']}');
+      }
+    }
+    
+    // Créer une liste de tarifs manuellement vérifiés
+    final List<Map<String, dynamic>> manuallyVerifiedTarifs = [];
+    final Set<String> processedIds = {};
+    
+    for (var tarif in tarifsResponse) {
+      if (tarif is Map<String, dynamic> && tarif.containsKey('id')) {
+        String tarifId = tarif['id'].toString();
+        
+        // Vérifier si on a déjà traité cet ID
+        if (!processedIds.contains(tarifId)) {
+          processedIds.add(tarifId);
+          
+          // Créer une nouvelle copie du tarif pour éviter les références partagées
+          Map<String, dynamic> cleanTarif = {};
+          tarif.forEach((key, value) {
+            cleanTarif[key] = value;
+          });
+          
+          manuallyVerifiedTarifs.add(cleanTarif);
+        } else {
+          print('DEBUG: Skipping duplicate tarif ID: $tarifId');
+        }
+      }
+    }
+    
+    print('DEBUG: Final unique tarifs count: ${manuallyVerifiedTarifs.length}');
+    return manuallyVerifiedTarifs;
   } catch (e) {
-_logger.e('Error fetching tarifs for prestataire: $prestaId: ${e.toString()}');
+    print('ERROR: Error fetching tarifs for prestataire: $prestaId - $e');
     return [];
   }
 }
