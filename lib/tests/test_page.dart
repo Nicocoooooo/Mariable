@@ -4,7 +4,6 @@ import '../shared/services/auth_service.dart';
 import '../Partner/models/partner_model.dart';
 import '../shared/widgets/custom_app_bar.dart';
 import '../shared/widgets/loading_indicator.dart';
-import '../shared/widgets/error_view.dart';
 import '../utils/logger.dart';
 
 class TestPage extends StatefulWidget {

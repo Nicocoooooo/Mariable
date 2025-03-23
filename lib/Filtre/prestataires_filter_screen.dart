@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../Filtre/data/repositories/presta_repository.dart';
-import '../Filtre/data/models/presta_type_model.dart';
 import '../widgets/empty_state.dart';
 import 'lieu_types_screen.dart';
 import 'traiteur_types_screen.dart';
