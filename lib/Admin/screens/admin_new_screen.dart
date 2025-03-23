@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../services/admin_service.dart';
 import '../../shared/constants/style_constants.dart';
 import '../../routes_partner_admin.dart';
-import '../../utils/logger.dart';
 
 class AdminNewScreen extends StatefulWidget {
   const AdminNewScreen({Key? key}) : super(key: key);
@@ -52,7 +50,7 @@ class _AdminNewScreenState extends State<AdminNewScreen> {
                   margin: const EdgeInsets.only(
                       bottom: PartnerAdminStyles.paddingMedium),
                   decoration: BoxDecoration(
-                    color: PartnerAdminStyles.errorColor.withOpacity(0.1),
+                    color: PartnerAdminStyles.errorColor.withAlpha(26),
                     borderRadius: BorderRadius.circular(
                         PartnerAdminStyles.borderRadiusMedium),
                   ),

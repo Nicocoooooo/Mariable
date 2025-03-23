@@ -612,7 +612,7 @@ class _AdminPartnerEditScreenState extends State<AdminPartnerEditScreen> {
                       'Remplissez le formulaire pour créer un nouveau prestataire',
                       style: TextStyle(
                         fontSize: 12,
-                        color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                        color: PartnerAdminStyles.textColor.withAlpha(179), 
                       ),
                     ),
                   ],
@@ -672,7 +672,7 @@ class _AdminPartnerEditScreenState extends State<AdminPartnerEditScreen> {
                     'ID: ${widget.partnerId}',
                     style: TextStyle(
                       fontSize: 12,
-                      color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                      color: PartnerAdminStyles.textColor.withAlpha(179), 
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -720,7 +720,7 @@ class _AdminPartnerEditScreenState extends State<AdminPartnerEditScreen> {
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withAlpha(51),
         borderRadius:
             BorderRadius.circular(PartnerAdminStyles.borderRadiusSmall),
       ),

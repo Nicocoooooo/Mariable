@@ -1,7 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/presta_type_model.dart';
-import 'package:logger/logger.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:logger/logger.dart';
 
 class PrestaRepository {

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../Filtre/data/repositories/presta_repository.dart';
 import '../widgets/empty_state.dart';
 
 class LieuTypesScreen extends StatefulWidget {
-  const LieuTypesScreen({Key? key}) : super(key: key);
+  const LieuTypesScreen({super.key});
 
   @override
   State<LieuTypesScreen> createState() => _LieuTypesScreenState();
@@ -12,7 +11,6 @@ class LieuTypesScreen extends StatefulWidget {
 
 class _LieuTypesScreenState extends State<LieuTypesScreen> {
   final _searchController = TextEditingController();
-  final PrestaRepository _repository = PrestaRepository();
   
   List<Map<String, dynamic>> _lieuTypes = [];
   List<Map<String, dynamic>> _filteredLieuTypes = [];
@@ -102,7 +100,7 @@ class _LieuTypesScreenState extends State<LieuTypesScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(26),
             spreadRadius: 0,
             blurRadius: 10,
             offset: const Offset(0, -3),
@@ -124,7 +122,7 @@ class _LieuTypesScreenState extends State<LieuTypesScreen> {
                     width: 40,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.3),
+                      color: Colors.grey.withAlpha(77),
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
@@ -154,10 +152,10 @@ class _LieuTypesScreenState extends State<LieuTypesScreen> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Rechercher un type de lieu',
-                hintStyle: TextStyle(color: grisTexte.withOpacity(0.5)),
-                prefixIcon: Icon(Icons.search, color: grisTexte.withOpacity(0.6)),
+                hintStyle: TextStyle(color: grisTexte.withAlpha(128)), // 0.5 * 255 = 127.5 ≈ 128
+                prefixIcon: Icon(Icons.search, color: grisTexte.withAlpha(153)), // 0.6 * 255 = 153
                 filled: true,
-                fillColor: beige.withOpacity(0.3),
+                fillColor: beige.withAlpha(77), 
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -168,7 +166,7 @@ class _LieuTypesScreenState extends State<LieuTypesScreen> {
           ),
           
           // Divider
-          Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.2)),
+          Divider(height: 1, thickness: 1, color: Colors.grey.withAlpha(51)),
           
           // List of lieu types
           Expanded(
@@ -224,7 +222,7 @@ class _LieuTypesScreenState extends State<LieuTypesScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withAlpha(15), 
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -248,10 +246,10 @@ class _LieuTypesScreenState extends State<LieuTypesScreen> {
                         return Container(
                           width: 100,
                           height: 80,
-                          color: accentColor.withOpacity(0.1),
+                          color: accentColor.withAlpha(26),
                           child: Icon(
                             Icons.image_not_supported_outlined,
-                            color: accentColor.withOpacity(0.5),
+                            color: accentColor.withAlpha(128),
                           ),
                         );
                       },
@@ -259,10 +257,10 @@ class _LieuTypesScreenState extends State<LieuTypesScreen> {
                   : Container(
                       width: 100,
                       height: 80,
-                      color: accentColor.withOpacity(0.1),
+                      color: accentColor.withAlpha(26), 
                       child: Icon(
                         Icons.place_outlined,
-                        color: accentColor.withOpacity(0.5),
+                        color: accentColor.withAlpha(128),
                       ),
                     ),
             ),
@@ -287,7 +285,7 @@ class _LieuTypesScreenState extends State<LieuTypesScreen> {
                       lieuType['description'] ?? 'Aucune description',
                       style: TextStyle(
                         fontSize: 13,
-                        color: grisTexte.withOpacity(0.7),
+                        color: grisTexte.withAlpha(179),
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

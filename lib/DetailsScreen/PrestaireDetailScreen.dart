@@ -4,16 +4,14 @@ import 'package:flutter/services.dart';
 import 'dart:collection'; // Pour LinkedHashMap
 import '../Filtre/data/repositories/lieu_repository.dart'; // Ajoutez cette ligne
 import '../Filtre/data/models/avis_model.dart';
-import '../widgets/avis_card.dart';
 import '../utils/fake_data.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../Widgets/availability_selector.dart';
 import 'package:intl/intl.dart';
 import 'ImageGalleryScreen.dart';
-import 'dart:math' as math;
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../Filtre/data/repositories/presta_repository.dart';
+import 'package:logging/logging.dart';
+
 
 class PrestaireDetailScreen extends StatefulWidget {
   final Map<String, dynamic> prestataire;
@@ -36,7 +34,6 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   List<String> _galleryImages = [];
   bool _isLoadingAvis = true;
   List<Map<String, dynamic>> _formules = [];
-  final LieuRepository _lieuRepository = LieuRepository(); 
 
 
   @override
@@ -336,7 +333,6 @@ Widget build(BuildContext context) {
           ? widget.prestataire['note_moyenne'] 
           : double.tryParse(widget.prestataire['note_moyenne'].toString()))
       : null;
-  final bool isFavorite = false;
    // ici 
 
   // Formules/Packages (à partir de tarifs)
@@ -369,7 +365,7 @@ Widget build(BuildContext context) {
       elevation: _isScrolled ? 4 : 0,
       leading: IconButton(
         icon: CircleAvatar(
-          backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
+          backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
           child: Icon(
             Icons.arrow_back,
             color: _isScrolled ? Colors.black : Colors.white,
@@ -380,7 +376,7 @@ Widget build(BuildContext context) {
       actions: [
         IconButton(
           icon: CircleAvatar(
-            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
+            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
             child: Icon(
               Icons.share,
               color: _isScrolled ? Colors.black : Colors.white,
@@ -392,11 +388,7 @@ Widget build(BuildContext context) {
         ),
         IconButton(
           icon: CircleAvatar(
-            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
-            child: Icon(
-              isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: _isScrolled ? (isFavorite ? Colors.red : Colors.black) : Colors.white,
-            ),
+            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
           ),
           onPressed: () {
             // Ajouter/retirer des favoris
@@ -1148,7 +1140,9 @@ Widget _buildCancellationItem(String title, String subtitle, Color color) {
 Widget _buildFeaturesAndServices() {
   // Récupérer proprement le type de prestataire
   var prestaTypeId = widget.prestataire['presta_type_id'];
-  print('Type original: $prestaTypeId');
+  final Logger _logger = Logger('PrestaireDetailScreen');
+  _logger.fine('Type original: $prestaTypeId');
+
 
   // Vérifier le nom pour corriger les traiteurs sans ID correct
   String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
@@ -1494,7 +1488,7 @@ else if (prestaTypeId == 2) {
     setState(() => _isLoadingAvis = true);
     try {
       // Au lieu d'appeler l'API, utilisez les données fictives
-      if (widget.prestataire != null && widget.prestataire['id'] != null) {
+      if (widget.prestataire['id'] != null) {
         // Petit délai pour simuler un appel réseau
         await Future.delayed(const Duration(milliseconds: 800));
         
@@ -1513,17 +1507,6 @@ else if (prestaTypeId == 2) {
   }
 
 
-
-// Méthode pour calculer la moyenne des notes
-double _calculateAverageRating() {
-  if (_avis.isEmpty) return 0.0;
-  
-  double total = 0.0;
-  for (var avis in _avis) {
-    total += avis.note;
-  }
-  return total / _avis.length;
-}
 
 Widget _buildRecommendedPrestataires() {
   if (_isLoadingRecommendations) {
@@ -1678,7 +1661,7 @@ void _navigateToPrestaireDetail(Map<String, dynamic> prestataire) async {
         .limit(1)
         .single();
       
-      if (response != null) {
+      if (response.isNotEmpty) {
         print('Données complètes récupérées avec succès');
         enrichedData = response;
       }
@@ -1916,339 +1899,6 @@ String _getDefaultImageByType(int prestaTypeId) {
   }
 }
 
-void _navigateToDetails(Map<String, dynamic> prestataire) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => PrestaireDetailScreen(
-        prestataire: prestataire,
-      ),
-    ),
-  );
-}
-
-// Widget pour l'état vide (aucun avis)
-Widget _buildEmptyAvisState() {
-  return Container(
-    padding: const EdgeInsets.symmetric(vertical: 24),
-    alignment: Alignment.center,
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.rate_review_outlined,
-          size: 48,
-          color: Colors.grey[400],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Aucun avis pour le moment',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[600],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Soyez le premier à donner votre avis!',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[500],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-// Méthode pour afficher tous les avis dans une modale
-void _showAllAvis() {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (context) {
-      return DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) {
-          return Column(
-            children: [
-              // Header avec titre et bouton fermer
-              Container(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Text(
-                          'Tous les avis',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF524B46),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                _calculateAverageRating().toStringAsFixed(1),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.star,
-                                color: Colors.amber,
-                                size: 16,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Liste des avis
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(20),
-                  itemCount: _avis.length,
-                  itemBuilder: (context, index) => AvisCard(avis: _avis[index]),
-                ),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-
-
-
-
-
-// 7. Enfin, implémentons la méthode pour afficher le dialogue d'ajout d'avis
-
-
-  void _showAddAvisDialog() {
-  double rating = 5.0;
-  final commentController = TextEditingController();
-  final avisService = AvisService(); // Instancier le service ici
-  
-  showDialog(
-    context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setState) {
-        return AlertDialog(
-          title: const Text('Laisser un avis'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Votre note:'),
-              const SizedBox(height: 8),
-              // Étoiles pour la notation
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return IconButton(
-                    icon: Icon(
-                      index < rating ? Icons.star : Icons.star_border,
-                      color: Colors.amber,
-                      size: 36,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        rating = index + 1.0;
-                      });
-                    },
-                  );
-                }),
-              ),
-              const SizedBox(height: 16),
-              const Text('Votre commentaire:'),
-              const SizedBox(height: 8),
-              // Champ de commentaire
-              TextField(
-                controller: commentController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'Partagez votre expérience...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                // Vérifier si le commentaire n'est pas vide
-                if (commentController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Veuillez ajouter un commentaire'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                  return;
-                }
-                
-                // Récupérer l'ID utilisateur (exemple simple)
-                final userId = 'anonymous'; // ID temporaire pour les tests
-                
-                // Soumettre l'avis avec le AvisService au lieu de LieuRepository
-                final success = await avisService.addAvis(
-                  prestataireId: widget.prestataire['id'],
-                  userId: userId,
-                  note: rating,
-                  commentaire: commentController.text.trim(),
-                );
-                
-                Navigator.pop(context);
-                
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Merci pour votre avis! Il sera visible après modération.'),
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Une erreur est survenue lors de l\'envoi de votre avis'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF524B46),
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Soumettre'),
-            ),
-          ],
-        );
-      },
-    ),
-  );
-}
-
-// Ces deux méthodes sont des placeholders à adapter selon votre système d'authentification
-bool _userIsLoggedIn() {
-  // Version simplifiée temporaire
-  return true; // Toujours autorisé pendant le développement
-}
-
-String _getCurrentUserId() {
-  // Version simplifiée temporaire
-  return "user_test_id"; // ID fixe pour les tests
-}
-
-
-// Méthode pour ajouter les caractéristiques numériques et textuelles
-void _addNumericFeatures(Map<String, dynamic> lieu, Map<String, dynamic> features) {
-  // Capacité maximale
-  if (lieu.containsKey('capacite_max') && lieu['capacite_max'] != null) {
-    features['Capacité maximale'] = {
-      'type': 'numeric',
-      'value': lieu['capacite_max'],
-      'unit': 'invités',
-      'icon': Icons.people
-    };
-  }
-  
-  // Capacité minimale
-  if (lieu.containsKey('capacite_min') && lieu['capacite_min'] != null) {
-    features['Capacité minimale'] = {
-      'type': 'numeric',
-      'value': lieu['capacite_min'],
-      'unit': 'invités',
-      'icon': Icons.people_outline
-    };
-  }
-  
-  // Capacité d'hébergement
-  if (lieu.containsKey('capacite_hebergement') && lieu['capacite_hebergement'] != null) {
-    features['Capacité d\'hébergement'] = {
-      'type': 'numeric',
-      'value': lieu['capacite_hebergement'],
-      'unit': 'couchages',
-      'icon': Icons.hotel
-    };
-  }
-  
-  // Nombre de chambres
-  if (lieu.containsKey('nombre_chambres') && lieu['nombre_chambres'] != null) {
-    features['Nombre de chambres'] = {
-      'type': 'numeric',
-      'value': lieu['nombre_chambres'],
-      'unit': '',
-      'icon': Icons.bed
-    };
-  }
-  
-  // Superficie intérieure
-  if (lieu.containsKey('superficie_interieur') && lieu['superficie_interieur'] != null) {
-    features['Superficie intérieure'] = {
-      'type': 'numeric',
-      'value': lieu['superficie_interieur'],
-      'unit': 'm²',
-      'icon': Icons.square_foot
-    };
-  }
-  
-  // Superficie extérieure
-  if (lieu.containsKey('superficie_exterieur') && lieu['superficie_exterieur'] != null) {
-    features['Superficie extérieure'] = {
-      'type': 'numeric',
-      'value': lieu['superficie_exterieur'],
-      'unit': 'm²',
-      'icon': Icons.grass
-    };
-  }
-}
 
 // Widget pour afficher un item numérique (avec valeur et unité)
 Widget _buildNumericFeatureItem({
@@ -2546,266 +2196,6 @@ String _getMonthName(int month) {
   return months[month - 1];
 }
 
-// Fonction pour classer les propriétés dans features ou services
-void _addFeatureOrService(String key, Map<String, dynamic> features, Map<String, IconData> services) {
-  // Table complète de correspondance basée sur le schéma Supabase
-  switch (key) {
-    // CARACTERISTIQUES DU LIEU
-    case 'espace_exterieur':
-      features['Espace extérieur'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.terrain
-      };
-      break;
-    case 'piscine':
-      features['Piscine'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.pool
-      };
-      break;
-    case 'parking':
-      features['Parking'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.local_parking
-      };
-      break;
-    case 'hebergement':
-      features['Hébergement sur place'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.hotel
-      };
-      break;
-    case 'exclusivite':
-      features['Exclusivité du lieu'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.verified_user
-      };
-      break;
-    case 'feu_artifice':
-      features['Feu d\'artifice autorisé'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.celebration
-      };
-      break;
-    case 'proximite_transports':
-      features['Proximité transports'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.directions_bus
-      };
-      break;
-    case 'accessibilite_pmr':
-      features['Accessibilité PMR'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.accessible
-      };
-      break;
-    case 'salle_reception':
-      features['Salle de réception'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.meeting_room
-      };
-      break;
-    case 'espace_cocktail':
-      features['Espace cocktail'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.local_bar
-      };
-      break;
-    case 'espace_ceremonie':
-      features['Espace cérémonie'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.celebration
-      };
-      break;
-    case 'jardin':
-      features['Jardin'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.park
-      };
-      break;
-    case 'parc':
-      features['Parc'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.nature
-      };
-      break;
-    case 'terrasse':
-      features['Terrasse'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.deck
-      };
-      break;
-    case 'cour':
-      features['Cour intérieure'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.yard
-      };
-      break;
-    case 'disponibilite_weekend':
-      features['Disponible le weekend'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.weekend
-      };
-      break;
-    case 'disponibilite_semaine':
-      features['Disponible en semaine'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.work
-      };
-      break;
-    case 'espace_enfants':
-      features['Espace enfants'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.child_care
-      };
-      break;
-    case 'climatisation':
-      features['Climatisation'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.ac_unit
-      };
-      break;
-    case 'espace_lacher_lanternes':
-      features['Espace pour lanternes'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.light
-      };
-      break;
-    case 'lieu_seance_photo':
-      features['Lieu pour photos'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.photo_camera
-      };
-      break;
-    case 'acces_bateau_helicoptere':
-      features['Accès bateau/hélicoptère'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.flight
-      };
-      break;
-    
-    // SERVICES INCLUS
-    case 'systeme_sonorisation':
-      services['Système de sonorisation'] = Icons.speaker;
-      break;
-    case 'tables_fournies':
-      services['Tables fournies'] = Icons.table_bar;
-      break;
-    case 'chaises_fournies':
-      services['Chaises fournies'] = Icons.event_seat;
-      break;
-    case 'nappes_fournies':
-      services['Nappes fournies'] = Icons.table_restaurant;
-      break;
-    case 'vaisselle_fournie':
-      services['Vaisselle fournie'] = Icons.restaurant;
-      break;
-    case 'eclairage':
-      services['Éclairage'] = Icons.lightbulb;
-      break;
-    case 'sonorisation':
-      services['Sonorisation'] = Icons.surround_sound;
-      break;
-    case 'wifi':
-      services['Wi-Fi'] = Icons.wifi;
-      break;
-    case 'coordinateur_sur_place':
-      services['Coordinateur sur place'] = Icons.people;
-      break;
-    case 'vestiaire':
-      services['Vestiaire'] = Icons.checkroom;
-      break;
-    case 'voiturier':
-      services['Service voiturier'] = Icons.car_rental;
-      break;
-  }
-}
-
-  // Widget pour afficher un avis
-  Widget _buildReviewItem({
-    required String author,
-    required String date,
-    required double rating,
-    required String comment,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.3),
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                author,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-               fontSize: 16,
-             ),
-           ),
-           Text(
-             date,
-             style: TextStyle(
-               color: Colors.grey[600],
-               fontSize: 14,
-             ),
-           ),
-         ],
-       ),
-       const SizedBox(height: 8),
-       Row(
-         children: [
-           for (int i = 1; i <= 5; i++)
-             Icon(
-               i <= rating ? Icons.star : 
-               (i - 0.5 <= rating ? Icons.star_half : Icons.star_border),
-               color: Colors.amber,
-               size: 16,
-             ),
-         ],
-       ),
-       const SizedBox(height: 8),
-       Text(
-         comment,
-         style: TextStyle(
-           color: Colors.grey[800],
-           fontSize: 14,
-           height: 1.5,
-         ),
-       ),
-     ],
-   ),
- );
-}
 
 void _showAllReviews() {
   final double? reviewRating = widget.prestataire['note_moyenne'] != null 

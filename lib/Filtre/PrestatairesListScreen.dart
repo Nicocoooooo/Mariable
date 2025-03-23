@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import '../Filtre/data/repositories/presta_repository.dart';
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/Widgets/prestataire_card.dart';
-import '../utils/logger.dart';
 import '../DetailsScreen/PrestaireDetailScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../Filtre/traiteur_types_screen.dart';
-import '../Filtre/data/repositories/presta_repository.dart';
-
 
 
 class PrestatairesListScreen extends StatefulWidget {

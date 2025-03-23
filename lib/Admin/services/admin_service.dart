@@ -47,7 +47,7 @@ class AdminService {
         'created_at': DateTime.now().toIso8601String(),
       }).select();
 
-      if (response != null && response.isNotEmpty) {
+      if (response.isNotEmpty) {
         return AdminModel.fromMap(response[0]);
       }
 

@@ -11,7 +11,7 @@ import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
 
 class AdminPartnersListScreen extends StatefulWidget {
-  const AdminPartnersListScreen({Key? key}) : super(key: key);
+  const AdminPartnersListScreen({super.key});
 
   @override
   State<AdminPartnersListScreen> createState() =>
@@ -213,7 +213,7 @@ class _AdminPartnersListScreenState extends State<AdminPartnersListScreen> {
                     child: Text(
                       'Aucun prestataire trouvé',
                       style: TextStyle(
-                        color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                        color: PartnerAdminStyles.textColor.withAlpha(179), 
                         fontSize: 16,
                       ),
                     ),
@@ -286,7 +286,7 @@ class _AdminPartnersListScreenState extends State<AdminPartnersListScreen> {
             child: Text(
               '${_filteredPartners.length} prestataires trouvés',
               style: TextStyle(
-                color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                color: PartnerAdminStyles.textColor.withAlpha(179),
                 fontSize: 12,
               ),
             ),
@@ -309,7 +309,7 @@ class _AdminPartnersListScreenState extends State<AdminPartnersListScreen> {
             _applyFilters();
           });
         },
-        selectedColor: PartnerAdminStyles.accentColor.withOpacity(0.2),
+        selectedColor: PartnerAdminStyles.accentColor.withAlpha(51),
         labelStyle: TextStyle(
           color: isSelected
               ? PartnerAdminStyles.accentColor

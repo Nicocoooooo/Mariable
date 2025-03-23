@@ -120,7 +120,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Text(
               'Voici une vue d\'ensemble de la plateforme Mariable',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                    color: PartnerAdminStyles.textColor.withAlpha(179),
                   ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
@@ -238,7 +238,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       leading: Container(
         padding: const EdgeInsets.all(PartnerAdminStyles.paddingSmall),
         decoration: BoxDecoration(
-          color: PartnerAdminStyles.accentColor.withOpacity(0.1),
+          color: PartnerAdminStyles.accentColor.withAlpha(26),
           borderRadius:
               BorderRadius.circular(PartnerAdminStyles.borderRadiusSmall),
         ),

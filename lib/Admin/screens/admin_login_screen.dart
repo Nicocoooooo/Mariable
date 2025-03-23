@@ -8,7 +8,7 @@ import '../../Admin/services/admin_service.dart';
 import '../../utils/logger.dart';
 
 class AdminLoginScreen extends StatefulWidget {
-  const AdminLoginScreen({Key? key}) : super(key: key);
+  const AdminLoginScreen({super.key});
 
   @override
   State<AdminLoginScreen> createState() => _AdminLoginScreenState();
@@ -61,7 +61,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     'Connectez-vous à votre espace administrateur',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                          color: PartnerAdminStyles.textColor.withAlpha(179),
                         ),
                   ),
                   const SizedBox(height: 48),
@@ -71,7 +71,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: PartnerAdminStyles.errorColor.withOpacity(0.1),
+                        color: PartnerAdminStyles.errorColor.withAlpha(26),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(

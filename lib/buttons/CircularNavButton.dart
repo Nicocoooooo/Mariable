@@ -85,7 +85,7 @@ class _CircularNavButtonState extends State<CircularNavButton> with SingleTicker
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(_isPressed ? 0.1 : 0.2),
+                    color: Colors.black.withAlpha(_isPressed ? 26 : 51),
                     blurRadius: _isPressed ? 3 : 6,
                     offset: Offset(0, _isPressed ? 1 : 2),
                   ),

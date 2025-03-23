@@ -4,8 +4,6 @@ import '../Filtre/prestataires_filter_screen.dart';
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
 import '../services/region_service.dart';
-import '../Widgets/lieu_selector_dialog.dart';
-import '../Filtre/traiteur_types_screen.dart';
 
 import '../routes_partner_admin.dart';
 
@@ -43,7 +41,7 @@ class _HomePageState extends State<HomePage> {
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
                 return Container(
-                  color: beige.withOpacity(0.5),
+                  color: beige.withAlpha(128),
                   child: Center(
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null

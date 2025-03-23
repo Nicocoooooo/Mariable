@@ -12,7 +12,7 @@ import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
 
 class AdminPartnerAnalyticsScreen extends StatefulWidget {
-  const AdminPartnerAnalyticsScreen({Key? key}) : super(key: key);
+  const AdminPartnerAnalyticsScreen({super.key});
 
   @override
   State<AdminPartnerAnalyticsScreen> createState() =>
@@ -199,7 +199,7 @@ class _AdminPartnerAnalyticsScreenState
               child: Text(
                 'Statistiques détaillées sur les prestataires de la plateforme',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                      color: PartnerAdminStyles.textColor.withAlpha(179),
                     ),
               ),
             ),
@@ -365,7 +365,7 @@ class _AdminPartnerAnalyticsScreenState
       child: Container(
         padding: const EdgeInsets.all(PartnerAdminStyles.paddingMedium),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withAlpha(26),
           borderRadius:
               BorderRadius.circular(PartnerAdminStyles.borderRadiusMedium),
         ),
@@ -389,7 +389,7 @@ class _AdminPartnerAnalyticsScreenState
               title,
               style: TextStyle(
                 fontSize: 12,
-                color: color.withOpacity(0.8),
+                color: color.withAlpha(204),
               ),
             ),
           ],
@@ -419,7 +419,7 @@ class _AdminPartnerAnalyticsScreenState
               'Pourcentage de prestataires vérifiés dans chaque catégorie',
               style: TextStyle(
                 fontSize: 14,
-                color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                color: PartnerAdminStyles.textColor.withAlpha(179),
               ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingMedium),
@@ -464,7 +464,7 @@ class _AdminPartnerAnalyticsScreenState
                       LinearProgressIndicator(
                         value: rate / 100,
                         backgroundColor:
-                            PartnerAdminStyles.accentColor.withOpacity(0.2),
+                            PartnerAdminStyles.accentColor.withAlpha(51),
                         valueColor: const AlwaysStoppedAnimation<Color>(
                             PartnerAdminStyles.accentColor),
                         minHeight: 8,

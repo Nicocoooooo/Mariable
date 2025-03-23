@@ -12,7 +12,7 @@ import '../../shared/widgets/loading_indicator.dart';
 import '../../shared/widgets/error_view.dart';
 
 class AdminUserAnalyticsScreen extends StatefulWidget {
-  const AdminUserAnalyticsScreen({Key? key}) : super(key: key);
+  const AdminUserAnalyticsScreen({super.key});
 
   @override
   State<AdminUserAnalyticsScreen> createState() =>
