@@ -141,7 +141,7 @@ Future<List<Map<String, dynamic>>> getTarifsByPrestaId(String prestaId) async {
     _logger.d('Found ${tarifsResponse.length} tarifs for prestataire: $prestaId');
     return tarifsResponse;
   } catch (e) {
-    _logger.e('Error fetching tarifs for prestataire: $prestaId', e);
+_logger.e('Error fetching tarifs for prestataire: $prestaId: ${e.toString()}');
     return [];
   }
 }
@@ -176,7 +176,7 @@ Future<List<Map<String, dynamic>>> getTarifsByLieuId(String lieuId) async {
     _logger.w('No presta_id found for lieu: $lieuId');
     return [];
   } catch (e) {
-    _logger.e('Error fetching tarifs for lieu: $lieuId', e);
+  _logger.e('Error fetching tarifs for lieu: $lieuId: ${e.toString()}');
     return [];
   }
 }
@@ -226,7 +226,7 @@ Future<List<Map<String, dynamic>>> getTarifsByLieuId(String lieuId) async {
       _logger.d('Found ${avis.length} avis for prestataire: $prestataireId');
       return avis;
     } catch (e) {
-      _logger.e('Error fetching avis for prestataire: $prestataireId', e);
+    _logger.e('Error fetching avis for prestataire: $prestataireId: ${e.toString()}');
       return [];
     }
   }

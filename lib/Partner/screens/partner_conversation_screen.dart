@@ -8,6 +8,9 @@ import '../../shared/models/message_model.dart';
 import '../../utils/logger.dart';
 import '../services/message_service.dart';
 import '../widgets/messages/message_bubble.dart';
+import 'package:realtime_client/src/types.dart'; 
+import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+
 
 class PartnerConversationScreen extends StatefulWidget {
   final String conversationId;
@@ -60,48 +63,54 @@ class _PartnerConversationScreenState extends State<PartnerConversationScreen> {
     super.dispose();
   }
 
-  void _setupRealtimeSubscription() {
-    try {
-      // S'abonner aux nouveaux messages pour cette conversation
-      _messagesChannel = Supabase.instance.client.channel('messages');
-
-      // Version compatible avec supabase_flutter 1.10.25
-      _messagesChannel!.on(
-        RealtimeListenTypes.postgresChanges,
-        ChannelFilter(
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: 'conversation_id=eq.${widget.conversationId}',
-        ),
-        (payload, [ref]) {
-          // Un nouveau message a été ajouté
-          if (!mounted) return;
-
-          // Créer un MessageModel à partir du payload
-          final newMessage = MessageModel.fromMap(payload['new']);
-
-          // Ajouter le message à la liste
-          setState(() {
-            _messages.add(newMessage);
-          });
-
-          // Faire défiler vers le bas
-          _scrollToBottom();
-
-          // Si le message est destiné au partenaire, le marquer comme lu
-          if (newMessage.destinataireId == widget.partnerId) {
-            _messageService.markMessagesAsRead(
-              conversationId: widget.conversationId,
-              userId: widget.partnerId,
-            );
+void _setupRealtimeSubscription() {
+  try {
+    // Obtenir le canal pour les messages
+    _messagesChannel = Supabase.instance.client.channel('public:messages');
+    
+    // S'abonner aux changements avec la méthode onPostgresChanges
+    _messagesChannel!.onPostgresChanges(
+      event: PostgresChangeEvent.insert,
+      schema: 'public',
+      table: 'messages',
+      callback: (dynamic payload) {
+        // Debug pour voir la structure exacte du payload
+        print('Payload reçu: $payload');
+        
+        if (!mounted) return;
+        
+        try {
+          // Essayer de récupérer les données du message
+          final dynamic messageData = payload.new_record ?? payload.newRecord;
+          
+          if (messageData != null && 
+              messageData['conversation_id'] == widget.conversationId) {
+            // Créer un modèle de message à partir des données
+            final message = MessageModel.fromMap(Map<String, dynamic>.from(messageData));
+            
+            setState(() {
+              _messages.add(message);
+            });
+            
+            _scrollToBottom();
+            
+            // Marquer comme lu si nécessaire
+            if (message.destinataireId == widget.partnerId) {
+              _messageService.markMessagesAsRead(
+                conversationId: widget.conversationId,
+                userId: widget.partnerId,
+              );
+            }
           }
-        },
-      ).subscribe();
-    } catch (e) {
-      AppLogger.error('Erreur lors de la configuration du canal temps réel', e);
-    }
+        } catch (e) {
+          print('Erreur lors du traitement du message: $e');
+        }
+      }
+    ).subscribe();
+  } catch (e) {
+    print('Erreur lors de la configuration du canal temps réel: $e');
   }
+}
 
   Future<void> _loadMessages() async {
     setState(() {
