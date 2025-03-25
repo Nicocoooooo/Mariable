@@ -6,8 +6,6 @@ import '../Filtre/PrestatairesListScreen.dart';
 import '../services/region_service.dart';
 import '../Widgets/lieu_selector_dialog.dart';
 
-
-
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
@@ -210,7 +208,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(grisTexte, accentColor),
+      bottomNavigationBar: _buildBottomNavigationBar(grisTexte, accentColor, context),
     );
   }
 
@@ -279,7 +277,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Fonction pour sélectionner un lieu
-  
   Future<void> _showLieuSelector(BuildContext context) async {
     final regionService = RegionService();
     List<String> regions = [];
@@ -330,67 +327,68 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-// Modification de la fonction _selectDate dans lib/Home/HomeScreen.dart
-Future<void> _selectDate(BuildContext context, {required bool isStartDate}) async {
-  final DateTime now = DateTime.now();
-  
-  // Définir la bonne date initiale pour chaque cas
-  DateTime initialDate;
-  if (isStartDate) {
-    initialDate = _startDate ?? now;
-  } else {
-    // Pour la date de fin, utiliser la date de début + 1 jour ou aujourd'hui + 1 jour
-    initialDate = _endDate ?? (_startDate != null ? _startDate!.add(const Duration(days: 1)) : now.add(const Duration(days: 1)));
-  }
-  
-  // Assurer que la date initiale est dans la plage valide
-  if (initialDate.isBefore(now)) {
-    initialDate = now;
-  }
-  
-  final DateTime? picked = await showDatePicker(
-    context: context,
-    initialDate: initialDate,
-    // Pour la date de début, commencer à aujourd'hui
-    // Pour la date de fin, commencer à la date de début ou aujourd'hui
-    firstDate: isStartDate ? now : (_startDate ?? now),
-    lastDate: DateTime(now.year + 3), // Permettre jusqu'à 3 ans dans le futur
+  // Modification de la fonction _selectDate dans lib/Home/HomeScreen.dart
+  Future<void> _selectDate(BuildContext context, {required bool isStartDate}) async {
+    final DateTime now = DateTime.now();
     
-    // S'assurer qu'aucun jour n'est désactivé
-    selectableDayPredicate: (DateTime date) {
-      return true; // Permettre tous les jours, y compris les weekends
-    },
+    // Définir la bonne date initiale pour chaque cas
+    DateTime initialDate;
+    if (isStartDate) {
+      initialDate = _startDate ?? now;
+    } else {
+      // Pour la date de fin, utiliser la date de début + 1 jour ou aujourd'hui + 1 jour
+      initialDate = _endDate ?? (_startDate != null ? _startDate!.add(const Duration(days: 1)) : now.add(const Duration(days: 1)));
+    }
     
-    // Peut-être ajouter des paramètres supplémentaires pour personnaliser l'apparence
-    builder: (context, child) {
-      return Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.light(
-            primary: const Color(0xFF524B46), // Couleur accent
-            onPrimary: Colors.white,
-            surface: Colors.white,
-            onSurface: const Color(0xFF2B2B2B),
+    // Assurer que la date initiale est dans la plage valide
+    if (initialDate.isBefore(now)) {
+      initialDate = now;
+    }
+    
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      // Pour la date de début, commencer à aujourd'hui
+      // Pour la date de fin, commencer à la date de début ou aujourd'hui
+      firstDate: isStartDate ? now : (_startDate ?? now),
+      lastDate: DateTime(now.year + 3), // Permettre jusqu'à 3 ans dans le futur
+      
+      // S'assurer qu'aucun jour n'est désactivé
+      selectableDayPredicate: (DateTime date) {
+        return true; // Permettre tous les jours, y compris les weekends
+      },
+      
+      // Peut-être ajouter des paramètres supplémentaires pour personnaliser l'apparence
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: const Color(0xFF524B46), // Couleur accent
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: const Color(0xFF2B2B2B),
+            ),
           ),
-        ),
-        child: child!,
-      );
-    },
-  );
+          child: child!,
+        );
+      },
+    );
 
-  if (picked != null) {
-    setState(() {
-      if (isStartDate) {
-        _startDate = picked;
-        // Réinitialiser la date de fin si elle est antérieure à la nouvelle date de début
-        if (_endDate != null && _endDate!.isBefore(_startDate!)) {
-          _endDate = null;
+    if (picked != null) {
+      setState(() {
+        if (isStartDate) {
+          _startDate = picked;
+          // Réinitialiser la date de fin si elle est antérieure à la nouvelle date de début
+          if (_endDate != null && _endDate!.isBefore(_startDate!)) {
+            _endDate = null;
+          }
+        } else {
+          _endDate = picked;
         }
-      } else {
-        _endDate = picked;
-      }
-    });
+      });
+    }
   }
-}
+  
   // Ouvre le modal des filtres prestataires
   Future<void> _showPrestatairesFilter(BuildContext context) async {
     final result = await showModalBottomSheet<dynamic>(
@@ -461,7 +459,7 @@ Future<void> _selectDate(BuildContext context, {required bool isStartDate}) asyn
   }
   
   // Barre de navigation
-  Widget _buildBottomNavigationBar(Color grisTexte, Color accentColor) {
+  Widget _buildBottomNavigationBar(Color grisTexte, Color accentColor, BuildContext context) {
     return Container(
       height: 65,
       decoration: BoxDecoration(
@@ -477,11 +475,37 @@ Future<void> _selectDate(BuildContext context, {required bool isStartDate}) asyn
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildNavItem(Icons.search, 'Prestataires', grisTexte),
-          _buildNavItem(Icons.favorite_border, 'Favoris', grisTexte),
-          _buildNavItem(Icons.home, 'Accueil', accentColor, isSelected: true),
-          _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte),
-          _buildNavItem(Icons.person_outline, 'Profil', grisTexte),
+          GestureDetector(
+            onTap: () {
+              // Navigation vers l'écran des prestataires
+            },
+            child: _buildNavItem(Icons.search, 'Prestataires', grisTexte),
+          ),
+          GestureDetector(
+            onTap: () {
+              // Navigation vers l'écran des favoris
+            },
+            child: _buildNavItem(Icons.favorite_border, 'Favoris', grisTexte),
+          ),
+          GestureDetector(
+            onTap: () {
+              // Déjà sur la page d'accueil
+            },
+            child: _buildNavItem(Icons.home, 'Accueil', accentColor, isSelected: true),
+          ),
+          GestureDetector(
+            onTap: () {
+              // Navigation vers l'écran Bouquet
+              context.go('/bouquet');
+            },
+            child: _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte),
+          ),
+          GestureDetector(
+            onTap: () {
+              // Navigation vers l'écran Profil
+            },
+            child: _buildNavItem(Icons.person_outline, 'Profil', grisTexte),
+          ),
         ],
       ),
     );

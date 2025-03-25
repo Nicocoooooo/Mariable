@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'Bouquet/screens/bouquetHomeScreen.dart'; // Notez le nom du fichier avec des underscores
 // Importez vos écrans ici
 // import 'features/auth/presentation/screens/login_screen.dart';
 // import 'features/prestataires/presentation/screens/recherche_screen.dart';
@@ -11,6 +12,13 @@ class AppRouter {
         path: '/',
         builder: (BuildContext context, GoRouterState state) {
           return const HomeScreen();
+        },
+      ),
+      // Route pour l'écran Bouquet
+      GoRoute(
+        path: '/bouquet',
+        builder: (BuildContext context, GoRouterState state) {
+          return const BouquetHomeScreen(); // Modifié ici
         },
       ),
       // Ajoutez d'autres routes ici
@@ -81,7 +89,7 @@ class HomeScreen extends StatelessWidget {
                 Expanded(child: Container()),
                 
                 // Barre de navigation du bas
-                _buildBottomNavigationBar(),
+                _buildBottomNavigationBar(context),
               ],
             ),
           ),
@@ -201,7 +209,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   // Fonction pour construire la barre de navigation du bas
-  Widget _buildBottomNavigationBar() {
+  Widget _buildBottomNavigationBar(BuildContext context) {
     return Container(
       height: 60,
       decoration: BoxDecoration(
@@ -217,34 +225,48 @@ class HomeScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildNavItem(Icons.list_alt, 'Prestataire'),
-          _buildNavItem(Icons.favorite_border, 'Favoris'),
-          _buildNavItem(Icons.home, 'Home', isSelected: true),
-          _buildNavItem(Icons.settings, 'Bouquet'),
-          _buildNavItem(Icons.person_outline, 'Profil'),
+          _buildNavItem(Icons.list_alt, 'Prestataire', onTap: () {
+            // Navigation vers l'écran des prestataires
+          }),
+          _buildNavItem(Icons.favorite_border, 'Favoris', onTap: () {
+            // Navigation vers les favoris
+          }),
+          _buildNavItem(Icons.home, 'Home', isSelected: true, onTap: () {
+            // Déjà sur la page d'accueil
+          }),
+          _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', onTap: () {
+            // Navigation vers l'écran Bouquet
+            context.go('/bouquet');
+          }),
+          _buildNavItem(Icons.person_outline, 'Profil', onTap: () {
+            // Navigation vers le profil
+          }),
         ],
       ),
     );
   }
 
   // Fonction pour construire un élément de la barre de navigation
-  Widget _buildNavItem(IconData icon, String label, {bool isSelected = false}) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          color: isSelected ? const Color(0xFF1A4D2E) : Colors.grey,
-          size: 24,
-        ),
-        Text(
-          label,
-          style: TextStyle(
+  Widget _buildNavItem(IconData icon, String label, {bool isSelected = false, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
             color: isSelected ? const Color(0xFF1A4D2E) : Colors.grey,
-            fontSize: 12,
+            size: 24,
           ),
-        ),
-      ],
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? const Color(0xFF1A4D2E) : Colors.grey,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
