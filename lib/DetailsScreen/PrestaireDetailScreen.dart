@@ -11,6 +11,8 @@ import 'package:intl/intl.dart';
 import 'ImageGalleryScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:logging/logging.dart';
+import 'package:mariable/Widgets/chatbot_widget.dart';
+
 
 
 class PrestaireDetailScreen extends StatefulWidget {
@@ -34,7 +36,8 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   List<String> _galleryImages = [];
   bool _isLoadingAvis = true;
   List<Map<String, dynamic>> _formules = [];
-
+  bool _hasChatbotDocument = false;
+  bool _isCheckingChatbot = true;
 
   @override
   void initState() {
@@ -44,9 +47,10 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     _loadAvis();
     _loadGalleryImages();
     _loadRecommendedPrestataires();
-    print('Prestataire complet: ${widget.prestataire}');
-    print('Type ID: ${widget.prestataire['presta_type_id']}');
+    _checkChatbotAvailability();
   
+  print('Prestataire complet: ${widget.prestataire}');
+  print('Type ID: ${widget.prestataire['presta_type_id']}');
   _scrollController.addListener(_onScroll);
   _loadFormules();
   _loadAvis();
@@ -359,6 +363,16 @@ Widget build(BuildContext context) {
   }
 
   return Scaffold(
+    floatingActionButton: !_isCheckingChatbot && _hasChatbotDocument ? 
+    Padding(
+    // Ajouter un padding pour éloigner le bouton du bas de l'écran
+    padding: const EdgeInsets.only(bottom: 80), // Ajuster cette valeur selon vos besoins
+    child: FloatingActionButton(
+      backgroundColor: const Color(0xFF524B46),
+      child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+      onPressed: () => _showChatbotModal(context),
+    ),
+  ) : null,
     extendBodyBehindAppBar: true,
     appBar: AppBar(
       backgroundColor: _isScrolled ? Colors.white : Colors.transparent,
@@ -387,16 +401,23 @@ Widget build(BuildContext context) {
           },
         ),
         IconButton(
-          icon: CircleAvatar(
-            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
+        icon: CircleAvatar(
+          backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
+          child: Icon(
+            Icons.favorite_border,
+            color: _isScrolled ? Colors.black : Colors.white,
           ),
-          onPressed: () {
-            // Ajouter/retirer des favoris
-            setState(() {
-              // isFavorite = !isFavorite;
-            });
-          },
         ),
+        onPressed: () {
+          // Action lors du clic sur le cœur
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ajouté aux favoris'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        },
+      ),
         const SizedBox(width: 8),
       ],
       title: _isScrolled ? Text(
@@ -410,6 +431,7 @@ Widget build(BuildContext context) {
           ? SystemUiOverlayStyle.dark 
           : SystemUiOverlayStyle.light,
     ),
+
     body: CustomScrollView(
       controller: _scrollController,
       slivers: [
@@ -457,8 +479,8 @@ Widget build(BuildContext context) {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.3),
-                        Colors.black.withOpacity(0.6),
+                        Colors.black.withAlpha(77), // 0.3 * 255 = 76.5, arrondi à 77
+                        Colors.black.withAlpha(153), // 0.6 * 255 = 153
                       ],
                       stops: const [0.5, 0.8, 1.0],
                     ),
@@ -580,7 +602,7 @@ Widget build(BuildContext context) {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.6), // Un peu plus opaque
+                            color: Colors.black.withAlpha(153), // Un peu plus opaque
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -599,7 +621,7 @@ Widget build(BuildContext context) {
                       Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withAlpha(128),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -870,7 +892,7 @@ Widget build(BuildContext context) {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                    border: Border.all(color: Colors.grey.withAlpha(77)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -941,8 +963,8 @@ Widget build(BuildContext context) {
         ),
       ],
     ),
-
     
+
     // Bouton Réserver fixe en bas
     bottomSheet: Container(
       width: double.infinity,
@@ -952,7 +974,7 @@ Widget build(BuildContext context) {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(26),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -1059,7 +1081,7 @@ Widget _buildCancellationItem(String title, String subtitle, Color color) {
   return Container(
     margin: const EdgeInsets.only(bottom: 16),
     decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey.withOpacity(0.3)),
+      border: Border.all(color: Colors.grey.withAlpha(77)),
       borderRadius: BorderRadius.circular(8),
     ),
     child: Column(
@@ -1136,6 +1158,25 @@ Widget _buildCancellationItem(String title, String subtitle, Color color) {
 }
 
 
+void _showChatbotModal(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (BuildContext context) {
+      return Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        margin: const EdgeInsets.all(16),
+        child: ChatbotWidget(
+          prestaId: widget.prestataire['id'],
+          prestaName: widget.prestataire['nom_entreprise'] ?? 'ce prestataire',
+          prestaEmail: widget.prestataire['email'],
+        ),
+      );
+    },
+  );
+}
+
 // Fonction principale pour construire les caractéristiques et services
 Widget _buildFeaturesAndServices() {
   // Récupérer proprement le type de prestataire
@@ -1154,7 +1195,6 @@ Widget _buildFeaturesAndServices() {
       nomEntreprise.toLowerCase().contains('food') ||
       nomEntreprise.toLowerCase().contains('cuisine') ||
       widget.prestataire['traiteur_type_id'] != null) {
-    print('Détecté comme TRAITEUR par le nom/description');
     prestaTypeId = 2;  // FORCER le type traiteur
   }
 
@@ -1175,18 +1215,16 @@ if (prestaTypeId == 1) {
   
   // Récupérer les données de lieux depuis le prestataire
   if (widget.prestataire.containsKey('lieux')) {
-    print('DEBUG LIEU: Le prestataire contient des données lieux');
+
     var lieuxData = widget.prestataire['lieux'];
-    print('DEBUG LIEU: Données lieux: ${lieuxData?.runtimeType}');
+
     
     // Objet Map directement 
     if (lieuxData is Map<String, dynamic>) {
-      print('DEBUG LIEU: Données lieux (Map): $lieuxData');
       _processLieuData(lieuxData, features, services);
     } 
     // Si c'est une liste, essayer d'extraire le premier élément
     else if (lieuxData is List && lieuxData.isNotEmpty) {
-      print('DEBUG LIEU: Données lieux (Liste): ${lieuxData.length} éléments');
       
       // Convertir l'élément de la liste en Map<String, dynamic>
       final Map<String, dynamic> lieuMap = {};
@@ -1197,25 +1235,21 @@ if (prestaTypeId == 1) {
           lieuMap[key.toString()] = value;
         });
         
-        print('DEBUG LIEU: Premier lieu converti: $lieuMap');
         _processLieuData(lieuMap, features, services);
       } else {
-        print('DEBUG LIEU: Format de lieu invalide: $lieu');
+       
         _addDefaultLieuFeatures(features, services);
       }
     } else {
-      print('DEBUG LIEU: Format des données lieux invalide: $lieuxData');
       _addDefaultLieuFeatures(features, services);
     }
   } else {
-    print('DEBUG LIEU: Aucune donnée lieux trouvée, utilisation des valeurs par défaut');
     // Si aucune donnée n'est trouvée, ajoutons des valeurs par défaut
     _addDefaultLieuFeatures(features, services);
   }
 }
  
 else if (prestaTypeId == 2) {
-  print('Affichage des caractéristiques TRAITEUR');
   
   // Caractéristiques du traiteur
   features['Type de cuisine'] = {
@@ -1500,7 +1534,6 @@ else if (prestaTypeId == 2) {
         });
       }
     } catch (e) {
-      print('Erreur lors du chargement des avis: $e');
     } finally {
       setState(() => _isLoadingAvis = false);
     }
@@ -1568,7 +1601,6 @@ void _navigateToPrestaireDetail(Map<String, dynamic> prestataire) async {
         : int.tryParse(prestataire['presta_type_id'].toString()) ?? 1;
     }
     
-    print('Navigation vers le prestataire $prestaId de type $prestaTypeId');
     
     // Enrichir les données en fonction du type
     var enrichedData = Map<String, dynamic>.from(prestataire);
@@ -1662,11 +1694,10 @@ void _navigateToPrestaireDetail(Map<String, dynamic> prestataire) async {
         .single();
       
       if (response.isNotEmpty) {
-        print('Données complètes récupérées avec succès');
+
         enrichedData = response;
       }
     } catch (e) {
-      print('Erreur lors de la récupération des données complètes: $e');
     }
     
     // Naviguer vers la page de détail avec les données enrichies
@@ -1679,7 +1710,7 @@ void _navigateToPrestaireDetail(Map<String, dynamic> prestataire) async {
       ),
     );
   } catch (e) {
-    print('Erreur de navigation: $e');
+
     // Naviguer quand même avec les données existantes en cas d'erreur
     Navigator.push(
       context,
@@ -1734,7 +1765,7 @@ Widget _buildRecommendedCard(Map<String, dynamic> prestataire) {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(26),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -1818,6 +1849,32 @@ Widget _buildRecommendedCard(Map<String, dynamic> prestataire) {
     ),
   );
 }
+
+void _checkChatbotAvailability() async {
+  setState(() => _isCheckingChatbot = true);
+  
+  try {
+    final response = await Supabase.instance.client
+        .from('presta')
+        .select('chatbot_document')
+        .eq('id', widget.prestataire['id'])
+        .single();
+        
+    setState(() {
+      _hasChatbotDocument = response['chatbot_document'] != null && 
+                          response['chatbot_document'].toString().isNotEmpty;
+      _isCheckingChatbot = false;
+    });
+  } catch (e) {
+    setState(() {
+      _hasChatbotDocument = false;
+      _isCheckingChatbot = false;
+    });
+    print('Erreur: $e');
+  }
+}
+
+
 Future<void> _loadRecommendedPrestataires() async {
   try {
     setState(() {
@@ -1848,8 +1905,7 @@ Future<void> _loadRecommendedPrestataires() async {
           .neq('id', currentId)
           .limit(10);
     }
-    
-    print('Réponse recommandations: ${response?.length} résultats');
+  
     
     if (response != null && response.isNotEmpty) {
       final List<Map<String, dynamic>> prestataires = [];
@@ -1877,7 +1933,6 @@ Future<void> _loadRecommendedPrestataires() async {
       });
     }
   } catch (e) {
-    print('Erreur lors du chargement des prestataires recommandés: $e');
     setState(() {
       _recommendedPrestataires = [];
       _isLoadingRecommendations = false;
@@ -2019,7 +2074,7 @@ void _showAllFeatures(Map<String, dynamic> items, String title) {
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withAlpha(13),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -2131,7 +2186,7 @@ Widget _buildAvisItem(AvisModel avis) {
     margin: const EdgeInsets.only(bottom: 16),
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey.withOpacity(0.3)),
+      border: Border.all(color: Colors.black.withAlpha(13)),
       borderRadius: BorderRadius.circular(8),
     ),
     child: Column(
@@ -2226,7 +2281,7 @@ void _showAllReviews() {
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withAlpha(13),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -2579,7 +2634,7 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
                       color: Colors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withAlpha(26),
                           blurRadius: 10,
                           offset: const Offset(0, -5),
                         ),
@@ -2663,7 +2718,6 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
 String _getMainImage() {
   // Récupérer le type de prestataire
   int prestaTypeId = _getActualPrestaireType();
-  print('Type de prestataire pour image principale: $prestaTypeId');
   
   // Pour les lieux (type_id = 1), chercher EXCLUSIVEMENT dans la table lieux
   if (prestaTypeId == 1) {
@@ -2677,7 +2731,6 @@ String _getMainImage() {
               lieu.containsKey('image_url') && 
               lieu['image_url'] != null && 
               lieu['image_url'].toString().isNotEmpty) {
-            print('Utilisation image du lieu (liste): ${lieu['image_url']}');
             return lieu['image_url'];
           }
         }
@@ -2687,7 +2740,6 @@ String _getMainImage() {
                lieuxData.containsKey('image_url') && 
                lieuxData['image_url'] != null && 
                lieuxData['image_url'].toString().isNotEmpty) {
-        print('Utilisation image du lieu (map): ${lieuxData['image_url']}');
         return lieuxData['image_url'];
       }
     }
@@ -2699,7 +2751,6 @@ String _getMainImage() {
   else {
     if (widget.prestataire['image_url'] != null && 
         widget.prestataire['image_url'].toString().isNotEmpty) {
-      print('Utilisation image du prestataire: ${widget.prestataire['image_url']}');
       return widget.prestataire['image_url'];
     }
     
@@ -2722,7 +2773,7 @@ Widget buildLocationWidget(String address) {
       borderRadius: BorderRadius.circular(12),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withOpacity(0.08),
+          color: Colors.black.withAlpha(20),
           blurRadius: 6,
           offset: const Offset(0, 2),
         ),

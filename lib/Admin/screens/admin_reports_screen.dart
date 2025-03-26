@@ -148,7 +148,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                       'Exportez les données pour une analyse plus approfondie',
                       style: TextStyle(
                         fontSize: 14,
-                        color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                        color: PartnerAdminStyles.textColor.withAlpha(179),
                       ),
                     ),
                     const SizedBox(height: PartnerAdminStyles.paddingMedium),
@@ -286,7 +286,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withAlpha(26),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -310,7 +310,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                 description,
                 style: TextStyle(
                   fontSize: 12,
-                  color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                  color: PartnerAdminStyles.textColor.withAlpha(179),
                 ),
                 textAlign: TextAlign.center,
                 maxLines: 2,

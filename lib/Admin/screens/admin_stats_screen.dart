@@ -119,7 +119,7 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
             Text(
               'Vue d\'ensemble des statistiques de la plateforme',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                    color: PartnerAdminStyles.textColor.withAlpha(179),
                   ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingLarge),
@@ -276,7 +276,7 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
+                color: color.withAlpha(51),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
@@ -342,7 +342,7 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
                   stat['title'] as String,
                   style: TextStyle(
                     fontSize: 13, // Plus petit
-                    color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                    color: PartnerAdminStyles.textColor.withAlpha(179),
                   ),
                   overflow: TextOverflow.ellipsis, // Évite les débordements
                 ),
@@ -403,7 +403,7 @@ class _AdminStatsScreenState extends State<AdminStatsScreen> {
         LinearProgressIndicator(
           value: (percentage / 100)
               .clamp(0.0, 1.0), // Assurer que la valeur est entre 0 et 1
-          backgroundColor: color.withOpacity(0.2),
+          backgroundColor: color.withAlpha(51), 
           valueColor: AlwaysStoppedAnimation<Color>(color),
           minHeight: 6, // Légèrement plus petite
         ),

@@ -38,7 +38,7 @@ class AdminStatsCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(PartnerAdminStyles.paddingSmall),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
+                  color: color.withAlpha(51),
                   borderRadius: BorderRadius.circular(
                       PartnerAdminStyles.borderRadiusSmall),
                 ),
@@ -64,7 +64,7 @@ class AdminStatsCard extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                      color: PartnerAdminStyles.textColor.withAlpha(179),
                     ),
               ),
             ],

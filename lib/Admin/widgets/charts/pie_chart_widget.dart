@@ -99,7 +99,7 @@ class AdminPieChartWidget extends StatelessWidget {
                   subtitle!,
                   style: TextStyle(
                     fontSize: 14,
-                    color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                    color: PartnerAdminStyles.textColor.withAlpha(179),
                   ),
                 ),
               ),

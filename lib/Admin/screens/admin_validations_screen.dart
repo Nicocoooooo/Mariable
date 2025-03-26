@@ -174,7 +174,7 @@ class _AdminValidationsScreenState extends State<AdminValidationsScreen> {
                     'Aucun prestataire en attente de validation',
                     style: TextStyle(
                       fontSize: 16,
-                      color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                      color: PartnerAdminStyles.textColor.withAlpha(179),
                     ),
                   ),
                   const SizedBox(height: PartnerAdminStyles.paddingMedium),

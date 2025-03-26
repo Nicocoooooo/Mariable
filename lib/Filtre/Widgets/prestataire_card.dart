@@ -84,7 +84,7 @@ class PrestaireCard extends StatelessWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withAlpha(26),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -93,7 +93,7 @@ class PrestaireCard extends StatelessWidget {
                       child: Center(
                         child: Icon(
                           isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorite ? Colors.red : grisTexte.withOpacity(0.7),
+                          color: isFavorite ? Colors.red : grisTexte.withAlpha(179),
                           size: 18,
                         ),
                       ),
@@ -153,14 +153,14 @@ class PrestaireCard extends StatelessWidget {
                         Icon(
                           Icons.location_on,
                           size: 14,
-                          color: grisTexte.withOpacity(0.7),
+                          color: grisTexte.withAlpha(179),
                         ),
                         const SizedBox(width: 2),
                         Text(
                           region,
                           style: TextStyle(
                             fontSize: 14,
-                            color: grisTexte.withOpacity(0.7),
+                            color: grisTexte.withAlpha(179),
                           ),
                         ),
                       ],
@@ -175,7 +175,7 @@ class PrestaireCard extends StatelessWidget {
                         caracteristiques.join(' • '),
                         style: TextStyle(
                           fontSize: 14,
-                          color: grisTexte.withOpacity(0.7),
+                          color: grisTexte.withAlpha(179),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -189,7 +189,7 @@ class PrestaireCard extends StatelessWidget {
                       description,
                       style: TextStyle(
                         fontSize: 14,
-                        color: grisTexte.withOpacity(0.8),
+                        color: grisTexte.withAlpha(204),
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -257,27 +257,26 @@ Widget _buildPrestaireImage(Map<String, dynamic> prestataire) {
         imageUrl: imageUrl,
         fit: BoxFit.cover,
         placeholder: (context, url) => Container(
-          color: beige.withOpacity(0.3),
+          color: beige.withAlpha(77),
           child: const Center(child: CircularProgressIndicator()),
         ),
         errorWidget: (context, url, error) {
-          print("Error loading image: $url, error: $error");
           return Container(
-            color: beige.withOpacity(0.3),
+            color: beige.withAlpha(77),
             child: Icon(
               Icons.business,
               size: 40,
-              color: accentColor.withOpacity(0.6),
+              color: accentColor.withAlpha(153),
             ),
           );
         },
       )
     : Container(
-        color: beige.withOpacity(0.3),
+        color: beige.withAlpha(77),
         child: Icon(
           Icons.business,
           size: 40,
-          color: accentColor.withOpacity(0.6),
+          color: accentColor.withAlpha(153),
         ),
       );
 }

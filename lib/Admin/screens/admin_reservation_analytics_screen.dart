@@ -210,7 +210,7 @@ class _AdminReservationAnalyticsScreenState
               child: Text(
                 'Statistiques détaillées sur les réservations de la plateforme',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                      color: PartnerAdminStyles.textColor.withAlpha(179),
                     ),
               ),
             ),
@@ -399,7 +399,7 @@ class _AdminReservationAnalyticsScreenState
               'Les prestataires avec le plus de réservations',
               style: TextStyle(
                 fontSize: 14,
-                color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                color: PartnerAdminStyles.textColor.withAlpha(179),
               ),
             ),
             const SizedBox(height: PartnerAdminStyles.paddingMedium),

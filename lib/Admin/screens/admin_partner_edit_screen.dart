@@ -538,7 +538,7 @@ class _AdminPartnerEditScreenState extends State<AdminPartnerEditScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       side: BorderSide(
-                          color: PartnerAdminStyles.textColor.withOpacity(0.5)),
+                          color: PartnerAdminStyles.textColor.withAlpha(128)), 
                       foregroundColor: PartnerAdminStyles.textColor,
                     ),
                   ),

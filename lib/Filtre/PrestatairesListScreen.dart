@@ -266,7 +266,7 @@ Future<void> _loadPrestataires() async {
                                     Icon(
                                       Icons.search_off,
                                       size: 48,
-                                      color: grisTexte.withOpacity(0.4),
+                                      color: grisTexte.withAlpha(102),
                                     ),
                                     const SizedBox(height: 16),
                                     Text(
@@ -274,7 +274,7 @@ Future<void> _loadPrestataires() async {
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
-                                        color: grisTexte.withOpacity(0.8),
+                                        color: grisTexte.withAlpha(204),
                                       ),
                                       textAlign: TextAlign.center,
                                     ),
@@ -283,7 +283,7 @@ Future<void> _loadPrestataires() async {
                                       'Essayez de modifier vos critères de recherche',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: grisTexte.withOpacity(0.6),
+                                        color: grisTexte.withAlpha(153),
                                       ),
                                       textAlign: TextAlign.center,
                                     ),
@@ -438,7 +438,7 @@ Future<void> _loadPrestataires() async {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: const Color(0xFF2B2B2B).withOpacity(0.7),
+            color: Color(0xB32B2B2B),
           ),
         ),
       ],
@@ -509,7 +509,7 @@ Future<void> _loadPrestataires() async {
           color: isReset ? accentColor : beige,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isReset ? accentColor : accentColor.withOpacity(0.2),
+            color: isReset ? accentColor : accentColor.withAlpha(51),
             width: 1,
           ),
         ),
@@ -534,7 +534,7 @@ Future<void> _loadPrestataires() async {
                   height: 16,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isReset ? Colors.white.withOpacity(0.3) : accentColor.withOpacity(0.1),
+                    color: isReset ? Colors.white.withAlpha(77) : accentColor.withAlpha(26),
                   ),
                   child: Center(
                     child: Icon(
@@ -699,7 +699,7 @@ void _showFilterBottomSheet(BuildContext context) {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.3),
+                        color: Colors.grey.withAlpha(77),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -753,7 +753,7 @@ void _showFilterBottomSheet(BuildContext context) {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? accentColor : beige.withOpacity(0.4),
+                                  color: isSelected ? accentColor : beige.withAlpha(102),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: isSelected ? accentColor : beige,
@@ -790,7 +790,7 @@ void _showFilterBottomSheet(BuildContext context) {
                             Expanded(
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: beige.withOpacity(0.3),
+                                  color: beige.withAlpha(77),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: TextField(
@@ -816,7 +816,7 @@ void _showFilterBottomSheet(BuildContext context) {
                             Expanded(
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: beige.withOpacity(0.3),
+                                  color: beige.withAlpha(77),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: TextField(
@@ -875,9 +875,9 @@ void _showFilterBottomSheet(BuildContext context) {
                         SliderTheme(
                           data: SliderTheme.of(context).copyWith(
                             activeTrackColor: accentColor,
-                            inactiveTrackColor: beige.withOpacity(0.3),
+                            inactiveTrackColor: beige.withAlpha(77),
                             thumbColor: accentColor,
-                            overlayColor: accentColor.withOpacity(0.2),
+                            overlayColor: accentColor.withAlpha(51),
                             valueIndicatorColor: accentColor,
                             valueIndicatorTextStyle: const TextStyle(
                               color: Colors.white,
@@ -916,7 +916,7 @@ void _showFilterBottomSheet(BuildContext context) {
                 ),
                 
                 // Barre de séparation
-                Divider(height: 32, thickness: 1, color: Colors.grey.withOpacity(0.2)),
+                Divider(height: 32, thickness: 1, color: Colors.grey.withAlpha(51)),
                 
                 // Boutons d'action
                 Row(

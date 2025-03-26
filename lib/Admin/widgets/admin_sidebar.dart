@@ -26,7 +26,7 @@ class AdminSidebar extends StatelessWidget {
           // En-tête avec les informations de l'admin
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-            color: PartnerAdminStyles.accentColor.withOpacity(0.1),
+            color: PartnerAdminStyles.accentColor.withAlpha(26),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -53,7 +53,7 @@ class AdminSidebar extends StatelessWidget {
                 Text(
                   adminEmail,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: PartnerAdminStyles.textColor.withOpacity(0.7),
+                        color: PartnerAdminStyles.textColor.withAlpha(179),
                       ),
                 ),
                 const SizedBox(height: 10),
@@ -138,7 +138,7 @@ class AdminSidebar extends StatelessWidget {
         icon,
         color: isSelected
             ? PartnerAdminStyles.accentColor
-            : PartnerAdminStyles.textColor.withOpacity(0.7),
+            : PartnerAdminStyles.textColor.withAlpha(179),
       ),
       title: Text(
         title,
@@ -149,7 +149,7 @@ class AdminSidebar extends StatelessWidget {
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
-      selectedTileColor: PartnerAdminStyles.accentColor.withOpacity(0.1),
+      selectedTileColor: PartnerAdminStyles.accentColor.withAlpha(26),
       selected: isSelected,
       onTap: () {
         if (!isSelected) {
