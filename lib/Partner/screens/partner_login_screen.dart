@@ -45,7 +45,11 @@ class _PartnerLoginScreenState extends State<PartnerLoginScreen> {
 
     try {
       // Tentative de connexion
- 
+      final response = await _authService.signIn(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
       // Vérifier si l'utilisateur est un partenaire
       final isPartner = await _authService.isPartner();
 
