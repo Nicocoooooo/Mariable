@@ -9,11 +9,13 @@ class PrestataireModel extends Equatable {
   final double? prixBase;
   final double? noteAverage;
   final Map<String, dynamic>? formuleChoisie;
+  final String region; // Propriété région ajoutée pour tous les prestataires
   
   const PrestataireModel({
     required this.id,
     required this.nomEntreprise,
     required this.description,
+    required this.region,
     this.photoUrl,
     this.prixBase,
     this.noteAverage,
@@ -21,7 +23,7 @@ class PrestataireModel extends Equatable {
   });
   
   @override
-  List<Object?> get props => [id, nomEntreprise, description, photoUrl, prixBase, noteAverage, formuleChoisie];
+  List<Object?> get props => [id, nomEntreprise, description, photoUrl, prixBase, noteAverage, formuleChoisie, region];
   
   /// Crée une copie du modèle avec des champs mis à jour
   PrestataireModel copyWith({
@@ -32,6 +34,7 @@ class PrestataireModel extends Equatable {
     double? prixBase,
     double? noteAverage,
     Map<String, dynamic>? formuleChoisie,
+    String? region,
   }) {
     return PrestataireModel(
       id: id ?? this.id,
@@ -41,6 +44,7 @@ class PrestataireModel extends Equatable {
       prixBase: prixBase ?? this.prixBase,
       noteAverage: noteAverage ?? this.noteAverage,
       formuleChoisie: formuleChoisie ?? this.formuleChoisie,
+      region: region ?? this.region,
     );
   }
   
@@ -50,6 +54,7 @@ class PrestataireModel extends Equatable {
       id: map['id'].toString(),
       nomEntreprise: map['nom_entreprise'] ?? '',
       description: map['description'] ?? '',
+      region: map['region'] ?? '',
       photoUrl: map['photo_url'],
       prixBase: map['prix_base'] != null ? (map['prix_base'] as num).toDouble() : null,
       noteAverage: map['note_moyenne'] != null ? (map['note_moyenne'] as num).toDouble() : null,
@@ -66,6 +71,7 @@ class PrestataireModel extends Equatable {
       'prix_base': prixBase,
       'note_moyenne': noteAverage,
       'formule_choisie': formuleChoisie,
+      'region': region,
     };
   }
 }
@@ -81,6 +87,7 @@ class LieuModel extends PrestataireModel {
     required super.id,
     required super.nomEntreprise,
     required super.description,
+    required super.region,
     super.photoUrl,
     super.prixBase,
     super.noteAverage,
@@ -106,6 +113,7 @@ class LieuModel extends PrestataireModel {
       id: map['id'].toString(),
       nomEntreprise: map['nom_entreprise'] ?? '',
       description: map['description'] ?? '',
+      region: map['region'] ?? '',
       photoUrl: map['photo_url'],
       prixBase: map['prix_base'] != null ? (map['prix_base'] as num).toDouble() : null,
       noteAverage: map['note_moyenne'] != null ? (map['note_moyenne'] as num).toDouble() : null,
@@ -140,6 +148,7 @@ class TraiteurModel extends PrestataireModel {
     required super.id,
     required super.nomEntreprise,
     required super.description,
+    required super.region,
     super.photoUrl,
     super.prixBase,
     super.noteAverage,
@@ -174,6 +183,7 @@ class TraiteurModel extends PrestataireModel {
       id: map['id'].toString(),
       nomEntreprise: map['nom_entreprise'] ?? '',
       description: map['description'] ?? '',
+      region: map['region'] ?? '',
       photoUrl: map['photo_url'],
       prixBase: map['prix_base'] != null ? (map['prix_base'] as num).toDouble() : null,
       noteAverage: map['note_moyenne'] != null ? (map['note_moyenne'] as num).toDouble() : null,
@@ -207,6 +217,7 @@ class PhotographeModel extends PrestataireModel {
     required super.id,
     required super.nomEntreprise,
     required super.description,
+    required super.region,
     super.photoUrl,
     super.prixBase,
     super.noteAverage,
@@ -239,6 +250,7 @@ class PhotographeModel extends PrestataireModel {
       id: map['id'].toString(),
       nomEntreprise: map['nom_entreprise'] ?? '',
       description: map['description'] ?? '',
+      region: map['region'] ?? '',
       photoUrl: map['photo_url'],
       prixBase: map['prix_base'] != null ? (map['prix_base'] as num).toDouble() : null,
       noteAverage: map['note_moyenne'] != null ? (map['note_moyenne'] as num).toDouble() : null,

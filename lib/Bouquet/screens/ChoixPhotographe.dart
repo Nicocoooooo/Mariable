@@ -6,7 +6,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/prestataireCard.dart';
 import '../widgets/details.dart';
 
-/// Écran de sélection du photographe pour le bouquet
+/// Écran de sélection du photographe pour le bouquet avec filtrage par région
 class ChoixPhotographeScreen extends StatefulWidget {
   final Function(PhotographeModel) onPhotographeSelected;
   final PhotographeModel? selectedPhotographe;
@@ -26,12 +26,31 @@ class ChoixPhotographeScreen extends StatefulWidget {
 class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
   final PrestaRepository _repository = PrestaRepository();
   List<PhotographeModel> _photographes = [];
+  List<PhotographeModel> _photographesFiltres = [];
   bool _isLoading = true;
   String _errorMessage = '';
+  
+  // Filtre par région sélectionnée dans le quiz
+  String? _selectedRegion;
+  
+  // Filtre par style de photographie
+  String? _selectedStyle;
 
   @override
   void initState() {
     super.initState();
+    
+    // Récupérer la région et le style depuis les résultats du quiz
+    if (widget.quizResults != null) {
+      if (widget.quizResults!.answers.containsKey('region')) {
+        _selectedRegion = widget.quizResults!.answers['region'] as String?;
+      }
+      
+      if (widget.quizResults!.answers.containsKey('photo_preferences')) {
+        _selectedStyle = widget.quizResults!.answers['photo_preferences'] as String?;
+      }
+    }
+    
     _loadPhotographes();
   }
 
@@ -43,51 +62,19 @@ class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
         _errorMessage = '';
       });
 
-      // Utilisation du repository pour charger les photographes
+      // Récupérer les photographes depuis la base de données
       try {
         final photographesData = await _repository.getPrestairesByType(3);
-        print('Photographes chargés: ${photographesData.length}');
-        
-        // Debug: Vérifier les données reçues
-        if (photographesData.isNotEmpty) {
-          print('Premier photographe: ${photographesData.first}');
-          print('URL image: ${photographesData.first['photo_url'] ?? photographesData.first['image_url'] ?? "Aucune image"}');
-        }
-        
-        // Conversion des données en modèles
-        final photographes = photographesData.map((data) {
-          // Assurez-vous que le champ photo_url existe
-          if (data['photo_url'] == null && data['image_url'] != null) {
-            data['photo_url'] = data['image_url'];
-          }
-          
-          // Conversion des données en modèle PhotographeModel
-          try {
-            return PhotographeModel.fromMap(data);
-          } catch (e) {
-            print('Erreur conversion photographe: $e');
-            print('Données: $data');
-            // Créer un modèle minimal en cas d'erreur 
-            return PhotographeModel(
-              id: data['id'] ?? 'unknown',
-              nomEntreprise: data['nom_entreprise'] ?? 'Photographe sans nom',
-              description: data['description'] ?? '',
-              photoUrl: data['photo_url'] ?? data['image_url'],
-              prixBase: data['prix_base'] != null ? (data['prix_base'] as num).toDouble() : 0.0,
-              style: data['style'] is List ? List<String>.from(data['style']) : [],
-              optionsDuree: {},
-              drone: data['drone'] == true,
-            );
-          }
-        }).toList();
+        final photographes = photographesData.map((data) => PhotographeModel.fromMap(data)).toList();
         
         setState(() {
           _photographes = photographes;
+          _filterPhotographes();
           _isLoading = false;
         });
       } catch (e) {
         print('Erreur lors du chargement des photographes: $e');
-        // Si l'API rencontre une erreur, utiliser des données factices
+        // En cas d'erreur, utiliser des données fictives
         _loadMockPhotographes();
       }
     } catch (e) {
@@ -98,19 +85,57 @@ class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
     }
   }
   
-  /// Charge des données factices en attendant l'API
+  /// Filtre les photographes selon la région et le style sélectionnés
+  void _filterPhotographes() {
+    List<PhotographeModel> photographesFiltres = _photographes;
+    
+    // Filtre par région
+    if (_selectedRegion != null && _selectedRegion!.isNotEmpty) {
+      photographesFiltres = photographesFiltres.where((photographe) {
+        return photographe.region.toLowerCase() == _selectedRegion!.toLowerCase();
+      }).toList();
+    }
+    
+    // Filtre par style (si un style est sélectionné)
+    if (_selectedStyle != null && _selectedStyle!.isNotEmpty) {
+      photographesFiltres = photographesFiltres.where((photographe) {
+      // Vérifier si l'un des styles du photographe correspond au style sélectionné
+      // Si style est null, la méthode any ne sera pas appelée et false sera retourné
+        return photographe.style?.any((style) => style.toLowerCase().contains(_selectedStyle!.toLowerCase())) ?? false; // Retourne false si photographe.style est null
+      }).toList();
+    }
+    
+    setState(() {
+      _photographesFiltres = photographesFiltres;
+    });
+  }
+  
+  /// Change la région de filtre
+  void _changeRegion(String? region) {
+    setState(() {
+      _selectedRegion = region;
+      _filterPhotographes();
+    });
+  }
+  
+  /// Charge des données fictives en attendant l'API
   void _loadMockPhotographes() {
     final List<Map<String, dynamic>> mockData = [];
     
-    // Générer des photographes factices
-    final regions = ['Paris', 'Lyon', 'Bordeaux', 'Marseille', 'Strasbourg'];
-    final stylesPhoto = [
-      'Reportage', 'Artistique', 'Traditionnel', 'Journalistique', 'Contemporain', 'Vintage'
+    // Générer des photographes fictifs
+    final regions = [
+      'Île-de-France', 'Provence-Alpes-Côte d\'Azur', 'Auvergne-Rhône-Alpes', 
+      'Occitanie', 'Nouvelle-Aquitaine', 'Bretagne', 'Normandie', 
+      'Hauts-de-France', 'Grand Est', 'Pays de la Loire'
     ];
     
-    for (int i = 1; i <= 10; i++) {
-      final bool hasDrone = i % 3 == 0;
-      final String region = regions[i % regions.length];
+    final stylesPhoto = [
+      'reportage', 'artistique', 'traditionnel', 'journalistique', 'contemporain', 'vintage'
+    ];
+    
+    for (int i = 1; i <= 30; i++) {
+      final regionIndex = i % regions.length;
+      final String region = regions[regionIndex];
       
       // Générer 1-2 styles pour chaque photographe
       final List<String> styles = [];
@@ -119,7 +144,8 @@ class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
         styles.add(stylesPhoto[(i + 3) % stylesPhoto.length]);
       }
       
-      // Options de durée (simplifiées pour l'exemple)
+      // Caractéristiques du photographe
+      final bool hasDrone = i % 3 == 0;
       final Map<String, dynamic> optionsDuree = {
         'demi_journee': {
           'prix': 800 + (i * 50),
@@ -143,6 +169,7 @@ class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
         'prix_base': 800.0 + (i * 100),
         'note_moyenne': 3.5 + (i % 5) * 0.3,
         'region': region,
+        'adresse': 'Adresse fictive en $region',
         'style': styles,
         'options_duree': optionsDuree,
         'drone': hasDrone,
@@ -151,11 +178,12 @@ class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
     
     setState(() {
       _photographes = mockData.map((data) => PhotographeModel.fromMap(data)).toList();
+      _filterPhotographes();
       _isLoading = false;
     });
   }
   
-  /// Génère un nom aléatoire pour les données factices
+  /// Génère un nom aléatoire pour les données fictives
   String _getRandomName(int seed) {
     final names = [
       'Lumière', 'Vision', 'Capture', 'Objectif', 'Clic', 
@@ -166,15 +194,27 @@ class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
   
   @override
   Widget build(BuildContext context) {
+    final Color accentColor = Theme.of(context).colorScheme.primary;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Titre de la section
+        // Titre et filtres
         Padding(
           padding: const EdgeInsets.all(16),
-          child: Text(
-            'Choisissez votre photographe',
-            style: Theme.of(context).textTheme.titleLarge,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Titre de la section
+              Text(
+                'Choisissez votre photographe',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              
+              // Filtre par région
+              const SizedBox(height: 16),
+              _buildRegionFilter(context),
+            ],
           ),
         ),
         
@@ -186,7 +226,7 @@ class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
               'Photographe sélectionné: ${widget.selectedPhotographe!.nomEntreprise}',
               style: TextStyle(
                 fontStyle: FontStyle.italic,
-                color: Theme.of(context).colorScheme.primary,
+                color: accentColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -204,13 +244,15 @@ class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
                     textAlign: TextAlign.center,
                   ),
                 )
-              : _photographes.isEmpty
+              : _photographesFiltres.isEmpty
                 ? EmptyState(
                     title: 'Aucun photographe disponible',
-                    message: 'Nous ne trouvons pas de photographes à vous proposer actuellement.',
+                    message: _selectedRegion != null 
+                        ? 'Aucun photographe trouvé dans la région $_selectedRegion' 
+                        : 'Aucun photographe disponible actuellement',
                     icon: Icons.camera_alt_outlined,
-                    actionLabel: 'Réessayer',
-                    onActionPressed: _loadPhotographes,
+                    actionLabel: 'Modifier la région',
+                    onActionPressed: () => _showRegionSelector(context),
                   )
                 : _buildVerticalPhotographesList(),
         ),
@@ -218,30 +260,170 @@ class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
     );
   }
   
+  /// Construit le sélecteur de région
+  Widget _buildRegionFilter(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Filtrer par région:',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () => _showRegionSelector(context),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.place, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _selectedRegion ?? 'Toutes les régions',
+                    style: TextStyle(
+                      fontWeight: _selectedRegion != null ? FontWeight.bold : FontWeight.normal,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.arrow_drop_down),
+              ],
+            ),
+          ),
+        ),
+        if (_selectedRegion != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _selectedRegion = null;
+                  _filterPhotographes();
+                });
+              },
+              icon: const Icon(Icons.clear, size: 16),
+              label: const Text('Effacer le filtre'),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+  
+  /// Affiche le sélecteur de région
+  void _showRegionSelector(BuildContext context) {
+    final Color accentColor = Theme.of(context).colorScheme.primary;
+    
+    // Liste des régions disponibles
+    final regions = [
+      'Île-de-France',
+      'Provence-Alpes-Côte d\'Azur',
+      'Auvergne-Rhône-Alpes',
+      'Occitanie',
+      'Nouvelle-Aquitaine',
+      'Bretagne',
+      'Normandie',
+      'Hauts-de-France',
+      'Grand Est',
+      'Pays de la Loire',
+    ];
+    
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Titre du sélecteur
+              Text(
+                'Sélectionnez une région',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              const Divider(),
+              
+              // Liste de régions
+              Expanded(
+                child: ListView.builder(
+                  itemCount: regions.length,
+                  itemBuilder: (context, index) {
+                    final region = regions[index];
+                    final isSelected = region == _selectedRegion;
+                    
+                    return ListTile(
+                      title: Text(
+                        region,
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? accentColor : null,
+                        ),
+                      ),
+                      leading: isSelected 
+                          ? Icon(Icons.check_circle, color: accentColor)
+                          : const Icon(Icons.circle_outlined),
+                      onTap: () {
+                        _changeRegion(region);
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+              
+              // Option pour afficher toutes les régions
+              const Divider(),
+              ListTile(
+                title: const Text('Afficher toutes les régions'),
+                leading: _selectedRegion == null 
+                    ? Icon(Icons.check_circle, color: accentColor)
+                    : const Icon(Icons.circle_outlined),
+                onTap: () {
+                  _changeRegion(null);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
   /// Construit la liste verticale des photographes
   Widget _buildVerticalPhotographesList() {
-    return RefreshIndicator(
-      onRefresh: _loadPhotographes,
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        itemCount: _photographes.length,
-        itemBuilder: (context, index) {
-          final photographe = _photographes[index];
-          final isSelected = widget.selectedPhotographe?.id == photographe.id;
-          
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: PrestaireCard(
-              prestataire: photographe.toMap(),
-              isSelected: isSelected,
-              onTap: () => _selectPhotographe(photographe),
-              onDetailPressed: () => _openPhotographeDetails(photographe),
-              isFavorite: false,
-              onFavoriteToggle: () {},
-            ),
-          );
-        },
-      ),
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _photographesFiltres.length,
+      itemBuilder: (context, index) {
+        final photographe = _photographesFiltres[index];
+        final isSelected = widget.selectedPhotographe?.id == photographe.id;
+        
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: PrestaireCard(
+            prestataire: photographe.toMap(),
+            isSelected: isSelected,
+            onTap: () => _selectPhotographe(photographe),
+            onDetailPressed: () => _openPhotographeDetails(photographe),
+          ),
+        );
+      },
     );
   }
   
