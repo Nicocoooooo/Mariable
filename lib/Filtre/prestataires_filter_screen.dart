@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../Filtre/data/repositories/presta_repository.dart';
+import '../Filtre/data/models/presta_type_model.dart';
 import '../widgets/empty_state.dart';
 import 'lieu_types_screen.dart';
 import 'traiteur_types_screen.dart';
@@ -74,78 +75,32 @@ class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> wit
         _errorMessage = '';
       });
 
-<<<<<<< HEAD
-Future<void> _fetchPrestaTypes() async {
-  try {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-    
-    // Utilisez la méthode existante si elle existe
-    List<Map<String, dynamic>> typesData = [];
-    
-    try {
-      // Utilisez le repository au lieu d'accéder directement à Supabase
-      typesData = await _repository.getPrestaTypesAsMap();
-    } catch (innerError) {
-      // Utiliser des données factices si la requête échoue
-      typesData = [
-        {'id': 1, 'name': 'Lieu', 'description': 'Lieux pour votre mariage'},
-        {'id': 2, 'name': 'Traiteur', 'description': 'Services de restauration'},
-        {'id': 3, 'name': 'Photographe', 'description': 'Capture de vos souvenirs'},
-        {'id': 4, 'name': 'Wedding Planner', 'description': 'Organisation complète de votre mariage'},
-      ];
-    }
-    
-    setState(() {
-      _prestaTypes = typesData;
-      _filteredPrestaTypes = List.from(_prestaTypes);
-      _isLoading = false;
-    });
-  } catch (e) {
-    // Gestion d'erreur...
-=======
       await Future.delayed(const Duration(milliseconds: 500));
       
-      final prestaTypes = await _repository.getPrestaTypes();
+      List<Map<String, dynamic>> typesData = [];
       
-      if (prestaTypes.isEmpty) {
-        print('No prestataire types found, using default values');
-
-        final defaultTypes = [
-          PrestaTypeModel(id: 1, name: 'Lieu', description: 'Du château romantique à la plage paradisiaque, trouvez le cadre parfait pour votre mariage.'),
-          PrestaTypeModel(id: 2, name: 'Traiteur', description: 'Des mets raffinés servis avec élégance pour enchanter vos invités et créer un moment de partage inoubliable.'),
-          PrestaTypeModel(id: 3, name: 'Photographe', description: 'L\'artiste qui immortalisera vos précieux souvenirs pour revivre éternellement votre plus beau jour.'),
-          PrestaTypeModel(id: 4, name: 'Wedding Planner', description: 'L\'organisateur qui s\'occupera de tous les détails pour que vous profitiez pleinement de votre journée.'),
-        ];
+      try {
+        // Utilisez le repository pour récupérer les données
+        final prestaTypes = await _repository.getPrestaTypes();
         
-        final prestaTypesMapList = defaultTypes.map((type) => type.toMap()).toList();
-        
-        setState(() {
-          _prestaTypes = prestaTypesMapList;
-          _filteredPrestaTypes = List.from(_prestaTypes);
-          _isLoading = false;
-        });
-        return;
-      }
-      
-      final prestaTypesMapList = prestaTypes.map((type) => type.toMap()).toList();
-
-      setState(() {
-        _prestaTypes = prestaTypesMapList;
-        _filteredPrestaTypes = List.from(_prestaTypes);
-        _isLoading = false;
-      });
-    } catch (e) {
-      print('Error fetching prestataire types: $e');
-      
-      setState(() {
-        _errorMessage = 'Erreur lors du chargement des types de prestataires: ${e.toString()}';
-        _isLoading = false;
-        
+        if (prestaTypes.isEmpty) {
+          print('No prestataire types found, using default values');
+  
+          final defaultTypes = [
+            PrestaTypeModel(id: 1, name: 'Lieu', description: 'Du château romantique à la plage paradisiaque, trouvez le cadre parfait pour votre mariage.'),
+            PrestaTypeModel(id: 2, name: 'Traiteur', description: 'Des mets raffinés servis avec élégance pour enchanter vos invités et créer un moment de partage inoubliable.'),
+            PrestaTypeModel(id: 3, name: 'Photographe', description: 'L\'artiste qui immortalisera vos précieux souvenirs pour revivre éternellement votre plus beau jour.'),
+            PrestaTypeModel(id: 4, name: 'Wedding Planner', description: 'L\'organisateur qui s\'occupera de tous les détails pour que vous profitiez pleinement de votre journée.'),
+          ];
+          
+          typesData = defaultTypes.map((type) => type.toMap()).toList();
+        } else {
+          typesData = prestaTypes.map((type) => type.toMap()).toList();
+        }
+      } catch (innerError) {
+        print('Error in repository call: $innerError');
         // Données par défaut avec images et descriptions
-        _prestaTypes = [
+        typesData = [
           {
             'id': 1, 
             'name': 'Lieu', 
@@ -171,12 +126,21 @@ Future<void> _fetchPrestaTypes() async {
             'imageUrl': 'https://images.unsplash.com/photo-1501139083538-0139583c060f?q=80&w=2940&auto=format&fit=crop'
           },
         ];
+      }
+      
+      setState(() {
+        _prestaTypes = typesData;
         _filteredPrestaTypes = List.from(_prestaTypes);
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error in _fetchPrestaTypes: $e');
+      setState(() {
+        _errorMessage = 'Erreur lors du chargement des types de prestataires: ${e.toString()}';
+        _isLoading = false;
       });
     }
->>>>>>> feature/prestataires
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +231,6 @@ Future<void> _fetchPrestaTypes() async {
                                 itemCount: _filteredPrestaTypes.length,
                                 itemBuilder: (context, index) {
                                   final prestaType = _filteredPrestaTypes[index];
-                                  // Utiliser la nouvelle méthode de carte ici
                                   return _buildPrestaTypeCardNew(prestaType);
                                 },
                               ),
@@ -389,86 +352,20 @@ Future<void> _fetchPrestaTypes() async {
       ),
     );
   }
-<<<<<<< HEAD
-// Dans PrestatairesFilterScreen.dart
-Future<void> _handlePrestaTypeSelection(Map<String, dynamic> prestaType) async {
-  // Get the name of the prestataire type
-  final String typeName = prestaType['name'].toString().toLowerCase();
-  final int? typeId = prestaType['id'];
-  
-  // Ajoutez un print pour déboguer
-  print('Selected prestaType: $typeName with ID: $typeId');
-  
-  // Handle different types of prestataires
-  switch (typeName) {
-    case 'lieu':
-      // Show lieu types screen
-      final result = await showModalBottomSheet<Map<String, dynamic>>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => DraggableScrollableSheet(
-          initialChildSize: 0.75,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (_, scrollController) {
-            return const LieuTypesScreen();
-          },
-        ),
-      );
-      
-      if (result != null) {
-        // Return both presta type and lieu type
-        Navigator.pop(context, {
-          'prestaType': prestaType,
-          'subType': result,
-        });
-      }
-      break;
-      
-    case 'traiteur':
-      // Show traiteur types screen
-      final result = await showModalBottomSheet<Map<String, dynamic>>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => DraggableScrollableSheet(
-          initialChildSize: 0.75,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (_, scrollController) {
-            return const TraiteurTypesScreen();
-          },
-        ),
-      );
-      
-      if (result != null) {
-        // Return both presta type and traiteur type
-        Navigator.pop(context, {
-          'prestaType': prestaType,
-          'subType': result,
-        });
-      }
-      break;
-      
-    case 'photographe':
-    case 'wedding planner':
-      // For now, just return the selected prestataire type
-      Navigator.pop(context, prestaType);
-      break;
-      
-    default:
-      // For all other types, just return the selected type
-      Navigator.pop(context, prestaType);
-      break;
-=======
 
-  // Méthode de sélection
+  // Méthode de sélection avec support pour les traiteurs
   Future<void> _handlePrestaTypeSelection(Map<String, dynamic> prestaType) async {
+    // Get the name of the prestataire type
     final String typeName = prestaType['name'].toString().toLowerCase();
+    final int? typeId = prestaType['id'];
     
+    // Ajoutez un print pour déboguer
+    print('Selected prestaType: $typeName with ID: $typeId');
+    
+    // Handle different types of prestataires
     switch (typeName) {
       case 'lieu':
+        // Show lieu types screen
         final result = await showModalBottomSheet<Map<String, dynamic>>(
           context: context,
           isScrollControlled: true,
@@ -484,6 +381,32 @@ Future<void> _handlePrestaTypeSelection(Map<String, dynamic> prestaType) async {
         );
         
         if (result != null) {
+          // Return both presta type and lieu type
+          Navigator.pop(context, {
+            'prestaType': prestaType,
+            'subType': result,
+          });
+        }
+        break;
+        
+      case 'traiteur':
+        // Show traiteur types screen
+        final result = await showModalBottomSheet<Map<String, dynamic>>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => DraggableScrollableSheet(
+            initialChildSize: 0.75,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (_, scrollController) {
+              return const TraiteurTypesScreen();
+            },
+          ),
+        );
+        
+        if (result != null) {
+          // Return both presta type and traiteur type
           Navigator.pop(context, {
             'prestaType': prestaType,
             'subType': result,
@@ -492,16 +415,15 @@ Future<void> _handlePrestaTypeSelection(Map<String, dynamic> prestaType) async {
         break;
         
       case 'photographe':
-      case 'traiteur':
       case 'wedding planner':
+        // For now, just return the selected prestataire type
         Navigator.pop(context, prestaType);
         break;
         
       default:
+        // For all other types, just return the selected type
         Navigator.pop(context, prestaType);
         break;
     }
->>>>>>> feature/prestataires
   }
-}
 }
