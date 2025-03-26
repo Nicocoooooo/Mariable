@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../Filtre/prestataires_filter_screen.dart';
+import '../Filtre/prestataires_filter_screen.dart';  // Ajout de l'import pour la page des prestataires
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
 import '../services/region_service.dart';
+<<<<<<< HEAD
 
 import '../routes_partner_admin.dart';
+=======
+import '../Widgets/lieu_selector_dialog.dart';
+import '../Prestataires/PrestatairesScreen.dart';
+>>>>>>> feature/prestataires
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -515,7 +520,14 @@ class _HomePageState extends State<HomePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildNavItem(Icons.search, 'Prestataires', grisTexte),
+          _buildNavItem(Icons.search, 'Prestataires', grisTexte, onTap: () {
+           Navigator.push(
+            context,
+           MaterialPageRoute(
+            builder: (context) => PrestatairesScreen(), // Utilisez le nouvel écran
+           ),
+          );
+          }),
           _buildNavItem(Icons.favorite_border, 'Favoris', grisTexte),
           _buildNavItem(Icons.home, 'Accueil', accentColor, isSelected: true),
           _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte),
@@ -531,8 +543,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Élément de la barre de navigation
+<<<<<<< HEAD
   Widget _buildNavItem(IconData icon, String label, Color color,
       {bool isSelected = false, VoidCallback? onTap}) {
+=======
+  Widget _buildNavItem(IconData icon, String label, Color color, {bool isSelected = false, VoidCallback? onTap}) {
+>>>>>>> feature/prestataires
     return GestureDetector(
       onTap: onTap,
       child: Column(
