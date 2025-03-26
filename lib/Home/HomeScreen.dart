@@ -4,13 +4,9 @@ import '../Filtre/prestataires_filter_screen.dart';  // Ajout de l'import pour l
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
 import '../services/region_service.dart';
-
-
 import '../routes_partner_admin.dart';
-
 import '../Widgets/lieu_selector_dialog.dart';
 import '../Prestataires/PrestatairesScreen.dart';
-
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
@@ -543,12 +539,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Élément de la barre de navigation
-
-  Widget _buildNavItem(IconData icon, String label, Color color,
-      {bool isSelected = false, VoidCallback? onTap}) {
-
   Widget _buildNavItem(IconData icon, String label, Color color, {bool isSelected = false, VoidCallback? onTap}) {
-
     return GestureDetector(
       onTap: onTap,
       child: Column(
