@@ -11,7 +11,7 @@ class PrestatairesFilterScreen extends StatefulWidget {
   State<PrestatairesFilterScreen> createState() => _PrestatairesFilterScreenState();
 }
 
-class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
+class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> with SingleTickerProviderStateMixin {
   final _searchController = TextEditingController();
   final PrestaRepository _repository = PrestaRepository();
   
@@ -19,18 +19,38 @@ class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
   List<Map<String, dynamic>> _filteredPrestaTypes = [];
   bool _isLoading = true;
   String _errorMessage = '';
+  
+  // Pour les animations
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
     _fetchPrestaTypes();
     _searchController.addListener(_filterPrestaTypes);
+    
+    // Initialiser l'animation
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeIn,
+      ),
+    );
+    
+    _animationController.forward();
   }
 
   @override
   void dispose() {
     _searchController.removeListener(_filterPrestaTypes);
     _searchController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -54,19 +74,18 @@ class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
         _errorMessage = '';
       });
 
-      // Ajouter un délai avant de récupérer les données
       await Future.delayed(const Duration(milliseconds: 500));
       
-      // Fetch prestataire types using the repository
       final prestaTypes = await _repository.getPrestaTypes();
       
-      // Si la liste est vide, utiliser des données fictives
       if (prestaTypes.isEmpty) {
         print('No prestataire types found, using default values');
 
         final defaultTypes = [
-          PrestaTypeModel(id: 1, name: 'Lieu', description: 'Lieux pour votre mariage'),
-          // ... autres types par défaut
+          PrestaTypeModel(id: 1, name: 'Lieu', description: 'Du château romantique à la plage paradisiaque, trouvez le cadre parfait pour votre mariage.'),
+          PrestaTypeModel(id: 2, name: 'Traiteur', description: 'Des mets raffinés servis avec élégance pour enchanter vos invités et créer un moment de partage inoubliable.'),
+          PrestaTypeModel(id: 3, name: 'Photographe', description: 'L\'artiste qui immortalisera vos précieux souvenirs pour revivre éternellement votre plus beau jour.'),
+          PrestaTypeModel(id: 4, name: 'Wedding Planner', description: 'L\'organisateur qui s\'occupera de tous les détails pour que vous profitiez pleinement de votre journée.'),
         ];
         
         final prestaTypesMapList = defaultTypes.map((type) => type.toMap()).toList();
@@ -87,18 +106,38 @@ class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      print('No prestataire types found, using default values');
+      print('Error fetching prestataire types: $e');
       
       setState(() {
         _errorMessage = 'Erreur lors du chargement des types de prestataires: ${e.toString()}';
         _isLoading = false;
         
-        // Ajouter des données fictives en cas d'erreur
+        // Données par défaut avec images et descriptions
         _prestaTypes = [
-          {'id': 1, 'name': 'Lieu', 'description': 'Lieux pour votre mariage'},
-          {'id': 2, 'name': 'Traiteur', 'description': 'Services de restauration'},
-          {'id': 3, 'name': 'Photographe', 'description': 'Capture de vos souvenirs'},
-          {'id': 4, 'name': 'Wedding Planner', 'description': 'Organisation complète de votre mariage'},
+          {
+            'id': 1, 
+            'name': 'Lieu', 
+            'description': 'Du château romantique à la plage paradisiaque, trouvez le cadre parfait pour votre mariage.', 
+            'imageUrl': 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop'
+          },
+          {
+            'id': 2, 
+            'name': 'Traiteur', 
+            'description': 'Des mets raffinés servis avec élégance pour enchanter vos invités et créer un moment de partage inoubliable.', 
+            'imageUrl': 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=2874&auto=format&fit=crop'
+          },
+          {
+            'id': 3, 
+            'name': 'Photographe', 
+            'description': 'L\'artiste qui immortalisera vos précieux souvenirs pour revivre éternellement votre plus beau jour.', 
+            'imageUrl': 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?q=80&w=2940&auto=format&fit=crop'
+          },
+          {
+            'id': 4, 
+            'name': 'Wedding Planner', 
+            'description': 'L\'organisateur qui s\'occupera de tous les détails pour que vous profitiez pleinement de votre journée.', 
+            'imageUrl': 'https://images.unsplash.com/photo-1501139083538-0139583c060f?q=80&w=2940&auto=format&fit=crop'
+          },
         ];
         _filteredPrestaTypes = List.from(_prestaTypes);
       });
@@ -107,212 +146,186 @@ class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use theme colors from the main app
-    final Color accentColor = Theme.of(context).colorScheme.primary; // #524B46
-    final Color grisTexte = Theme.of(context).colorScheme.onSurface; // #2B2B2B
-    final Color beige = Theme.of(context).colorScheme.secondary; // #FFF3E4
+    final Color accentColor = Theme.of(context).colorScheme.primary;
+    final Color grisTexte = Theme.of(context).colorScheme.onSurface;
 
-    // Ajouter le Scaffold comme widget parent pour fournir le contexte Material
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              spreadRadius: 0,
-              blurRadius: 10,
-              offset: const Offset(0, -3),
-            ),
-          ],
+      appBar: AppBar(
+        title: const Text('Types de prestataires'),
+        backgroundColor: const Color(0xFF524B46),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle and close button row
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Handle
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.3),
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                  ),
-                  // Title
-                  Text(
-                    'Types de prestataires',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: grisTexte,
-                    ),
-                  ),
-                  // Close button
-                  IconButton(
-                    icon: Icon(Icons.close, color: grisTexte),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Bannière en haut (style The Collectionist)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+            color: const Color(0xFF524B46),
+            width: double.infinity,
+            child: const Text(
+              'Nos prestataires pour votre mariage',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
             ),
-            
-            // Search bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Rechercher un type de prestataire',
-                  hintStyle: TextStyle(color: grisTexte.withOpacity(0.5)),
-                  prefixIcon: Icon(Icons.search, color: grisTexte.withOpacity(0.6)),
-                  filled: true,
-                  fillColor: beige.withOpacity(0.3),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+          
+          // Zone de recherche améliorée
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Rechercher un type de prestataire',
+                hintStyle: TextStyle(color: grisTexte.withOpacity(0.5)),
+                prefixIcon: Icon(Icons.search, color: accentColor),
+                filled: true,
+                fillColor: Colors.grey[100],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
                 ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16),
               ),
             ),
-            
-            // Divider
-            Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.2)),
-            
-            // List of prestataire types
-            Expanded(
-              child: _isLoading 
-                  ? const Center(child: CircularProgressIndicator())
-                  : _errorMessage.isNotEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Text(
-                              _errorMessage,
-                              style: TextStyle(color: Colors.red[700]),
-                              textAlign: TextAlign.center,
+          ),
+          
+          // Contenu principal
+          Expanded(
+            child: _isLoading 
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage.isNotEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text(
+                            _errorMessage,
+                            style: TextStyle(color: Colors.red[700]),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )
+                    : _filteredPrestaTypes.isEmpty
+                        ? EmptyState(
+                            title: 'Aucun type de prestataire trouvé',
+                            message: 'Essayez de modifier votre recherche.',
+                            icon: Icons.search_off,
+                            actionLabel: 'Réinitialiser',
+                            onActionPressed: () {
+                              _searchController.clear();
+                              _filterPrestaTypes();
+                            },
+                          )
+                        : FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: ListView.builder(
+                                itemCount: _filteredPrestaTypes.length,
+                                itemBuilder: (context, index) {
+                                  final prestaType = _filteredPrestaTypes[index];
+                                  // Utiliser la nouvelle méthode de carte ici
+                                  return _buildPrestaTypeCardNew(prestaType);
+                                },
+                              ),
                             ),
                           ),
-                        )
-                      : _filteredPrestaTypes.isEmpty
-                          ? EmptyState(
-                              title: 'Aucun type de prestataire trouvé',
-                              message: 'Essayez de modifier votre recherche ou consultez tous les prestataires disponibles.',
-                              icon: Icons.search_off,
-                              actionLabel: 'Voir tous les prestataires',
-                              onActionPressed: () {
-                                _searchController.clear();
-                                _filterPrestaTypes();
-                              },
-                            )
-                          : ListView.separated(
-                              padding: const EdgeInsets.all(20),
-                              itemCount: _filteredPrestaTypes.length,
-                              separatorBuilder: (context, index) => const SizedBox(height: 16),
-                              itemBuilder: (context, index) {
-                                final prestaType = _filteredPrestaTypes[index];
-                                return _buildPrestaTypeCard(prestaType, accentColor, grisTexte);
-                              },
-                            ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildPrestaTypeCard(Map<String, dynamic> prestaType, Color accentColor, Color grisTexte) {
-    return InkWell(
-      onTap: () {
-        // Handle tap based on the type of prestataire
-        _handlePrestaTypeSelection(prestaType);
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
+  Widget _buildPrestaTypeCardNew(Map<String, dynamic> prestaType) {
+    // Obtenir l'URL de l'image (de l'objet ou par défaut)
+    final String imageUrl = prestaType['imageUrl'] ?? 
+                            'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () => _handlePrestaTypeSelection(prestaType),
+        child: Stack(
           children: [
-            // Image
+            // Image d'arrière-plan
             ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-              ),
-              child: prestaType['image_url'] != null
-                  ? Image.network(
-                      prestaType['image_url'],
-                      width: 100,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          width: 100,
-                          height: 80,
-                          color: accentColor.withOpacity(0.1),
-                          child: Icon(
-                            Icons.image_not_supported_outlined,
-                            color: accentColor.withOpacity(0.5),
-                          ),
-                        );
-                      },
-                    )
-                  : Container(
-                      width: 100,
-                      height: 80,
-                      color: accentColor.withOpacity(0.1),
-                      child: Icon(
-                        Icons.business_outlined,
-                        color: accentColor.withOpacity(0.5),
-                      ),
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                imageUrl,
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  print('Error loading image: $error');
+                  return Container(
+                    height: 200,
+                    color: Colors.grey[200],
+                    child: const Center(
+                      child: Icon(Icons.image_not_supported, size: 50),
                     ),
+                  );
+                },
+              ),
             ),
             
-            // Text content
-            Expanded(
+            // Dégradé pour la lisibilité du texte
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.7),
+                    ],
+                    stops: const [0.5, 1.0],
+                  ),
+                ),
+              ),
+            ),
+            
+            // Contenu texte
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       prestaType['name'] ?? 'Sans nom',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: const TextStyle(
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: grisTexte,
+                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Text(
                       prestaType['description'] ?? 'Aucune description',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: grisTexte.withOpacity(0.7),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        height: 1.3,
                       ),
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -320,13 +333,21 @@ class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
               ),
             ),
             
-            // Arrow icon
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: accentColor,
+            // Icône flèche pour indiquer l'action
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_forward,
+                  size: 18,
+                  color: Color(0xFF524B46),
+                ),
               ),
             ),
           ],
@@ -335,15 +356,12 @@ class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
     );
   }
 
-  // Handle selection based on prestataire type
+  // Méthode de sélection
   Future<void> _handlePrestaTypeSelection(Map<String, dynamic> prestaType) async {
-    // Get the name of the prestataire type
     final String typeName = prestaType['name'].toString().toLowerCase();
     
-    // Handle different types of prestataires
     switch (typeName) {
       case 'lieu':
-        // Show lieu types screen
         final result = await showModalBottomSheet<Map<String, dynamic>>(
           context: context,
           isScrollControlled: true,
@@ -359,7 +377,6 @@ class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
         );
         
         if (result != null) {
-          // Return both presta type and lieu type
           Navigator.pop(context, {
             'prestaType': prestaType,
             'subType': result,
@@ -370,13 +387,10 @@ class _PrestatairesFilterScreenState extends State<PrestatairesFilterScreen> {
       case 'photographe':
       case 'traiteur':
       case 'wedding planner':
-        // For now, just return the selected prestataire type
-        // You can add specialized screens for these types later
         Navigator.pop(context, prestaType);
         break;
         
       default:
-        // For all other types, just return the selected type
         Navigator.pop(context, prestaType);
         break;
     }
