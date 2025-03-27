@@ -4,12 +4,16 @@ import 'package:flutter/services.dart';
 import 'dart:collection'; // Pour LinkedHashMap
 import '../Filtre/data/repositories/lieu_repository.dart'; // Ajoutez cette ligne
 import '../Filtre/data/models/avis_model.dart';
-import '../widgets/avis_card.dart';
 import '../utils/fake_data.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../Widgets/availability_selector.dart';
 import 'package:intl/intl.dart';
 import 'ImageGalleryScreen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:logging/logging.dart';
+import 'package:mariable/Widgets/chatbot_widget.dart';
+
+
 
 class PrestaireDetailScreen extends StatefulWidget {
   final Map<String, dynamic> prestataire;
@@ -32,8 +36,8 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   List<String> _galleryImages = [];
   bool _isLoadingAvis = true;
   List<Map<String, dynamic>> _formules = [];
-  final LieuRepository _lieuRepository = LieuRepository(); // Ajoutez cette ligne
-
+  bool _hasChatbotDocument = false;
+  bool _isCheckingChatbot = true;
 
   @override
   void initState() {
@@ -41,7 +45,16 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     _scrollController.addListener(_onScroll);
     _loadFormules();
     _loadAvis();
-    _loadGalleryImages(); // Ajoutez cette ligne
+    _loadGalleryImages();
+    _loadRecommendedPrestataires();
+    _checkChatbotAvailability();
+  
+  print('Prestataire complet: ${widget.prestataire}');
+  print('Type ID: ${widget.prestataire['presta_type_id']}');
+  _scrollController.addListener(_onScroll);
+  _loadFormules();
+  _loadAvis();
+  _loadGalleryImages();
   }
 
   @override
@@ -65,19 +78,110 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     }
   }
 
+   
   void _loadGalleryImages() {
-    _galleryImages = [
-      'https://images.unsplash.com/photo-1550005809-91ad75fb315f?q=80&w=2949&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1482482097755-0b595893ba63?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1507504031003-b417219a0fde?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1537633552985-df8429e8048b?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1523438885200-e635ba2c371e?q=80&w=2787&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?q=80&w=2940&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=2787&auto=format&fit=crop',
-    ];
+    // Récupérer proprement le type de prestataire
+  final int prestaTypeId = _getActualPrestaireType();
+  print('Type pour galerie: $prestaTypeId');
+
+  // Sélection des images selon le type
+  switch (prestaTypeId) {
+    case 2: // Traiteur
+      _galleryImages = [
+        'https://images.unsplash.com/photo-1525151498231-bc059cfafa2b?q=80&w=2189&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1607403217872-27422b4ece0b?q=80&w=3131&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1580959375944-abd7e991f971?q=80&w=2205&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1621327017866-6fb07e6c96ea?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1625108956250-0497f690d867?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1520181973954-cf92f53359ff?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      ];
+      break;
+    case 3: // Photographe
+      _galleryImages = [
+        'https://images.unsplash.com/photo-1733759414886-6b3a5423ceb3?q=80&w=3008&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1561593367-66c79c2294e6?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1504716864043-384fcec48a3d?q=80&w=3174&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1532454781337-fc3edff34f91?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1503508961401-4f07813e63ed?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      ];
+      break;
+    case 4: // Wedding Planner
+      _galleryImages = [
+        'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1501139083538-0139583c060f?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?q=80&w=2940&auto=format&fit=crop',
+      ];
+      break;
+    case 1: // Lieu
+    default:
+      _galleryImages = [
+        'https://images.unsplash.com/photo-1624486853918-f7bd17d70321?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1515715709530-858f7bfa1b10?q=80&w=3003&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1485178075098-49f78b4b43b4?q=80&w=2449&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1629744418692-345355518e78?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://plus.unsplash.com/premium_photo-1674760219927-29d571ea20ec?q=80&w=3088&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        'https://images.unsplash.com/photo-1635996145160-54e6bb3c8341?q=80&w=2942&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      ];
+      break;
   }
+}
+
+List<Map<String, dynamic>> _recommendedPrestataires = [];
+bool _isLoadingRecommendations = true;
+int _getActualPrestaireType() {
+  // Si le prestataire a un presta_type_id explicite, l'utiliser d'abord
+  if (widget.prestataire.containsKey('presta_type_id') && 
+      widget.prestataire['presta_type_id'] != null) {
+    
+    var typeId = widget.prestataire['presta_type_id'];
+    if (typeId is int) {
+      return typeId;
+    } else if (typeId is String) {
+      return int.tryParse(typeId) ?? 1;
+    }
+  }
+  
+  // Détection par l'ID de sous-type
+  if (widget.prestataire.containsKey('traiteur_type_id') && 
+      widget.prestataire['traiteur_type_id'] != null) {
+    return 2; // C'est un traiteur
+  }
+  
+  if (widget.prestataire.containsKey('lieux_type_id') && 
+      widget.prestataire['lieux_type_id'] != null) {
+    return 1; // C'est un lieu
+  }
+  
+  // Détection par le nom ou la description
+  String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
+  String description = widget.prestataire['description'] ?? '';
+  
+  if (nomEntreprise.toLowerCase().contains('traiteur') || 
+      description.toLowerCase().contains('traiteur') ||
+      nomEntreprise.toLowerCase().contains('food') ||
+      description.toLowerCase().contains('cuisine')) {
+    return 2; // C'est un traiteur
+  }
+  
+  if (nomEntreprise.toLowerCase().contains('photo') || 
+      description.toLowerCase().contains('photo') ||
+      description.toLowerCase().contains('photographe')) {
+    return 3; // C'est un photographe
+  }
+  
+  if (nomEntreprise.toLowerCase().contains('planner') || 
+      description.toLowerCase().contains('planner') ||
+      description.toLowerCase().contains('wedding planner')) {
+    return 4; // C'est un wedding planner
+  }
+  
+  // Par défaut, considérer comme un lieu
+  return 1;
+}
 
   void _showAvailabilitySelector() {
   showModalBottomSheet(
@@ -208,12 +312,21 @@ Widget build(BuildContext context) {
       ? '$region, France' 
       : (region.isNotEmpty ? '$region, France' : 'France');
   final String description = widget.prestataire['description'] ?? 'Aucune description disponible';
-  final int? capaciteMax = widget.prestataire.containsKey('lieux') && 
-                          widget.prestataire['lieux'] is List && 
-                          widget.prestataire['lieux'].isNotEmpty && 
-                          widget.prestataire['lieux'][0].containsKey('capacite_max') 
-                            ? widget.prestataire['lieux'][0]['capacite_max'] 
-                            : null;
+  
+  // Récupérer les données spécifiques au type de prestataire
+  final int prestaTypeId = _getActualPrestaireType();
+  
+  // Pour les lieux, récupérer les données de la table lieux
+  int? capaciteMax;
+  if (prestaTypeId == 1 && widget.prestataire.containsKey('lieux')) {
+    var lieuxData = widget.prestataire['lieux'];
+    if (lieuxData is List && lieuxData.isNotEmpty) {
+      capaciteMax = lieuxData[0]['capacite_max'];
+    } else if (lieuxData is Map) {
+      capaciteMax = lieuxData['capacite_max'];
+    }
+  }
+  
   final double? prixBase = widget.prestataire['prix_base'] != null 
       ? (widget.prestataire['prix_base'] is double 
           ? widget.prestataire['prix_base'] 
@@ -224,8 +337,6 @@ Widget build(BuildContext context) {
           ? widget.prestataire['note_moyenne'] 
           : double.tryParse(widget.prestataire['note_moyenne'].toString()))
       : null;
-  final bool isFavorite = false; // À implémenter avec la gestion des favoris
-   
    // ici 
 
   // Formules/Packages (à partir de tarifs)
@@ -252,13 +363,23 @@ Widget build(BuildContext context) {
   }
 
   return Scaffold(
+    floatingActionButton: !_isCheckingChatbot && _hasChatbotDocument ? 
+    Padding(
+    // Ajouter un padding pour éloigner le bouton du bas de l'écran
+    padding: const EdgeInsets.only(bottom: 80), // Ajuster cette valeur selon vos besoins
+    child: FloatingActionButton(
+      backgroundColor: const Color(0xFF524B46),
+      child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+      onPressed: () => _showChatbotModal(context),
+    ),
+  ) : null,
     extendBodyBehindAppBar: true,
     appBar: AppBar(
       backgroundColor: _isScrolled ? Colors.white : Colors.transparent,
       elevation: _isScrolled ? 4 : 0,
       leading: IconButton(
         icon: CircleAvatar(
-          backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
+          backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
           child: Icon(
             Icons.arrow_back,
             color: _isScrolled ? Colors.black : Colors.white,
@@ -269,7 +390,7 @@ Widget build(BuildContext context) {
       actions: [
         IconButton(
           icon: CircleAvatar(
-            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
+            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
             child: Icon(
               Icons.share,
               color: _isScrolled ? Colors.black : Colors.white,
@@ -280,20 +401,23 @@ Widget build(BuildContext context) {
           },
         ),
         IconButton(
-          icon: CircleAvatar(
-            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withOpacity(0.5),
-            child: Icon(
-              isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: _isScrolled ? (isFavorite ? Colors.red : Colors.black) : Colors.white,
-            ),
+        icon: CircleAvatar(
+          backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
+          child: Icon(
+            Icons.favorite_border,
+            color: _isScrolled ? Colors.black : Colors.white,
           ),
-          onPressed: () {
-            // Ajouter/retirer des favoris
-            setState(() {
-              // isFavorite = !isFavorite;
-            });
-          },
         ),
+        onPressed: () {
+          // Action lors du clic sur le cœur
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ajouté aux favoris'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        },
+      ),
         const SizedBox(width: 8),
       ],
       title: _isScrolled ? Text(
@@ -307,6 +431,7 @@ Widget build(BuildContext context) {
           ? SystemUiOverlayStyle.dark 
           : SystemUiOverlayStyle.light,
     ),
+
     body: CustomScrollView(
       controller: _scrollController,
       slivers: [
@@ -354,8 +479,8 @@ Widget build(BuildContext context) {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.3),
-                        Colors.black.withOpacity(0.6),
+                        Colors.black.withAlpha(77), // 0.3 * 255 = 76.5, arrondi à 77
+                        Colors.black.withAlpha(153), // 0.6 * 255 = 153
                       ],
                       stops: const [0.5, 0.8, 1.0],
                     ),
@@ -477,7 +602,7 @@ Widget build(BuildContext context) {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.6), // Un peu plus opaque
+                            color: Colors.black.withAlpha(153), // Un peu plus opaque
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -496,7 +621,7 @@ Widget build(BuildContext context) {
                       Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withAlpha(128),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
@@ -767,7 +892,7 @@ Widget build(BuildContext context) {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                    border: Border.all(color: Colors.grey.withAlpha(77)),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -826,6 +951,12 @@ Widget build(BuildContext context) {
           ),
         ),
         
+
+        // Widget à ajouter à la fin de votre CustomScrollView dans le build de PrestaireDetailScreen
+        SliverToBoxAdapter(
+          child: _buildRecommendedPrestataires(),
+        ),
+
         // Espace pour ne pas que le bouton cache du contenu
         const SliverToBoxAdapter(
           child: SizedBox(height: 80),
@@ -833,6 +964,7 @@ Widget build(BuildContext context) {
       ],
     ),
     
+
     // Bouton Réserver fixe en bas
     bottomSheet: Container(
       width: double.infinity,
@@ -842,7 +974,7 @@ Widget build(BuildContext context) {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(26),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -949,7 +1081,7 @@ Widget _buildCancellationItem(String title, String subtitle, Color color) {
   return Container(
     margin: const EdgeInsets.only(bottom: 16),
     decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey.withOpacity(0.3)),
+      border: Border.all(color: Colors.grey.withAlpha(77)),
       borderRadius: BorderRadius.circular(8),
     ),
     child: Column(
@@ -1026,85 +1158,141 @@ Widget _buildCancellationItem(String title, String subtitle, Color color) {
 }
 
 
+void _showChatbotModal(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (BuildContext context) {
+      return Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        margin: const EdgeInsets.all(16),
+        child: ChatbotWidget(
+          prestaId: widget.prestataire['id'],
+          prestaName: widget.prestataire['nom_entreprise'] ?? 'ce prestataire',
+          prestaEmail: widget.prestataire['email'],
+        ),
+      );
+    },
+  );
+}
+
 // Fonction principale pour construire les caractéristiques et services
 Widget _buildFeaturesAndServices() {
+  // Récupérer proprement le type de prestataire
+  var prestaTypeId = widget.prestataire['presta_type_id'];
+  final Logger _logger = Logger('PrestaireDetailScreen');
+  _logger.fine('Type original: $prestaTypeId');
+
+
+  // Vérifier le nom pour corriger les traiteurs sans ID correct
+  String nomEntreprise = widget.prestataire['nom_entreprise'] ?? '';
+  String description = widget.prestataire['description'] ?? '';
+
+  // Si c'est clairement un traiteur par le nom ou la description
+  if (nomEntreprise.toLowerCase().contains('traiteur') || 
+      description.toLowerCase().contains('traiteur') ||
+      nomEntreprise.toLowerCase().contains('food') ||
+      nomEntreprise.toLowerCase().contains('cuisine') ||
+      widget.prestataire['traiteur_type_id'] != null) {
+    prestaTypeId = 2;  // FORCER le type traiteur
+  }
+
+  // Si c'est une chaîne, convertir en entier
+  if (prestaTypeId is String) {
+    prestaTypeId = int.tryParse(prestaTypeId) ?? 1;
+  } else if (prestaTypeId is! int) {
+    prestaTypeId = 1; // Valeur par défaut si pas de type
+  }
+
   // Utiliser LinkedHashMap pour préserver l'ordre d'insertion
   final LinkedHashMap<String, dynamic> features = LinkedHashMap<String, dynamic>();
   final LinkedHashMap<String, IconData> services = LinkedHashMap<String, IconData>();
 
-  final int? prestaTypeId = widget.prestataire['presta_type_id'];
-  // Pour les lieux uniquement (type_id = 1)
-  if (prestaTypeId == 1) {
-    // Récupérer les données de lieux depuis le prestataire
-    if (widget.prestataire.containsKey('lieux')) {
-      var lieuxData = widget.prestataire['lieux'];
+// Pour les lieux uniquement (type_id = 1)
+if (prestaTypeId == 1) {
+  print('DEBUG LIEU: Récupération des données lieu pour: ${widget.prestataire['nom_entreprise']}');
+  
+  // Récupérer les données de lieux depuis le prestataire
+  if (widget.prestataire.containsKey('lieux')) {
+
+    var lieuxData = widget.prestataire['lieux'];
+
+    
+    // Objet Map directement 
+    if (lieuxData is Map<String, dynamic>) {
+      _processLieuData(lieuxData, features, services);
+    } 
+    // Si c'est une liste, essayer d'extraire le premier élément
+    else if (lieuxData is List && lieuxData.isNotEmpty) {
       
-      // Si c'est une liste, extraire le premier élément
-      if (lieuxData is List && lieuxData.isNotEmpty) {
-        final lieu = lieuxData[0];
-        
-        // Parcourir les propriétés du lieu
-        if (lieu is Map<String, dynamic>) {
-          // D'abord ajouter les caractéristiques numériques et textuelles
-          _addNumericFeatures(lieu, features);
-          
-          // Ajouter les caractéristiques textuelles
-          if (lieu.containsKey('cadre') && lieu['cadre'] != null && lieu['cadre'].toString().isNotEmpty) {
-            features['Cadre'] = {
-              'type': 'text',
-              'value': lieu['cadre'],
-              'icon': Icons.landscape
-            };
-          }
-          
-          // Ensuite ajouter les caractéristiques booléennes
-          lieu.forEach((key, value) {
-            if (value == true) {
-              _addFeatureOrService(key, features, services);
-            }
-          });
-        }
-      } 
-      // Si c'est directement un objet Map
-      else if (lieuxData is Map<String, dynamic>) {
-        // Même traitement que ci-dessus
-        _addNumericFeatures(lieuxData, features);
-        
-        if (lieuxData.containsKey('cadre') && lieuxData['cadre'] != null && lieuxData['cadre'].toString().isNotEmpty) {
-          features['Cadre'] = {
-            'type': 'text',
-            'value': lieuxData['cadre'],
-            'icon': Icons.landscape
-          };
-        }
-        
-        lieuxData.forEach((key, value) {
-          if (value == true) {
-            _addFeatureOrService(key, features, services);
-          }
+      // Convertir l'élément de la liste en Map<String, dynamic>
+      final Map<String, dynamic> lieuMap = {};
+      final lieu = lieuxData[0];
+      
+      if (lieu is Map) {
+        lieu.forEach((key, value) {
+          lieuMap[key.toString()] = value;
         });
+        
+        _processLieuData(lieuMap, features, services);
+      } else {
+       
+        _addDefaultLieuFeatures(features, services);
       }
+    } else {
+      _addDefaultLieuFeatures(features, services);
     }
-  } 
-  // Pour les traiteurs (type_id = 2)
-  else if (prestaTypeId == 2) {
-    // Ajouter des caractéristiques spécifiques aux traiteurs
-    features['Type de cuisine'] = {
-      'type': 'text',
-      'value': 'Cuisine française traditionnelle',
-      'icon': Icons.restaurant
-    };
-    
-    features['Personnel inclus'] = {
-      'type': 'boolean',
-      'value': true,
-      'icon': Icons.people
-    };
-    
-    services['Service à l\'assiette'] = Icons.restaurant_menu;
-    services['Vaisselle fournie'] = Icons.dining;
-    services['Menu dégustation'] = Icons.restaurant;
+  } else {
+    // Si aucune donnée n'est trouvée, ajoutons des valeurs par défaut
+    _addDefaultLieuFeatures(features, services);
   }
+}
+ 
+else if (prestaTypeId == 2) {
+  
+  // Caractéristiques du traiteur
+  features['Type de cuisine'] = {
+    'type': 'text',
+    'value': 'Cuisine française traditionnelle',
+    'icon': Icons.restaurant
+  };
+  
+  features['Menu personnalisable'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.edit_note
+  };
+  
+  features['Capacité de service'] = {
+    'type': 'numeric',
+    'value': 200,
+    'unit': 'invités',
+    'icon': Icons.group
+  };
+  
+  features['Expérience'] = {
+    'type': 'text',
+    'value': 'Plus de 10 ans dans l\'événementiel',
+    'icon': Icons.star
+  };
+  
+  features['Options diététiques'] = {
+    'type': 'text',
+    'value': 'Végétarien, Végan, Sans gluten',
+    'icon': Icons.spa
+  };
+  
+  // Services inclus du traiteur
+  services['Service à l\'assiette'] = Icons.restaurant_menu;
+  services['Vaisselle et verrerie'] = Icons.dining;
+  services['Menu dégustation offert'] = Icons.restaurant;
+  services['Gâteau personnalisé'] = Icons.cake;
+  services['Boissons et cocktails'] = Icons.local_bar;
+  services['Installation et débarrassage'] = Icons.cleaning_services;
+  services['Maître d\'hôtel dédié'] = Icons.support_agent;
+  services['Personnel de service'] = Icons.people;
+}
   // Pour les photographes (type_id = 3)
   else if (prestaTypeId == 3) {
     features['Style de photographie'] = {
@@ -1334,7 +1522,7 @@ Widget _buildFeaturesAndServices() {
     setState(() => _isLoadingAvis = true);
     try {
       // Au lieu d'appeler l'API, utilisez les données fictives
-      if (widget.prestataire != null && widget.prestataire['id'] != null) {
+      if (widget.prestataire['id'] != null) {
         // Petit délai pour simuler un appel réseau
         await Future.delayed(const Duration(milliseconds: 800));
         
@@ -1346,7 +1534,6 @@ Widget _buildFeaturesAndServices() {
         });
       }
     } catch (e) {
-      print('Erreur lors du chargement des avis: $e');
     } finally {
       setState(() => _isLoadingAvis = false);
     }
@@ -1354,339 +1541,419 @@ Widget _buildFeaturesAndServices() {
 
 
 
-// Méthode pour calculer la moyenne des notes
-double _calculateAverageRating() {
-  if (_avis.isEmpty) return 0.0;
-  
-  double total = 0.0;
-  for (var avis in _avis) {
-    total += avis.note;
+Widget _buildRecommendedPrestataires() {
+  if (_isLoadingRecommendations) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
   }
-  return total / _avis.length;
-}
-
-// Widget pour l'état vide (aucun avis)
-Widget _buildEmptyAvisState() {
-  return Container(
-    padding: const EdgeInsets.symmetric(vertical: 24),
-    alignment: Alignment.center,
+  
+  if (_recommendedPrestataires.isEmpty) {
+    return SizedBox(); // Ne rien afficher s'il n'y a pas de recommandations
+  }
+  
+  return Padding(
+    padding: const EdgeInsets.all(20),
     child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          Icons.rate_review_outlined,
-          size: 48,
-          color: Colors.grey[400],
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'Aucun avis pour le moment',
+        const Text(
+          'Vous allez aimer',
           style: TextStyle(
-            fontSize: 16,
+            fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.grey[600],
+            color: Color(0xFF2B2B2B),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          'Soyez le premier à donner votre avis!',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[500],
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 280, // Hauteur fixe pour le carrousel
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _recommendedPrestataires.length,
+            itemBuilder: (context, index) {
+              final prestataire = _recommendedPrestataires[index];
+              return _buildRecommendedCard(prestataire);
+            },
           ),
         ),
       ],
     ),
   );
 }
-
-// Méthode pour afficher tous les avis dans une modale
-void _showAllAvis() {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    builder: (context) {
-      return DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) {
-          return Column(
-            children: [
-              // Header avec titre et bouton fermer
-              Container(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        const Text(
-                          'Tous les avis',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF524B46),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Text(
-                                _calculateAverageRating().toStringAsFixed(1),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(
-                                Icons.star,
-                                color: Colors.amber,
-                                size: 16,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Liste des avis
-              Expanded(
-                child: ListView.builder(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(20),
-                  itemCount: _avis.length,
-                  itemBuilder: (context, index) => AvisCard(avis: _avis[index]),
-                ),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
-
-
-
-
-
-// 7. Enfin, implémentons la méthode pour afficher le dialogue d'ajout d'avis
-
-
-  void _showAddAvisDialog() {
-  double rating = 5.0;
-  final commentController = TextEditingController();
-  final avisService = AvisService(); // Instancier le service ici
-  
-  showDialog(
-    context: context,
-    builder: (context) => StatefulBuilder(
-      builder: (context, setState) {
-        return AlertDialog(
-          title: const Text('Laisser un avis'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Votre note:'),
-              const SizedBox(height: 8),
-              // Étoiles pour la notation
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  return IconButton(
-                    icon: Icon(
-                      index < rating ? Icons.star : Icons.star_border,
-                      color: Colors.amber,
-                      size: 36,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        rating = index + 1.0;
-                      });
-                    },
-                  );
-                }),
-              ),
-              const SizedBox(height: 16),
-              const Text('Votre commentaire:'),
-              const SizedBox(height: 8),
-              // Champ de commentaire
-              TextField(
-                controller: commentController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'Partagez votre expérience...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              ),
-            ],
+void _navigateToPrestaireDetail(Map<String, dynamic> prestataire) async {
+  try {
+    // Récupérer l'ID du prestataire
+    final String prestaId = prestataire['id'] ?? '';
+    if (prestaId.isEmpty) {
+      print('Erreur: ID du prestataire manquant');
+      return;
+    }
+    
+    // Déterminer le type de prestataire
+    int prestaTypeId = 1; // Par défaut: lieu
+    if (prestataire.containsKey('presta_type_id') && prestataire['presta_type_id'] != null) {
+      prestaTypeId = prestataire['presta_type_id'] is int 
+        ? prestataire['presta_type_id'] 
+        : int.tryParse(prestataire['presta_type_id'].toString()) ?? 1;
+    }
+    
+    
+    // Enrichir les données en fonction du type
+    var enrichedData = Map<String, dynamic>.from(prestataire);
+    
+    try {
+      // Requête pour obtenir les données complètes selon le type de prestataire
+      var query = Supabase.instance.client.from('presta').select('''
+        id, 
+        nom_entreprise, 
+        description, 
+        region, 
+        adresse, 
+        note_moyenne, 
+        verifie, 
+        actif,
+        presta_type_id,
+        image_url,
+        tarifs(
+          id,
+          nom_formule,
+          prix_base,
+          description
+        )
+      ''');
+      
+      // Si c'est un lieu (type 1), inclure les données de la table lieux
+      if (prestaTypeId == 1) {
+        query = Supabase.instance.client.from('presta').select('''
+          id, 
+          nom_entreprise, 
+          description, 
+          region, 
+          adresse, 
+          note_moyenne, 
+          verifie, 
+          actif,
+          presta_type_id,
+          image_url,
+          lieux(
+            id, 
+            capacite_max,
+            capacite_min,
+            nombre_chambres,
+            espace_exterieur, 
+            piscine,
+            parking, 
+            hebergement, 
+            capacite_hebergement,
+            exclusivite, 
+            feu_artifice,
+            image_url,
+            systeme_sonorisation,
+            tables_fournies,
+            chaises_fournies,
+            nappes_fournies,
+            vaisselle_fournie,
+            eclairage,
+            sonorisation,
+            wifi,
+            coordinateur_sur_place,
+            vestiaire,
+            voiturier,
+            espace_enfants,
+            climatisation,
+            espace_lacher_lanternes,
+            lieu_seance_photo,
+            acces_bateau_helicoptere,
+            jardin,
+            parc,
+            terrasse,
+            cour,
+            espace_ceremonie,
+            espace_cocktail,
+            superficie_interieur,
+            superficie_exterieur,
+            cadre
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                // Vérifier si le commentaire n'est pas vide
-                if (commentController.text.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Veuillez ajouter un commentaire'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                  return;
-                }
-                
-                // Récupérer l'ID utilisateur (exemple simple)
-                final userId = 'anonymous'; // ID temporaire pour les tests
-                
-                // Soumettre l'avis avec le AvisService au lieu de LieuRepository
-                final success = await avisService.addAvis(
-                  prestataireId: widget.prestataire['id'],
-                  userId: userId,
-                  note: rating,
-                  commentaire: commentController.text.trim(),
-                );
-                
-                Navigator.pop(context);
-                
-                if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Merci pour votre avis! Il sera visible après modération.'),
-                      duration: Duration(seconds: 3),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Une erreur est survenue lors de l\'envoi de votre avis'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF524B46),
-                foregroundColor: Colors.white,
+          tarifs(
+            id,
+            nom_formule,
+            prix_base,
+            description
+          )
+        ''');
+      }
+      
+      // Finaliser la requête
+      final response = await query
+        .eq('id', prestaId)
+        .limit(1)
+        .single();
+      
+      if (response.isNotEmpty) {
+
+        enrichedData = response;
+      }
+    } catch (e) {
+    }
+    
+    // Naviguer vers la page de détail avec les données enrichies
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PrestaireDetailScreen(
+          prestataire: enrichedData,
+        ),
+      ),
+    );
+  } catch (e) {
+
+    // Naviguer quand même avec les données existantes en cas d'erreur
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PrestaireDetailScreen(
+          prestataire: prestataire,
+        ),
+      ),
+    );
+  }
+}
+
+
+Widget _buildRecommendedCard(Map<String, dynamic> prestataire) {
+  // Déterminer le type et l'URL de l'image
+  int prestaTypeId = prestataire['presta_type_id'] ?? 1;
+  String imageUrl;
+  
+  // Pour les lieux (type 1), chercher dans la table lieux
+  if (prestaTypeId == 1 && prestataire.containsKey('lieux')) {
+    var lieuxData = prestataire['lieux'];
+    
+    if (lieuxData is List && lieuxData.isNotEmpty) {
+      var premierLieu = lieuxData[0];
+      if (premierLieu is Map && 
+          premierLieu.containsKey('image_url') && 
+          premierLieu['image_url'] != null) {
+        imageUrl = premierLieu['image_url'];
+      } else {
+        imageUrl = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+      }
+    } else if (lieuxData is Map && 
+               lieuxData.containsKey('image_url') && 
+               lieuxData['image_url'] != null) {
+      imageUrl = lieuxData['image_url'];
+    } else {
+      imageUrl = 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+    }
+  } 
+  // Pour les autres types, utiliser l'image de presta
+  else {
+    imageUrl = prestataire['image_url'] ?? _getDefaultImageByType(prestaTypeId);
+  }
+  
+  return GestureDetector(
+    onTap: () => _navigateToPrestaireDetail(prestataire),
+    child: Container(
+      width: 220,
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(26),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image avec l'URL déterminée
+          ClipRRect(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
+              height: 160,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                color: Colors.grey[300],
+                child: Center(child: CircularProgressIndicator()),
               ),
-              child: const Text('Soumettre'),
+              errorWidget: (context, url, error) => Container(
+                color: Colors.grey[300],
+                height: 160,
+                child: Icon(Icons.image_not_supported, color: Colors.grey[500]),
+              ),
             ),
-          ],
-        );
-      },
+          ),
+          // Informations
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  prestataire['nom_entreprise'] ?? 'Nom inconnu',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        prestataire['region'] ?? 'Région inconnue',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                if (prestataire['note_moyenne'] != null)
+                  Row(
+                    children: [
+                      Icon(Icons.star, size: 14, color: Colors.amber),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${prestataire['note_moyenne']}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
 
-// Ces deux méthodes sont des placeholders à adapter selon votre système d'authentification
-bool _userIsLoggedIn() {
-  // Version simplifiée temporaire
-  return true; // Toujours autorisé pendant le développement
+void _checkChatbotAvailability() async {
+  setState(() => _isCheckingChatbot = true);
+  
+  try {
+    final response = await Supabase.instance.client
+        .from('presta')
+        .select('chatbot_document')
+        .eq('id', widget.prestataire['id'])
+        .single();
+        
+    setState(() {
+      _hasChatbotDocument = response['chatbot_document'] != null && 
+                          response['chatbot_document'].toString().isNotEmpty;
+      _isCheckingChatbot = false;
+    });
+  } catch (e) {
+    setState(() {
+      _hasChatbotDocument = false;
+      _isCheckingChatbot = false;
+    });
+    print('Erreur: $e');
+  }
 }
 
-String _getCurrentUserId() {
-  // Version simplifiée temporaire
-  return "user_test_id"; // ID fixe pour les tests
+
+Future<void> _loadRecommendedPrestataires() async {
+  try {
+    setState(() {
+      _isLoadingRecommendations = true;
+    });
+
+    final int currentPrestaType = _getActualPrestaireType();
+    final String currentId = widget.prestataire['id'] ?? '';
+    
+    // Construire la requête selon le type
+    var response;
+    if (currentPrestaType == 1) {
+      // Pour les lieux, inclure les données de la table lieux
+      response = await Supabase.instance.client
+          .from('presta')
+          .select('id, nom_entreprise, region, note_moyenne, image_url, presta_type_id, lieux(id, image_url)')
+          .eq('presta_type_id', currentPrestaType)
+          .eq('actif', true)
+          .neq('id', currentId)
+          .limit(10);
+    } else {
+      // Pour les autres types, pas besoin d'inclure lieux
+      response = await Supabase.instance.client
+          .from('presta')
+          .select('id, nom_entreprise, region, note_moyenne, image_url, presta_type_id')
+          .eq('presta_type_id', currentPrestaType)
+          .eq('actif', true)
+          .neq('id', currentId)
+          .limit(10);
+    }
+  
+    
+    if (response != null && response.isNotEmpty) {
+      final List<Map<String, dynamic>> prestataires = [];
+      for (var item in response) {
+        if (item is Map) {
+          Map<String, dynamic> prestataire = {};
+          item.forEach((key, value) {
+            prestataire[key.toString()] = value;
+          });
+          prestataires.add(prestataire);
+        }
+      }
+      
+      prestataires.shuffle();
+      final recommendedList = prestataires.take(4).toList();
+      
+      setState(() {
+        _recommendedPrestataires = recommendedList;
+        _isLoadingRecommendations = false;
+      });
+    } else {
+      setState(() {
+        _recommendedPrestataires = [];
+        _isLoadingRecommendations = false;
+      });
+    }
+  } catch (e) {
+    setState(() {
+      _recommendedPrestataires = [];
+      _isLoadingRecommendations = false;
+    });
+  }
 }
 
-
-// Méthode pour ajouter les caractéristiques numériques et textuelles
-void _addNumericFeatures(Map<String, dynamic> lieu, Map<String, dynamic> features) {
-  // Capacité maximale
-  if (lieu.containsKey('capacite_max') && lieu['capacite_max'] != null) {
-    features['Capacité maximale'] = {
-      'type': 'numeric',
-      'value': lieu['capacite_max'],
-      'unit': 'invités',
-      'icon': Icons.people
-    };
-  }
-  
-  // Capacité minimale
-  if (lieu.containsKey('capacite_min') && lieu['capacite_min'] != null) {
-    features['Capacité minimale'] = {
-      'type': 'numeric',
-      'value': lieu['capacite_min'],
-      'unit': 'invités',
-      'icon': Icons.people_outline
-    };
-  }
-  
-  // Capacité d'hébergement
-  if (lieu.containsKey('capacite_hebergement') && lieu['capacite_hebergement'] != null) {
-    features['Capacité d\'hébergement'] = {
-      'type': 'numeric',
-      'value': lieu['capacite_hebergement'],
-      'unit': 'couchages',
-      'icon': Icons.hotel
-    };
-  }
-  
-  // Nombre de chambres
-  if (lieu.containsKey('nombre_chambres') && lieu['nombre_chambres'] != null) {
-    features['Nombre de chambres'] = {
-      'type': 'numeric',
-      'value': lieu['nombre_chambres'],
-      'unit': '',
-      'icon': Icons.bed
-    };
-  }
-  
-  // Superficie intérieure
-  if (lieu.containsKey('superficie_interieur') && lieu['superficie_interieur'] != null) {
-    features['Superficie intérieure'] = {
-      'type': 'numeric',
-      'value': lieu['superficie_interieur'],
-      'unit': 'm²',
-      'icon': Icons.square_foot
-    };
-  }
-  
-  // Superficie extérieure
-  if (lieu.containsKey('superficie_exterieur') && lieu['superficie_exterieur'] != null) {
-    features['Superficie extérieure'] = {
-      'type': 'numeric',
-      'value': lieu['superficie_exterieur'],
-      'unit': 'm²',
-      'icon': Icons.grass
-    };
+String _getDefaultImageByType(int prestaTypeId) {
+  switch (prestaTypeId) {
+    case 2: // Traiteur
+      return 'https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=2940&auto=format&fit=crop';
+    case 3: // Photographe
+      return 'https://images.unsplash.com/photo-1532712938310-34cb3982ef74?q=80&w=2940&auto=format&fit=crop';
+    case 4: // Wedding Planner
+      return 'https://images.unsplash.com/photo-1501139083538-0139583c060f?q=80&w=2940&auto=format&fit=crop';
+    case 1: // Lieu
+    default:
+      return 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
   }
 }
+
 
 // Widget pour afficher un item numérique (avec valeur et unité)
 Widget _buildNumericFeatureItem({
@@ -1807,7 +2074,7 @@ void _showAllFeatures(Map<String, dynamic> items, String title) {
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withAlpha(13),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -1919,7 +2186,7 @@ Widget _buildAvisItem(AvisModel avis) {
     margin: const EdgeInsets.only(bottom: 16),
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey.withOpacity(0.3)),
+      border: Border.all(color: Colors.black.withAlpha(13)),
       borderRadius: BorderRadius.circular(8),
     ),
     child: Column(
@@ -1984,266 +2251,6 @@ String _getMonthName(int month) {
   return months[month - 1];
 }
 
-// Fonction pour classer les propriétés dans features ou services
-void _addFeatureOrService(String key, Map<String, dynamic> features, Map<String, IconData> services) {
-  // Table complète de correspondance basée sur le schéma Supabase
-  switch (key) {
-    // CARACTERISTIQUES DU LIEU
-    case 'espace_exterieur':
-      features['Espace extérieur'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.terrain
-      };
-      break;
-    case 'piscine':
-      features['Piscine'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.pool
-      };
-      break;
-    case 'parking':
-      features['Parking'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.local_parking
-      };
-      break;
-    case 'hebergement':
-      features['Hébergement sur place'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.hotel
-      };
-      break;
-    case 'exclusivite':
-      features['Exclusivité du lieu'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.verified_user
-      };
-      break;
-    case 'feu_artifice':
-      features['Feu d\'artifice autorisé'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.celebration
-      };
-      break;
-    case 'proximite_transports':
-      features['Proximité transports'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.directions_bus
-      };
-      break;
-    case 'accessibilite_pmr':
-      features['Accessibilité PMR'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.accessible
-      };
-      break;
-    case 'salle_reception':
-      features['Salle de réception'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.meeting_room
-      };
-      break;
-    case 'espace_cocktail':
-      features['Espace cocktail'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.local_bar
-      };
-      break;
-    case 'espace_ceremonie':
-      features['Espace cérémonie'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.celebration
-      };
-      break;
-    case 'jardin':
-      features['Jardin'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.park
-      };
-      break;
-    case 'parc':
-      features['Parc'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.nature
-      };
-      break;
-    case 'terrasse':
-      features['Terrasse'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.deck
-      };
-      break;
-    case 'cour':
-      features['Cour intérieure'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.yard
-      };
-      break;
-    case 'disponibilite_weekend':
-      features['Disponible le weekend'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.weekend
-      };
-      break;
-    case 'disponibilite_semaine':
-      features['Disponible en semaine'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.work
-      };
-      break;
-    case 'espace_enfants':
-      features['Espace enfants'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.child_care
-      };
-      break;
-    case 'climatisation':
-      features['Climatisation'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.ac_unit
-      };
-      break;
-    case 'espace_lacher_lanternes':
-      features['Espace pour lanternes'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.light
-      };
-      break;
-    case 'lieu_seance_photo':
-      features['Lieu pour photos'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.photo_camera
-      };
-      break;
-    case 'acces_bateau_helicoptere':
-      features['Accès bateau/hélicoptère'] = {
-        'type': 'boolean',
-        'value': true,
-        'icon': Icons.flight
-      };
-      break;
-    
-    // SERVICES INCLUS
-    case 'systeme_sonorisation':
-      services['Système de sonorisation'] = Icons.speaker;
-      break;
-    case 'tables_fournies':
-      services['Tables fournies'] = Icons.table_bar;
-      break;
-    case 'chaises_fournies':
-      services['Chaises fournies'] = Icons.event_seat;
-      break;
-    case 'nappes_fournies':
-      services['Nappes fournies'] = Icons.table_restaurant;
-      break;
-    case 'vaisselle_fournie':
-      services['Vaisselle fournie'] = Icons.restaurant;
-      break;
-    case 'eclairage':
-      services['Éclairage'] = Icons.lightbulb;
-      break;
-    case 'sonorisation':
-      services['Sonorisation'] = Icons.surround_sound;
-      break;
-    case 'wifi':
-      services['Wi-Fi'] = Icons.wifi;
-      break;
-    case 'coordinateur_sur_place':
-      services['Coordinateur sur place'] = Icons.people;
-      break;
-    case 'vestiaire':
-      services['Vestiaire'] = Icons.checkroom;
-      break;
-    case 'voiturier':
-      services['Service voiturier'] = Icons.car_rental;
-      break;
-  }
-}
-
-  // Widget pour afficher un avis
-  Widget _buildReviewItem({
-    required String author,
-    required String date,
-    required double rating,
-    required String comment,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Colors.grey.withOpacity(0.3),
-        ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                author,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-               fontSize: 16,
-             ),
-           ),
-           Text(
-             date,
-             style: TextStyle(
-               color: Colors.grey[600],
-               fontSize: 14,
-             ),
-           ),
-         ],
-       ),
-       const SizedBox(height: 8),
-       Row(
-         children: [
-           for (int i = 1; i <= 5; i++)
-             Icon(
-               i <= rating ? Icons.star : 
-               (i - 0.5 <= rating ? Icons.star_half : Icons.star_border),
-               color: Colors.amber,
-               size: 16,
-             ),
-         ],
-       ),
-       const SizedBox(height: 8),
-       Text(
-         comment,
-         style: TextStyle(
-           color: Colors.grey[800],
-           fontSize: 14,
-           height: 1.5,
-         ),
-       ),
-     ],
-   ),
- );
-}
 
 void _showAllReviews() {
   final double? reviewRating = widget.prestataire['note_moyenne'] != null 
@@ -2274,7 +2281,7 @@ void _showAllReviews() {
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withAlpha(13),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -2627,7 +2634,7 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
                       color: Colors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withAlpha(26),
                           blurRadius: 10,
                           offset: const Offset(0, -5),
                         ),
@@ -2695,9 +2702,8 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
 }
 
   void _openGallery() {
-  // Récupérer l'URL de l'image principale de votre prestataire
-  final String imageUrl = widget.prestataire['photo_url'] ?? 
-      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+  // Utiliser la même méthode que pour l'image principale
+  final String imageUrl = _getMainImage();
       
   Navigator.push(
     context,
@@ -2708,52 +2714,102 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
       ),
     ),
   );
+}
+String _getMainImage() {
+  // Récupérer le type de prestataire
+  int prestaTypeId = _getActualPrestaireType();
+  
+  // Pour les lieux (type_id = 1), chercher EXCLUSIVEMENT dans la table lieux
+  if (prestaTypeId == 1) {
+    if (widget.prestataire.containsKey('lieux')) {
+      var lieuxData = widget.prestataire['lieux'];
+      
+      // Si lieuxData est une liste
+      if (lieuxData is List && lieuxData.isNotEmpty) {
+        for (var lieu in lieuxData) {
+          if (lieu is Map && 
+              lieu.containsKey('image_url') && 
+              lieu['image_url'] != null && 
+              lieu['image_url'].toString().isNotEmpty) {
+            return lieu['image_url'];
+          }
+        }
+      } 
+      // Si lieuxData est un Map (objet direct)
+      else if (lieuxData is Map && 
+               lieuxData.containsKey('image_url') && 
+               lieuxData['image_url'] != null && 
+               lieuxData['image_url'].toString().isNotEmpty) {
+        return lieuxData['image_url'];
+      }
+    }
+    
+    // Si aucune image n'est trouvée dans lieux, utiliser l'image par défaut pour les lieux
+    return 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=2940&auto=format&fit=crop';
+  } 
+  // Pour les autres types (2, 3, etc.), chercher EXCLUSIVEMENT dans la table presta
+  else {
+    if (widget.prestataire['image_url'] != null && 
+        widget.prestataire['image_url'].toString().isNotEmpty) {
+      return widget.prestataire['image_url'];
+    }
+    
+    // Si aucune image n'est trouvée, utiliser l'image par défaut selon le type
+    return _getDefaultImageByType(prestaTypeId);
   }
-
-  Widget buildLocationWidget(String address) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Titre "Adresse"
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              "Adresse",
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2B2B2B),
-              ),
+}
+Widget buildLocationWidget(String address) {
+  // Vérifier si l'adresse est véritablement non disponible
+  bool isAddressAvailable = address.isNotEmpty && 
+                            address != 'Adresse non disponible' && 
+                            address != 'null';
+  
+  String displayAddress = isAddressAvailable ? address : 'Adresse non disponible';
+  
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withAlpha(20),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Titre "Adresse"
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            "Adresse",
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2B2B2B),
             ),
           ),
-          
-          // Contenu (adresse)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Text(
-              address,
-              style: TextStyle(
-                color: Colors.grey[800],
-                fontSize: 16,
-                height: 1.5,
-              ),
+        ),
+        
+        // Contenu (adresse)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Text(
+            displayAddress,
+            style: TextStyle(
+              color: Colors.grey[800],
+              fontSize: 16,
+              height: 1.5,
             ),
           ),
-          
-          // Bouton "Voir sur la carte"
+        ),
+        
+        // Bouton "Voir sur la carte" (seulement si l'adresse est disponible)
+        if (isAddressAvailable)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: OutlinedButton.icon(
@@ -2783,11 +2839,13 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
                   if (await canLaunchUrl(url)) {
                     await launchUrl(url, mode: LaunchMode.externalApplication);
                   } else {
+                    // ignore: use_build_context_synchronously
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Impossible d\'ouvrir la carte')),
                     );
                   }
                 } catch (e) {
+                  // ignore: use_build_context_synchronously
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Erreur: ${e.toString()}')),
                   );
@@ -2795,10 +2853,10 @@ void _showFormulaCalculator(Map<String, dynamic> formula) {
               },
             ),
           ),
-        ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
     
 
 
@@ -2848,6 +2906,237 @@ Widget _buildOptionCheckbox(
       controlAffinity: ListTileControlAffinity.trailing,
     ),
   );
+}
+
+// Méthode pour traiter les données de lieu
+void _processLieuData(Map<String, dynamic> lieu, Map<String, dynamic> features, Map<String, IconData> services) {
+  print('Traitement des données lieu: ${lieu.keys}');
+  
+  try {
+    // CARACTÉRISTIQUES NUMÉRIQUES
+    // Capacité maximale
+    if (lieu.containsKey('capacite_max') && lieu['capacite_max'] != null) {
+      features['Capacité maximale'] = {
+        'type': 'numeric',
+        'value': lieu['capacite_max'],
+        'unit': 'invités',
+        'icon': Icons.people
+      };
+    }
+    
+    // Capacité minimale
+    if (lieu.containsKey('capacite_min') && lieu['capacite_min'] != null) {
+      features['Capacité minimale'] = {
+        'type': 'numeric',
+        'value': lieu['capacite_min'],
+        'unit': 'invités',
+        'icon': Icons.people_outline
+      };
+    }
+    
+    // Capacité d'hébergement
+    if (lieu.containsKey('capacite_hebergement') && lieu['capacite_hebergement'] != null) {
+      features['Capacité d\'hébergement'] = {
+        'type': 'numeric',
+        'value': lieu['capacite_hebergement'],
+        'unit': 'couchages',
+        'icon': Icons.hotel
+      };
+    }
+    
+    // Nombre de chambres
+    if (lieu.containsKey('nombre_chambres') && lieu['nombre_chambres'] != null) {
+      features['Nombre de chambres'] = {
+        'type': 'numeric',
+        'value': lieu['nombre_chambres'],
+        'unit': '',
+        'icon': Icons.bed
+      };
+    }
+    
+    // Superficie intérieure
+    if (lieu.containsKey('superficie_interieur') && lieu['superficie_interieur'] != null) {
+      features['Superficie intérieure'] = {
+        'type': 'numeric',
+        'value': lieu['superficie_interieur'],
+        'unit': 'm²',
+        'icon': Icons.square_foot
+      };
+    }
+    
+    // Superficie extérieure
+    if (lieu.containsKey('superficie_exterieur') && lieu['superficie_exterieur'] != null) {
+      features['Superficie extérieure'] = {
+        'type': 'numeric',
+        'value': lieu['superficie_exterieur'],
+        'unit': 'm²',
+        'icon': Icons.grass
+      };
+    }
+    
+    // CARACTÉRISTIQUES TEXTUELLES
+    // Cadre
+    if (lieu.containsKey('cadre') && lieu['cadre'] != null && lieu['cadre'].toString().isNotEmpty) {
+      features['Cadre'] = {
+        'type': 'text',
+        'value': lieu['cadre'],
+        'icon': Icons.landscape
+      };
+    }
+    
+    // CARACTÉRISTIQUES BOOLÉENNES - Traiter toutes les clés possibles
+    Map<String, IconData> booleanFeatures = {
+      'parking': Icons.local_parking,
+      'exclusivite': Icons.verified_user,
+      'hebergement': Icons.hotel,
+      'feu_artifice': Icons.celebration,
+      'espace_exterieur': Icons.terrain,
+      'piscine': Icons.pool,
+      'jardin': Icons.park,
+      'parc': Icons.nature,
+      'terrasse': Icons.deck,
+      'cour': Icons.yard,
+      'espace_ceremonie': Icons.celebration,
+      'espace_cocktail': Icons.local_bar,
+      'accessibilite_pmr': Icons.accessible,
+      'disponibilite_weekend': Icons.weekend,
+      'disponibilite_semaine': Icons.work,
+      'espace_enfants': Icons.child_care,
+      'climatisation': Icons.ac_unit,
+      'espace_lacher_lanternes': Icons.light,
+      'lieu_seance_photo': Icons.photo_camera,
+      'acces_bateau_helicoptere': Icons.flight,
+    };
+    
+    // SERVICES INCLUS - Traiter toutes les clés possibles
+    Map<String, IconData> booleanServices = {
+      'wifi': Icons.wifi,
+      'systeme_sonorisation': Icons.speaker,
+      'tables_fournies': Icons.table_bar,
+      'chaises_fournies': Icons.event_seat,
+      'nappes_fournies': Icons.table_restaurant,
+      'vaisselle_fournie': Icons.restaurant,
+      'eclairage': Icons.lightbulb,
+      'sonorisation': Icons.surround_sound,
+      'coordinateur_sur_place': Icons.people,
+      'vestiaire': Icons.checkroom,
+      'voiturier': Icons.car_rental,
+    };
+    
+    // Ajouter les caractéristiques booléennes - avec vérification explicite de la valeur booléenne
+    booleanFeatures.forEach((key, iconData) {
+      // Vérifier que la clé existe et a une valeur booléenne true
+      if (lieu.containsKey(key) && lieu[key] != null) {
+        bool isEnabled = false;
+        if (lieu[key] is bool) {
+          isEnabled = lieu[key];
+        } else if (lieu[key] is String) {
+          isEnabled = lieu[key].toLowerCase() == 'true';
+        } else if (lieu[key] is num) {
+          isEnabled = lieu[key] > 0;
+        }
+        
+        if (isEnabled) {
+          String displayName = key
+              .split('_')
+              .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
+              .join(' ');
+          
+          features[displayName] = {
+            'type': 'boolean',
+            'value': true,
+            'icon': iconData
+          };
+        }
+      }
+    });
+    
+    // Ajouter les services booléens - avec vérification explicite de la valeur booléenne
+    booleanServices.forEach((key, iconData) {
+      // Vérifier que la clé existe et a une valeur booléenne true
+      if (lieu.containsKey(key) && lieu[key] != null) {
+        bool isEnabled = false;
+        if (lieu[key] is bool) {
+          isEnabled = lieu[key];
+        } else if (lieu[key] is String) {
+          isEnabled = lieu[key].toLowerCase() == 'true';
+        } else if (lieu[key] is num) {
+          isEnabled = lieu[key] > 0;
+        }
+        
+        if (isEnabled) {
+          String displayName = key
+              .split('_')
+              .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
+              .join(' ');
+          
+          services[displayName] = iconData;
+        }
+      }
+    });
+    
+    // Log des caractéristiques et services trouvés
+    print('DEBUG LIEU: ${features.length} caractéristiques trouvées');
+    print('DEBUG SERVICES: ${services.length} services trouvés');
+  } catch (e) {
+    print('Erreur lors du traitement des données lieu: $e');
+    // En cas d'erreur, ajouter des valeurs par défaut
+    _addDefaultLieuFeatures(features, services);
+  }
+}
+
+
+// Méthode pour ajouter des valeurs par défaut si aucune donnée n'est trouvée
+void _addDefaultLieuFeatures(Map<String, dynamic> features, Map<String, IconData> services) {
+  features['Capacité maximale'] = {
+    'type': 'numeric',
+    'value': 200,
+    'unit': 'invités',
+    'icon': Icons.people
+  };
+  
+  features['Capacité d\'hébergement'] = {
+    'type': 'numeric',
+    'value': 40,
+    'unit': 'couchages',
+    'icon': Icons.hotel
+  };
+  
+  features['Parking'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.local_parking
+  };
+  
+  features['Exclusivité du lieu'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.verified_user
+  };
+  
+  features['Hébergement sur place'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.hotel
+  };
+  
+  features['Feu d\'artifice autorisé'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.celebration
+  };
+  
+  features['Espace extérieur'] = {
+    'type': 'boolean',
+    'value': true,
+    'icon': Icons.terrain
+  };
+  
+  // Services par défaut
+  services['Wi-Fi'] = Icons.wifi;
+  services['Sonorisation'] = Icons.speaker;
+  services['Tables fournies'] = Icons.table_bar;
+  services['Chaises fournies'] = Icons.event_seat;
 }
   
 }

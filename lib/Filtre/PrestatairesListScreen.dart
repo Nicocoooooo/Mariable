@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../Filtre/data/repositories/presta_repository.dart';
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/Widgets/prestataire_card.dart';
-import '../utils/logger.dart';
 import '../DetailsScreen/PrestaireDetailScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -71,39 +70,57 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
     }
   }
 
-  Future<void> _loadPrestataires() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _errorMessage = '';
-      });
 
-      List<Map<String, dynamic>> prestataires = [];
-      
-      // Si nous avons un sous-type (pour les lieux), nous faisons une requête spécifique
-      if (widget.subType != null) {
-        prestataires = await _repository.searchPrestataires(
-          typeId: widget.prestaType.id,
-          region: widget.location,
-        );
-      } else {
-        // Sinon nous faisons une requête générale par type de prestataire
-        prestataires = await _repository.getPrestairesByType(widget.prestaType.id);
-      }
-      
-      setState(() {
-        _prestataires = prestataires;
-        _isLoading = false;
-      });
-    } catch (e) {
-      AppLogger.error('Erreur lors du chargement des prestataires', e);
-      setState(() {
-        _errorMessage = 'Erreur lors du chargement des prestataires: ${e.toString()}';
-        _isLoading = false;
-        _prestataires = [];
-      });
+Future<void> _loadPrestataires() async {
+  try {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    List<Map<String, dynamic>> prestataires = [];
+    
+    // Récupérer le type principal de prestataire (Lieu, Traiteur, etc.)
+    final int prestaTypeId = widget.prestaType.id;
+
+    
+    // Si c'est un lieu (type_id = 1) avec un sous-type spécifié
+    if (prestaTypeId == 1 && widget.subType != null) {
+
+      final lieuTypeId = widget.subType!['id'];
+      // Charger les lieux par type
+      prestataires = await _repository.getLieuxByType(lieuTypeId);
     }
+    // Si c'est un traiteur (type_id = 2) avec un sous-type spécifié
+    else if (prestaTypeId == 2 && widget.subType != null) {
+      final traiteurTypeId = widget.subType!['id'];
+      // Charger les traiteurs par type
+      prestataires = await _repository.getTraiteursByType(
+        traiteurTypeId, 
+        region: widget.location
+      );
+    }
+    // Pour tous les autres cas, utiliser la recherche générique
+    else {
+      prestataires = await _repository.searchPrestataires(
+        typeId: prestaTypeId,
+        region: widget.location,
+      );
+    }
+    
+   
+    setState(() {
+      _prestataires = prestataires;
+      _isLoading = false;
+    });
+  } catch (e) {
+    setState(() {
+      _errorMessage = 'Erreur lors du chargement des prestataires: ${e.toString()}';
+      _isLoading = false;
+      _prestataires = [];
+    });
   }
+}
   
   List<Map<String, dynamic>> get _filteredPrestataires {
     // Si aucun filtre n'est appliqué, retourner tous les prestataires
@@ -249,7 +266,7 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
                                     Icon(
                                       Icons.search_off,
                                       size: 48,
-                                      color: grisTexte.withOpacity(0.4),
+                                      color: grisTexte.withAlpha(102),
                                     ),
                                     const SizedBox(height: 16),
                                     Text(
@@ -257,7 +274,7 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
-                                        color: grisTexte.withOpacity(0.8),
+                                        color: grisTexte.withAlpha(204),
                                       ),
                                       textAlign: TextAlign.center,
                                     ),
@@ -266,7 +283,7 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
                                       'Essayez de modifier vos critères de recherche',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: grisTexte.withOpacity(0.6),
+                                        color: grisTexte.withAlpha(153),
                                       ),
                                       textAlign: TextAlign.center,
                                     ),
@@ -391,7 +408,6 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
     
     return uniqueRegions.toList();
   } catch (e) {
-    print('Erreur lors de la récupération des régions: $e');
     // Retourner une liste par défaut en cas d'erreur
     return ['Paris', 'Lyon', 'Marseille', 'Bordeaux'];
   }
@@ -422,7 +438,7 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: const Color(0xFF2B2B2B).withOpacity(0.7),
+            color: Color(0xB32B2B2B),
           ),
         ),
       ],
@@ -493,7 +509,7 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
           color: isReset ? accentColor : beige,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isReset ? accentColor : accentColor.withOpacity(0.2),
+            color: isReset ? accentColor : accentColor.withAlpha(51),
             width: 1,
           ),
         ),
@@ -518,7 +534,7 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
                   height: 16,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: isReset ? Colors.white.withOpacity(0.3) : accentColor.withOpacity(0.1),
+                    color: isReset ? Colors.white.withAlpha(77) : accentColor.withAlpha(26),
                   ),
                   child: Center(
                     child: Icon(
@@ -683,7 +699,7 @@ void _showFilterBottomSheet(BuildContext context) {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.3),
+                        color: Colors.grey.withAlpha(77),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -737,7 +753,7 @@ void _showFilterBottomSheet(BuildContext context) {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? accentColor : beige.withOpacity(0.4),
+                                  color: isSelected ? accentColor : beige.withAlpha(102),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: isSelected ? accentColor : beige,
@@ -774,7 +790,7 @@ void _showFilterBottomSheet(BuildContext context) {
                             Expanded(
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: beige.withOpacity(0.3),
+                                  color: beige.withAlpha(77),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: TextField(
@@ -800,7 +816,7 @@ void _showFilterBottomSheet(BuildContext context) {
                             Expanded(
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: beige.withOpacity(0.3),
+                                  color: beige.withAlpha(77),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: TextField(
@@ -859,9 +875,9 @@ void _showFilterBottomSheet(BuildContext context) {
                         SliderTheme(
                           data: SliderTheme.of(context).copyWith(
                             activeTrackColor: accentColor,
-                            inactiveTrackColor: beige.withOpacity(0.3),
+                            inactiveTrackColor: beige.withAlpha(77),
                             thumbColor: accentColor,
-                            overlayColor: accentColor.withOpacity(0.2),
+                            overlayColor: accentColor.withAlpha(51),
                             valueIndicatorColor: accentColor,
                             valueIndicatorTextStyle: const TextStyle(
                               color: Colors.white,
@@ -900,7 +916,7 @@ void _showFilterBottomSheet(BuildContext context) {
                 ),
                 
                 // Barre de séparation
-                Divider(height: 32, thickness: 1, color: Colors.grey.withOpacity(0.2)),
+                Divider(height: 32, thickness: 1, color: Colors.grey.withAlpha(51)),
                 
                 // Boutons d'action
                 Row(
@@ -961,4 +977,7 @@ void _showFilterBottomSheet(BuildContext context) {
     },
   );
 }
+
+
+
 }
