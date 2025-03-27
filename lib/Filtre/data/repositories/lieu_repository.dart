@@ -142,7 +142,7 @@ Future<List<Map<String, dynamic>>> getTarifsByPrestaId(String prestaId) async {
     
     // Afficher les IDs bruts pour déboguer
     for (var i = 0; i < tarifsResponse.length; i++) {
-      if (tarifsResponse[i] is Map && tarifsResponse[i]['id'] != null) {
+      if (tarifsResponse[i]['id'] != null) {
         
       }
     }
@@ -152,7 +152,7 @@ Future<List<Map<String, dynamic>>> getTarifsByPrestaId(String prestaId) async {
     final Set<String> processedIds = {};
     
     for (var tarif in tarifsResponse) {
-      if (tarif is Map<String, dynamic> && tarif.containsKey('id')) {
+      if (tarif.containsKey('id')) {
         String tarifId = tarif['id'].toString();
         
         // Vérifier si on a déjà traité cet ID
@@ -191,7 +191,7 @@ Future<List<Map<String, dynamic>>> getTarifsByLieuId(String lieuId) async {
         .single();
     
     // Si nous avons trouvé un prestataire associé
-    if (lieuResponse != null && lieuResponse['presta_id'] != null) {
+    if (lieuResponse['presta_id'] != null) {
       String prestaId = lieuResponse['presta_id'];
       _logger.d('Found presta_id: $prestaId for lieu: $lieuId');
       

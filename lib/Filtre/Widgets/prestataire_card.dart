@@ -8,12 +8,12 @@ class PrestaireCard extends StatelessWidget {
   final bool isFavorite;
 
   const PrestaireCard({
-    Key? key,
+    super.key,
     required this.prestataire,
     this.onTap,
     this.onFavoriteToggle,
     this.isFavorite = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

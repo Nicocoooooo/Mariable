@@ -8,12 +8,12 @@ class DocumentFilter extends StatelessWidget {
   final Function(String?) onStatusChanged;
 
   const DocumentFilter({
-    Key? key,
+    super.key,
     this.selectedType,
     this.selectedStatus,
     required this.onTypeChanged,
     required this.onStatusChanged,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -6,10 +6,10 @@ class ImageGalleryScreen extends StatefulWidget {
   final List<String> additionalImages;
 
   const ImageGalleryScreen({
-    Key? key, 
+    super.key, 
     required this.mainImageUrl,
     required this.additionalImages,
-  }) : super(key: key);
+  });
 
   @override
   State<ImageGalleryScreen> createState() => _ImageGalleryScreenState();

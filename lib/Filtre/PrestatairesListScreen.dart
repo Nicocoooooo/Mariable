@@ -14,13 +14,13 @@ class PrestatairesListScreen extends StatefulWidget {
   final DateTime? endDate;
 
   const PrestatairesListScreen({
-    Key? key,
+    super.key,
     required this.prestaType,
     this.subType,
     this.location,
     this.startDate,
     this.endDate,
-  }) : super(key: key);
+  });
 
   @override
   State<PrestatairesListScreen> createState() => _PrestatairesListScreenState();
@@ -33,7 +33,7 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
   List<String> _availableRegions = [];
   bool _isLoadingRegions = true;
   String _errorMessage = '';
-  List<int> _favorites = []; // Pour simuler les favoris
+  final List<int> _favorites = []; // Pour simuler les favoris
   
   // Filtres
   String? _regionFilter;

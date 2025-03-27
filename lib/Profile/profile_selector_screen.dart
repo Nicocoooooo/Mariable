@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../routes_partner_admin.dart';
+import '../routes_user.dart';  // Ajout de l'import nécessaire
 
 class ProfileSelectorScreen extends StatelessWidget {
-  const ProfileSelectorScreen({Key? key}) : super(key: key);
+  const ProfileSelectorScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -52,14 +53,8 @@ class ProfileSelectorScreen extends StatelessWidget {
                     icon: Icons.favorite,
                     color: Colors.red.shade400,
                     onTap: () {
-                      // Page non implémentée pour les mariés
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const PlaceholderUserLoginScreen(),
-                        ),
-                      );
+                      // Redirection vers l'espace utilisateur via go_router
+                      context.go(UserRoutes.userLogin);
                     },
                   ),
 
@@ -141,27 +136,4 @@ class ProfileSelectorScreen extends StatelessWidget {
   }
 }
 
-// Page d'espace utilisateur non implémentée
-class PlaceholderUserLoginScreen extends StatelessWidget {
-  const PlaceholderUserLoginScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Espace Utilisateur'),
-        backgroundColor: const Color(0xFF524B46),
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text(
-          'Futur page_login_utilisateur',
-          style: TextStyle(
-            fontSize: 20,
-            color: Color(0xFF2B2B2B),
-          ),
-        ),
-      ),
-    );
-  }
-}
+// Note: La classe PlaceholderUserLoginScreen a été supprimée car elle n'est plus nécessaire

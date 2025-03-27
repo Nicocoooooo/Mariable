@@ -15,7 +15,7 @@ import '../widgets/stats/chart_card.dart';
 import '../widgets/stats/period_selector.dart';
 
 class PartnerStatsScreen extends StatefulWidget {
-  const PartnerStatsScreen({Key? key}) : super(key: key);
+  const PartnerStatsScreen({super.key});
 
   @override
   State<PartnerStatsScreen> createState() => _PartnerStatsScreenState();

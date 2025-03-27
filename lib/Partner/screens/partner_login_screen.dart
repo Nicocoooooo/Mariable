@@ -7,7 +7,7 @@ import '../../utils/logger.dart';
 import '../../routes_partner_admin.dart';
 
 class PartnerLoginScreen extends StatefulWidget {
-  const PartnerLoginScreen({Key? key}) : super(key: key);
+  const PartnerLoginScreen({super.key});
 
   @override
   State<PartnerLoginScreen> createState() => _PartnerLoginScreenState();

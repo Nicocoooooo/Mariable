@@ -127,7 +127,6 @@ class AppTheme {
         primary: beige,
         secondary: accentColor,
         surface: textColor,
-        background: Color(0xFF121212),
         onPrimary: textColor,
         onSecondary: Colors.white,
         onSurface: Colors.white,

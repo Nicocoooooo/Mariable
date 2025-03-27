@@ -12,7 +12,7 @@ class AdminBarChartWidget extends StatelessWidget {
   final List<Color> gradientColors;
 
   const AdminBarChartWidget({
-    Key? key,
+    super.key,
     required this.title,
     required this.data,
     this.subtitle,
@@ -20,7 +20,7 @@ class AdminBarChartWidget extends StatelessWidget {
     this.maxY = 100,
     this.showValues = true,
     this.gradientColors = const [Color(0xFF524B46), Color(0xFF8B7E75)],
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

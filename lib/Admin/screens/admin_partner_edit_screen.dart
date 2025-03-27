@@ -14,11 +14,11 @@ class AdminPartnerEditScreen extends StatefulWidget {
   final bool isNewPartner;
 
   const AdminPartnerEditScreen({
-    Key? key,
+    super.key,
     required this.partnerId,
     // Par défaut, c'est false
     this.isNewPartner = false,
-  }) : super(key: key);
+  });
 
   @override
   State<AdminPartnerEditScreen> createState() => _AdminPartnerEditScreenState();

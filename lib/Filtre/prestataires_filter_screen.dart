@@ -6,7 +6,7 @@ import 'lieu_types_screen.dart';
 import 'traiteur_types_screen.dart';
 
 class PrestatairesFilterScreen extends StatefulWidget {
-  const PrestatairesFilterScreen({Key? key}) : super(key: key);
+  const PrestatairesFilterScreen({super.key});
 
   @override
   State<PrestatairesFilterScreen> createState() => _PrestatairesFilterScreenState();

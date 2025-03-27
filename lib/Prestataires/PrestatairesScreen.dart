@@ -4,7 +4,7 @@ import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
 
 class PrestatairesScreen extends StatefulWidget {
-  const PrestatairesScreen({Key? key}) : super(key: key);
+  const PrestatairesScreen({super.key});
 
   @override
   State<PrestatairesScreen> createState() => _PrestatairesScreenState();

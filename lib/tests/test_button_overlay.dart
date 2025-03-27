@@ -19,8 +19,8 @@ class TestButtonOverlay extends StatelessWidget {
               context.go('/test'); // Accès à la page de test
             },
             backgroundColor: Colors.amber,
-            child: const Icon(Icons.bug_report, color: Colors.black),
             tooltip: 'Page de test',
+            child: const Icon(Icons.bug_report, color: Colors.black),
           ),
           const SizedBox(height: 8),
           FloatingActionButton(
@@ -28,8 +28,8 @@ class TestButtonOverlay extends StatelessWidget {
               context.go('/partner/login'); // Accès à l'espace partenaire
             },
             backgroundColor: Colors.blue,
-            child: const Icon(Icons.business, color: Colors.white),
             tooltip: 'Espace partenaire',
+            child: const Icon(Icons.business, color: Colors.white),
           ),
           const SizedBox(height: 8),
           FloatingActionButton(
@@ -38,8 +38,8 @@ class TestButtonOverlay extends StatelessWidget {
                   .adminLogin); // Accès à l'espace administrateur
             },
             backgroundColor: Colors.purple,
-            child: const Icon(Icons.admin_panel_settings, color: Colors.white),
             tooltip: 'Espace administrateur',
+            child: const Icon(Icons.admin_panel_settings, color: Colors.white),
           ),
         ],
       ),

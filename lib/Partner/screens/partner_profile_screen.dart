@@ -11,7 +11,7 @@ import '../models/partner_model.dart';
 import '../widgets/partner_sidebar.dart';
 
 class PartnerProfileScreen extends StatefulWidget {
-  const PartnerProfileScreen({Key? key}) : super(key: key);
+  const PartnerProfileScreen({super.key});
 
   @override
   State<PartnerProfileScreen> createState() => _PartnerProfileScreenState();
@@ -394,9 +394,9 @@ class SectionTitle extends StatelessWidget {
   final String title;
 
   const SectionTitle({
-    Key? key,
+    super.key,
     required this.title,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

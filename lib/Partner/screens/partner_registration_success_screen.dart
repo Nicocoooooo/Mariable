@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../shared/constants/style_constants.dart';
 
 class PartnerRegistrationSuccessScreen extends StatelessWidget {
-  const PartnerRegistrationSuccessScreen({Key? key}) : super(key: key);
+  const PartnerRegistrationSuccessScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

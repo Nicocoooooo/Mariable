@@ -14,7 +14,7 @@ class PartnerOfferFormScreen extends StatefulWidget {
   final String?
       offerId; // Null pour une nouvelle offre, non-null pour l'édition
 
-  const PartnerOfferFormScreen({Key? key, this.offerId}) : super(key: key);
+  const PartnerOfferFormScreen({super.key, this.offerId});
 
   @override
   State<PartnerOfferFormScreen> createState() => _PartnerOfferFormScreenState();

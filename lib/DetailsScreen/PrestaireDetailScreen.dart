@@ -19,9 +19,9 @@ class PrestaireDetailScreen extends StatefulWidget {
   final Map<String, dynamic> prestataire;
 
   const PrestaireDetailScreen({
-    Key? key,
+    super.key,
     required this.prestataire,
-  }) : super(key: key);
+  });
 
   @override
   State<PrestaireDetailScreen> createState() => _PrestaireDetailScreenState();
@@ -442,7 +442,7 @@ Widget build(BuildContext context) {
           child: Stack(
             children: [
               // Image principale prenant tout l'écran
-              Container(
+              SizedBox(
                 height: MediaQuery.of(context).size.height, // Pleine hauteur de l'écran
                 width: MediaQuery.of(context).size.width, // Pleine largeur de l'écran
                 child: CachedNetworkImage(
@@ -1181,8 +1181,8 @@ void _showChatbotModal(BuildContext context) {
 Widget _buildFeaturesAndServices() {
   // Récupérer proprement le type de prestataire
   var prestaTypeId = widget.prestataire['presta_type_id'];
-  final Logger _logger = Logger('PrestaireDetailScreen');
-  _logger.fine('Type original: $prestaTypeId');
+  final Logger logger = Logger('PrestaireDetailScreen');
+  logger.fine('Type original: $prestaTypeId');
 
 
   // Vérifier le nom pour corriger les traiteurs sans ID correct
@@ -1437,7 +1437,7 @@ else if (prestaTypeId == 2) {
               text: entry.key,
             );
           }
-        }).toList(),
+        }),
         
         // Bouton "Voir plus" si plus de 8 caractéristiques
         if (features.length > 8)
@@ -1484,7 +1484,7 @@ else if (prestaTypeId == 2) {
         // Limiter l'affichage à 8 services maximum initialement
         ...services.entries.take(8).map((entry) => 
           _buildFeatureItem(icon: entry.value, text: entry.key)
-        ).toList(),
+        ),
         
         // Bouton "Voir plus" si plus de 8 services
         if (services.length > 8)
@@ -1533,7 +1533,6 @@ else if (prestaTypeId == 2) {
           _avis = fakeAvis;
         });
       }
-    } catch (e) {
     } finally {
       setState(() => _isLoadingAvis = false);
     }
@@ -1885,7 +1884,7 @@ Future<void> _loadRecommendedPrestataires() async {
     final String currentId = widget.prestataire['id'] ?? '';
     
     // Construire la requête selon le type
-    var response;
+    PostgrestList response;
     if (currentPrestaType == 1) {
       // Pour les lieux, inclure les données de la table lieux
       response = await Supabase.instance.client

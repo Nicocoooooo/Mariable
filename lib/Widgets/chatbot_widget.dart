@@ -22,11 +22,11 @@ class ChatbotWidget extends StatefulWidget {
   final String? prestaEmail;
   
   const ChatbotWidget({
-    Key? key, 
+    super.key, 
     required this.prestaId,
     required this.prestaName,
     this.prestaEmail,
-  }) : super(key: key);
+  });
 
   @override
   _ChatbotWidgetState createState() => _ChatbotWidgetState();
@@ -313,7 +313,7 @@ String _getResponseFromSection(String section, Map<String, List<String>> keyword
   if (match != null) {
     String sectionText = match.group(0)!;
     // Enlever le titre de section pour une réponse plus naturelle
-    sectionText = sectionText.replaceFirst('## ' + sectionTitle, '').trim();
+    sectionText = sectionText.replaceFirst('## $sectionTitle', '').trim();
     
     // Formater et améliorer la réponse
     return _formatResponse(sectionText, section);
@@ -377,7 +377,7 @@ String _formatResponse(String rawResponse, String section) {
   
   // Limiter la longueur de la réponse
   if (rawResponse.length > 500) {
-    rawResponse = rawResponse.substring(0, 497) + '...';
+    rawResponse = '${rawResponse.substring(0, 497)}...';
   }
   
   // Nettoyer la réponse
@@ -612,12 +612,12 @@ class ChatbotFloatingButton extends StatelessWidget {
   final bool isDocumentAvailable;
   
   const ChatbotFloatingButton({
-    Key? key,
+    super.key,
     required this.prestaId,
     required this.prestaName,
     this.prestaEmail,
     required this.isDocumentAvailable,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

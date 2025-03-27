@@ -11,12 +11,12 @@ class DocumentCard extends StatelessWidget {
   final Function(String)? onStatusChange;
 
   const DocumentCard({
-    Key? key,
+    super.key,
     required this.document,
     this.onDelete,
     this.onView,
     this.onStatusChange,
-  }) : super(key: key);
+  });
 
   // Fonction pour obtenir l'icône selon le type de document
   IconData _getDocumentIcon() {

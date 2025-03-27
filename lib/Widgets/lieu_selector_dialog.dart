@@ -5,9 +5,9 @@ class LieuSelectorDialog extends StatefulWidget {
   final String? initialLieu;
 
   const LieuSelectorDialog({
-    Key? key,
+    super.key,
     this.initialLieu,
-  }) : super(key: key);
+  });
 
   @override
   State<LieuSelectorDialog> createState() => _LieuSelectorDialogState();

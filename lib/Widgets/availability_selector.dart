@@ -7,11 +7,11 @@ class AvailabilitySelector extends StatefulWidget {
   final Function(DateTime, String)? onTimeSelected;
 
   const AvailabilitySelector({
-    Key? key,
+    super.key,
     required this.prestataireName,
     this.onClose,
     this.onTimeSelected,
-  }) : super(key: key);
+  });
 
   @override
   State<AvailabilitySelector> createState() => _AvailabilitySelectorState();

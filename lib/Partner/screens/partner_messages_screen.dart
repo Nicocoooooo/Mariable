@@ -14,7 +14,7 @@ import '../widgets/messages/conversation_card.dart';
 import 'partner_conversation_screen.dart';
 
 class PartnerMessagesScreen extends StatefulWidget {
-  const PartnerMessagesScreen({Key? key}) : super(key: key);
+  const PartnerMessagesScreen({super.key});
 
   @override
   State<PartnerMessagesScreen> createState() => _PartnerMessagesScreenState();

@@ -13,13 +13,13 @@ class ChartCard extends StatelessWidget {
   final String chartType; // 'line', 'bar', 'pie'
 
   const ChartCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.subtitle,
     required this.data,
     required this.chartType,
     this.isLoading = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +85,7 @@ class ChartCard extends StatelessWidget {
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             physics: const ClampingScrollPhysics(),
-                            child: Container(
+                            child: SizedBox(
                               width: 500, // Largeur fixe pour le graphique
                               child: _buildChart(),
                             ),
@@ -117,7 +117,7 @@ class ChartCard extends StatelessWidget {
       builder: (context, constraints) {
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Container(
+          child: SizedBox(
             width: max(constraints.maxWidth, 500),
             height: 200,
             child: LineChart(
@@ -232,7 +232,7 @@ class ChartCard extends StatelessWidget {
       builder: (context, constraints) {
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Container(
+          child: SizedBox(
             width: max(constraints.maxWidth, 500),
             height: 200,
             child: BarChart(

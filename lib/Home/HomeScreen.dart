@@ -9,7 +9,7 @@ import '../Widgets/lieu_selector_dialog.dart';
 import '../Prestataires/PrestatairesScreen.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();

@@ -7,7 +7,7 @@ import '../../shared/constants/style_constants.dart';
 import '../../utils/logger.dart';
 
 class PartnerRegisterScreen extends StatefulWidget {
-  const PartnerRegisterScreen({Key? key}) : super(key: key);
+  const PartnerRegisterScreen({super.key});
 
   @override
   State<PartnerRegisterScreen> createState() => _PartnerRegisterScreenState();

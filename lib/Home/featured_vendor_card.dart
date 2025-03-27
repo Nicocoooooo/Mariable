@@ -9,13 +9,13 @@ class FeaturedVendorCard extends StatefulWidget {
   final VoidCallback onTap;
 
   const FeaturedVendorCard({
-    Key? key,
+    super.key,
     required this.imageUrl,
     required this.title,
     required this.subtitle,
     required this.rating,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<FeaturedVendorCard> createState() => _FeaturedVendorCardState();
