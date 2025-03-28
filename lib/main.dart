@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mariable/Bouquet/screens/bouquet_creation_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'utils/logger.dart';
@@ -8,7 +7,6 @@ import 'utils/supabase_test.dart';
 import 'routes_partner_admin.dart';
 // Import des écrans
 import 'Home/HomeScreen.dart';
-import 'Bouquet/screens/bouquetHomeScreen.dart';  // Import de l'écran Bouquet
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 
@@ -157,7 +155,6 @@ final GoRouter _router = GoRouter(
     // Route pour l'écran Bouquet
     GoRoute(
       path: '/bouquet',
-      builder: (context, state) => const BouquetHomeScreen(),
     ),
     // Vous pourrez ajouter d'autres routes plus tard
     ...PartnerAdminRoutes.routes,
