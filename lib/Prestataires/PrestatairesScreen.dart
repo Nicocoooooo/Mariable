@@ -110,7 +110,7 @@ class _PrestatairesScreenState extends State<PrestatairesScreen> with SingleTick
         children: [
           // Titre élégant sur fond crème
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 19),
             color: const Color(0xFFF5F2EA), // Couleur crème élégante
             width: double.infinity,
             child: Column(
@@ -120,7 +120,7 @@ class _PrestatairesScreenState extends State<PrestatairesScreen> with SingleTick
                   height: 1,
                   width: 100,
                   margin: const EdgeInsets.only(bottom: 20),
-                  color: const Color(0xFFCCAA7A), // Couleur dorée élégante
+                  color: Color(0xFF524B46), // Couleur dorée élégante
                 ),
                 
                 // Titre principal
@@ -128,7 +128,7 @@ class _PrestatairesScreenState extends State<PrestatairesScreen> with SingleTick
                   'Nos prestataires pour votre mariage',
                   style: TextStyle(
                     color: Color(0xFF524B46),
-                    fontSize: 26,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
                   ),
@@ -155,11 +155,12 @@ class _PrestatairesScreenState extends State<PrestatairesScreen> with SingleTick
                   height: 1,
                   width: 100,
                   margin: const EdgeInsets.only(top: 20),
-                  color: const Color(0xFFCCAA7A), // Couleur dorée élégante
+                  color: Color(0xFF524B46), // Couleur dorée élégante
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 16),
           
           // Contenu principal
           Expanded(
@@ -198,10 +199,10 @@ class _PrestatairesScreenState extends State<PrestatairesScreen> with SingleTick
   Widget _buildPrestaTypeCard(PrestaTypeModel type) {
     // Images par défaut pour les différentes catégories - meilleures images de mariage
     final Map<String, String> defaultImages = {
-      'lieu': 'https://images.unsplash.com/photo-1460364157752-926555421a7e?q=80&w=2940&auto=format&fit=crop',
-      'traiteur': 'https://images.unsplash.com/photo-1565538420870-da08ff96a207?q=80&w=2940&auto=format&fit=crop',
-      'photographe': 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?q=80&w=2940&auto=format&fit=crop',
-      'wedding planner': 'https://images.unsplash.com/photo-1469371670807-013ccf25f16a?q=80&w=2940&auto=format&fit=crop',
+      'lieu': 'https://images.unsplash.com/photo-1573676048035-9c2a72b6a12a?q=80&w=2942&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'traiteur': 'https://images.unsplash.com/photo-1495147466023-ac5c588e2e94?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'photographe': 'https://images.unsplash.com/photo-1623783356340-95375aac85ce?q=80&w=2948&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+      'wedding planner': 'https://images.unsplash.com/photo-1585556282289-d4d5a7967936?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
     };
 
     // Obtenir l'URL de l'image selon le type
@@ -305,7 +306,7 @@ class _PrestatairesScreenState extends State<PrestatairesScreen> with SingleTick
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFCCAA7A),
+                  color: Color(0xFF524B46),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
