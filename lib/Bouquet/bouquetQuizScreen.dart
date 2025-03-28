@@ -401,7 +401,7 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
               description: '10,000€ - 20,000€',
               value: 'medium',
               icon: Icons.euro,
-              iconCount: 2,
+              iconCount: 1,
             ),
             
             const SizedBox(height: 16),
@@ -411,7 +411,7 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
               description: '20,000€ - 35,000€',
               value: 'high',
               icon: Icons.euro,
-              iconCount: 3,
+              iconCount: 1,
             ),
             
             const SizedBox(height: 16),
@@ -421,7 +421,7 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
               description: 'Plus de 35,000€',
               value: 'luxury',
               icon: Icons.euro,
-              iconCount: 4,
+              iconCount: 1,
             ),
             
             const SizedBox(height: 30),

@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../buttons/AnimatedReserveButton.dart';
 import 'bouquethomescreen.dart';
 import 'bouquet_detail_screen.dart';
+import 'bouquet_venue_selection_screen.dart';
+import 'bouquet_caterer_selection_screen.dart';
+import 'bouquet_photographer_selection_screen.dart';
 
 class BouquetSummaryScreen extends StatefulWidget {
   final String? bouquetId;
-  final Map<String, dynamic>? bouquet;
+  final Map<String, dynamic>? bouquet; // Can pass bouquet data directly
 
   const BouquetSummaryScreen({
     Key? key,
@@ -273,6 +277,163 @@ class _BouquetSummaryScreenState extends State<BouquetSummaryScreen> {
     }
   }
 
+  // Méthode pour naviguer vers l'écran de sélection du lieu
+  void _navigateToVenueSelection() {
+    if (_bouquetData != null && _bouquetData!['id'] != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BouquetVenueSelectionScreen(bouquetId: _bouquetData!['id']),
+        ),
+      ).then((_) {
+        // Recharger les données après retour à cet écran
+        if (_bouquetData != null && _bouquetData!['id'] != null) {
+          _loadBouquetData(_bouquetData!['id']!);
+        }
+      });
+    }
+  }
+
+  // Méthode pour naviguer vers l'écran de sélection du traiteur
+  void _navigateToCatererSelection() {
+    if (_bouquetData != null && _bouquetData!['id'] != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BouquetCatererSelectionScreen(bouquetId: _bouquetData!['id']),
+        ),
+      ).then((_) {
+        // Recharger les données après retour à cet écran
+        if (_bouquetData != null && _bouquetData!['id'] != null) {
+          _loadBouquetData(_bouquetData!['id']!);
+        }
+      });
+    }
+  }
+
+  // Méthode pour naviguer vers l'écran de sélection du photographe
+  void _navigateToPhotographerSelection() {
+    if (_bouquetData != null && _bouquetData!['id'] != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BouquetPhotographerSelectionScreen(bouquetId: _bouquetData!['id']),
+        ),
+      ).then((_) {
+        // Recharger les données après retour à cet écran
+        if (_bouquetData != null && _bouquetData!['id'] != null) {
+          _loadBouquetData(_bouquetData!['id']!);
+        }
+      });
+    }
+  }
+
+  // Méthode pour contacter tous les prestataires
+  void _contactAllProviders() {
+    // Collecter les emails des prestataires
+    List<String> emails = [];
+    if (_venue != null && _venue!.containsKey('email') && _venue!['email'] != null) {
+      emails.add(_venue!['email']);
+    }
+    if (_caterer != null && _caterer!.containsKey('email') && _caterer!['email'] != null) {
+      emails.add(_caterer!['email']);
+    }
+    if (_photographer != null && _photographer!.containsKey('email') && _photographer!['email'] != null) {
+      emails.add(_photographer!['email']);
+    }
+
+    // Vérifier qu'il y a au moins un email
+    if (emails.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Aucun prestataire à contacter')),
+      );
+      return;
+    }
+
+    // Afficher un dialogue de confirmation
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Contacter les prestataires'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Vous allez contacter les prestataires suivants :',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            if (_venue != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_venue!['nom_entreprise'] ?? 'Lieu non spécifié'),
+                    ),
+                  ],
+                ),
+              ),
+            if (_caterer != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    const Icon(Icons.restaurant, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_caterer!['nom_entreprise'] ?? 'Traiteur non spécifié'),
+                    ),
+                  ],
+                ),
+              ),
+            if (_photographer != null)
+              Row(
+                children: [
+                  const Icon(Icons.camera_alt, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(_photographer!['nom_entreprise'] ?? 'Photographe non spécifié'),
+                  ),
+                ],
+              ),
+            const SizedBox(height: 16),
+            const Text(
+              'Un email groupé sera envoyé pour coordonner votre mariage.',
+              style: TextStyle(fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Simuler l'envoi d'email (à remplacer par l'implémentation réelle)
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Email envoyé aux prestataires'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Envoyer'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _returnToHome() {
     // Approche la plus simple et la plus fiable
     // Utiliser Navigator.of(context).pop() jusqu'à ce qu'on atteigne l'écran d'accueil
@@ -334,10 +495,17 @@ class _BouquetSummaryScreenState extends State<BouquetSummaryScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.check_circle_outline,
-                          color: Colors.white,
-                          size: 72,
+                        // Bouquet de fleurs SVG
+                        SvgPicture.asset(
+                          'assets/images/13.svg',
+                          height: 130,
+                          width: 130,
+                          // Si l'image n'est pas trouvée, afficher une icône de succès
+                          placeholderBuilder: (context) => Icon(
+                            Icons.check_circle_outline,
+                            color: Colors.white,
+                            size: 72,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -423,12 +591,18 @@ class _BouquetSummaryScreenState extends State<BouquetSummaryScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
                     child: Column(
                       children: [
-                        Text(
-                          'Budget total estimé',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: grisTexte,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Budget total estimé',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: grisTexte,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -459,33 +633,67 @@ class _BouquetSummaryScreenState extends State<BouquetSummaryScreen> {
                         ),
                         const SizedBox(height: 20),
                         
-                        // Liste des prestataires
-                        _buildProviderSummaryItem(
-                          title: 'Lieu',
-                          name: _venue != null ? _venue!['nom_entreprise'] : null,
-                          price: _getProviderPrice('lieu'),
-                          icon: Icons.location_on,
-                          isSelected: _venue != null,
+                        // Liste des prestataires avec possibilité de modification
+                        InkWell(
+                          onTap: _navigateToVenueSelection,
+                          child: _buildProviderSummaryItem(
+                            title: 'Lieu',
+                            name: _venue != null ? _venue!['nom_entreprise'] : null,
+                            price: _getProviderPrice('lieu'),
+                            icon: Icons.location_on,
+                            isSelected: _venue != null,
+                            onEdit: _navigateToVenueSelection,
+                          ),
                         ),
                         const Divider(height: 32),
-                        _buildProviderSummaryItem(
-                          title: 'Traiteur',
-                          name: _caterer != null ? _caterer!['nom_entreprise'] : null,
-                          price: _getProviderPrice('traiteur'),
-                          icon: Icons.restaurant,
-                          isSelected: _caterer != null,
+                        InkWell(
+                          onTap: _navigateToCatererSelection,
+                          child: _buildProviderSummaryItem(
+                            title: 'Traiteur',
+                            name: _caterer != null ? _caterer!['nom_entreprise'] : null,
+                            price: _getProviderPrice('traiteur'),
+                            icon: Icons.restaurant,
+                            isSelected: _caterer != null,
+                            onEdit: _navigateToCatererSelection,
+                          ),
                         ),
                         const Divider(height: 32),
-                        _buildProviderSummaryItem(
-                          title: 'Photographe',
-                          name: _photographer != null ? _photographer!['nom_entreprise'] : null,
-                          price: _getProviderPrice('photographe'),
-                          icon: Icons.camera_alt,
-                          isSelected: _photographer != null,
+                        InkWell(
+                          onTap: _navigateToPhotographerSelection,
+                          child: _buildProviderSummaryItem(
+                            title: 'Photographe',
+                            name: _photographer != null ? _photographer!['nom_entreprise'] : null,
+                            price: _getProviderPrice('photographe'),
+                            icon: Icons.camera_alt,
+                            isSelected: _photographer != null,
+                            onEdit: _navigateToPhotographerSelection,
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  
+                  // Bouton pour contacter tous les prestataires
+                  if (_venue != null || _caterer != null || _photographer != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _contactAllProviders,
+                          icon: const Icon(Icons.email),
+                          label: const Text('Contacter tous les prestataires'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: accentColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   
                   // Message de félicitations et instructions
                   Padding(
@@ -652,6 +860,7 @@ class _BouquetSummaryScreenState extends State<BouquetSummaryScreen> {
     required IconData icon,
     required bool isSelected,
     required double price,
+    required VoidCallback onEdit,
   }) {
     final Color accentColor = Theme.of(context).colorScheme.primary;
     final Color grisTexte = Theme.of(context).colorScheme.onSurface;
@@ -706,18 +915,16 @@ class _BouquetSummaryScreenState extends State<BouquetSummaryScreen> {
             ],
           ),
         ),
-        if (isSelected)
-          Icon(
-            Icons.check_circle,
-            color: Colors.green,
-            size: 20,
-          )
-        else
-          Icon(
-            Icons.add_circle_outline,
-            color: Colors.grey,
+        // Bouton d'édition (utilise l'icône edit si sélectionné, add si non sélectionné)
+        IconButton(
+          icon: Icon(
+            isSelected ? Icons.edit : Icons.add_circle,
+            color: isSelected ? accentColor : Colors.grey,
             size: 20,
           ),
+          onPressed: onEdit,
+          tooltip: isSelected ? 'Modifier' : 'Ajouter',
+        ),
       ],
     );
   }

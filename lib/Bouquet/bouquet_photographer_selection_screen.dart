@@ -90,45 +90,45 @@ class _BouquetPhotographerSelectionScreenState extends State<BouquetPhotographer
   }
 
   Future<void> _loadPhotographers() async {
-  try {
-    // Récupérer seulement la région du bouquet
-    final String? region = _bouquetData?['region'];
-    
-    // Afficher des logs pour le débogage
-    print('Chargement des photographes pour la région: $region');
+    try {
+      // Récupérer seulement la région du bouquet
+      final String? region = _bouquetData?['region'];
+      
+      // Afficher des logs pour le débogage
+      print('Chargement des photographes pour la région: $region');
 
-    // Fetch photographers based only on region
-    List<Map<String, dynamic>> photographers = await _repository.searchPrestataires(
-      typeId: 3, // ID for photographer type
-      region: region,
-      // Supprimer les limites de prix
-      minPrice: null,
-      maxPrice: null,
-    );
+      // Fetch photographers based only on region
+      List<Map<String, dynamic>> photographers = await _repository.searchPrestataires(
+        typeId: 3, // ID for photographer type
+        region: region,
+        // Supprimer les limites de prix
+        minPrice: null,
+        maxPrice: null,
+      );
 
-    print('Nombre de photographes trouvés: ${photographers.length}');
+      print('Nombre de photographes trouvés: ${photographers.length}');
 
-    // Sort photographers by rating
-    photographers.sort((a, b) {
-      final ratingA = a['note_moyenne'] ?? 0.0;
-      final ratingB = b['note_moyenne'] ?? 0.0;
-      return ratingB.compareTo(ratingA);
-    });
+      // Sort photographers by rating
+      photographers.sort((a, b) {
+        final ratingA = a['note_moyenne'] ?? 0.0;
+        final ratingB = b['note_moyenne'] ?? 0.0;
+        return ratingB.compareTo(ratingA);
+      });
 
-    setState(() {
-      _photographers = photographers;
-      _isLoading = false;
-    });
-  } catch (e) {
-    print('Erreur lors du chargement des photographes: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Erreur lors du chargement des photographes: $e')),
-    );
-    setState(() {
-      _isLoading = false;
-    });
+      setState(() {
+        _photographers = photographers;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Erreur lors du chargement des photographes: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors du chargement des photographes: $e')),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
-}
 
   Future<void> _selectPhotographer(String photographerId) async {
     setState(() {
@@ -384,27 +384,70 @@ class _BouquetPhotographerSelectionScreenState extends State<BouquetPhotographer
                             (context, index) {
                               final photographer = _photographers[index];
                               final photographerId = photographer['id'];
+                              final bool isSelected = photographerId == _selectedPhotographerId;
                               
                               return Stack(
                                 children: [
-                                  PrestaireCard(
-                                    prestataire: photographer,
-                                    onTap: () => _navigateToDetails(photographer),
-                                    isFavorite: false,
+                                  // Conteneur avec bordure pour indiquer la sélection
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 16),
+                                    decoration: BoxDecoration(
+                                      border: isSelected 
+                                        ? Border.all(color: accentColor, width: 2.5)
+                                        : null,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: PrestaireCard(
+                                      prestataire: photographer,
+                                      onTap: () => _selectPhotographer(photographerId),
+                                      isFavorite: false,
+                                    ),
                                   ),
                                   
-                                  // Selection button
+                                  // Bouton détails ("+")
+                                  Positioned(
+                                    top: 12,
+                                    right: 12,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.2),
+                                            spreadRadius: 1,
+                                            blurRadius: 3,
+                                            offset: const Offset(0, 1),
+                                          ),
+                                        ],
+                                      ),
+                                      child: IconButton(
+                                        icon: const Icon(Icons.add),
+                                        color: accentColor,
+                                        iconSize: 24,
+                                        onPressed: () => _navigateToDetails(photographer),
+                                        tooltip: 'Voir les détails',
+                                      ),
+                                    ),
+                                  ),
+                                  
+                                  // Bouton de sélection en bas à droite (sans icône)
                                   Positioned(
                                     bottom: 36,
                                     right: 16,
-                                    child: ElevatedButton.icon(
+                                    child: ElevatedButton(
                                       onPressed: () => _selectPhotographer(photographerId),
-                                      icon: const Icon(Icons.check),
-                                      label: const Text('Sélectionner'),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: accentColor,
                                         foregroundColor: Colors.white,
                                         elevation: 3,
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      ),
+                                      child: const Text(
+                                        'Sélectionner',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                   ),

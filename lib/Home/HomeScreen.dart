@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../Bouquet2/bouquetHomeScreen.dart';
+import '../Bouquet/bouquetHomeScreen.dart';
 import '../Filtre/prestataires_filter_screen.dart';  // Ajout de l'import pour la page des prestataires
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
