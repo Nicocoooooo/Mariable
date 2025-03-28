@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../Widgets/empty_state.dart';
-import 'bouquetQuizScreen.dart';
-import 'bouquet_detail_screen.dart';
+import '../Bouquet/bouquetQuizScreen.dart';
+import '../Bouquet/bouquet_detail_screen.dart';
 
 class BouquetHomeScreen extends StatefulWidget {
   const BouquetHomeScreen({Key? key}) : super(key: key);

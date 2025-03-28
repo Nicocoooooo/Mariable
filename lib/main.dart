@@ -7,7 +7,7 @@ import 'utils/supabase_test.dart';
 import 'routes_partner_admin.dart';
 // Import des écrans
 import 'Home/HomeScreen.dart';
-import 'bouquet/bouquetHomeScreen.dart';  // Import de l'écran Bouquet
+import 'Bouquet/bouquetHomeScreen.dart';  // Import de l'écran Bouquet
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 

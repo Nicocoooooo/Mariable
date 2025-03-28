@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'bouquet/bouquetHomeScreen.dart'; // Notez le nom du fichier avec des underscores
+import 'Bouquet/bouquetHomeScreen.dart'; // Notez le nom du fichier avec des underscores
 // Importez vos écrans ici
 // import 'features/auth/presentation/screens/login_screen.dart';
 // import 'features/prestataires/presentation/screens/recherche_screen.dart';
