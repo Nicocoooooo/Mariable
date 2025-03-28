@@ -7,6 +7,7 @@ import 'utils/supabase_test.dart';
 import 'routes_partner_admin.dart';
 // Import des écrans
 import 'Home/HomeScreen.dart';
+import 'Bouquet/bouquetHomeScreen.dart';  // Import de l'écran Bouquet
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 
@@ -151,6 +152,11 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/',
       builder: (context, state) => const HomePage(),
+    ),
+    // Route pour l'écran Bouquet
+    GoRoute(
+      path: '/bouquet',
+      builder: (context, state) => const BouquetHomeScreen(),
     ),
     // Vous pourrez ajouter d'autres routes plus tard
     ...PartnerAdminRoutes.routes,

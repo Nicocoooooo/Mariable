@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../Bouquet/bouquetHomeScreen.dart';
 import '../Filtre/prestataires_filter_screen.dart';  // Ajout de l'import pour la page des prestataires
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
@@ -230,7 +231,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(grisTexte, accentColor),
+      bottomNavigationBar: _buildBottomNavigationBar(grisTexte, accentColor, context),
     );
   }
 
@@ -304,7 +305,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Fonction pour sélectionner un lieu
-
   Future<void> _showLieuSelector(BuildContext context) async {
     final regionService = RegionService();
     List<String> regions = [];
@@ -420,7 +420,6 @@ class _HomePageState extends State<HomePage> {
       });
     }
   }
-
   // Ouvre le modal des filtres prestataires
   Future<void> _showPrestatairesFilter(BuildContext context) async {
     final result = await showModalBottomSheet<dynamic>(
@@ -500,7 +499,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Barre de navigation
-  Widget _buildBottomNavigationBar(Color grisTexte, Color accentColor) {
+  Widget _buildBottomNavigationBar(Color grisTexte, Color accentColor, BuildContext context) {
     return Container(
       height: 65,
       decoration: BoxDecoration(
@@ -526,7 +525,14 @@ class _HomePageState extends State<HomePage> {
           }),
           _buildNavItem(Icons.favorite_border, 'Favoris', grisTexte),
           _buildNavItem(Icons.home, 'Accueil', accentColor, isSelected: true),
-          _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte),
+          _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte, onTap: () {
+           Navigator.push(
+            context,
+           MaterialPageRoute(
+            builder: (context) => BouquetHomeScreen(), // Utilisez le nouvel écran
+           ),
+          );
+          }),
           _buildNavItem(
             Icons.person_outline,
             'Profil',
