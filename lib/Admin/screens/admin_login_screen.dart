@@ -31,6 +31,16 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+      title: const Text('Administration Mariable'),
+      backgroundColor: Colors.white,
+      foregroundColor: PartnerAdminStyles.accentColor,
+      // Ajoutez cette ligne pour la flèche de retour:
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => context.go('/'), // ou Navigator.pop(context) si vous préférez
+      ),
+    ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
@@ -161,9 +171,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                 )
                               : const Text('Se connecter'),
                         ),
-                        const SizedBox(height: 16),
 
-                        // Lien de retour à l'accueil
+                        const SizedBox(height: 16), // Ajouter un espace
+
                         TextButton(
                           onPressed: () {
                             context.go('/');
