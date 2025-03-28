@@ -12,6 +12,10 @@ import 'ImageGalleryScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:mariable/Widgets/chatbot_widget.dart';
+import 'comparison_provider.dart';
+import 'comparison_screen.dart';
+import 'package:provider/provider.dart';
+
 
 
 
@@ -363,16 +367,103 @@ Widget build(BuildContext context) {
   }
 
   return Scaffold(
-    floatingActionButton: !_isCheckingChatbot && _hasChatbotDocument ? 
-    Padding(
-    // Ajouter un padding pour éloigner le bouton du bas de l'écran
-    padding: const EdgeInsets.only(bottom: 80), // Ajuster cette valeur selon vos besoins
-    child: FloatingActionButton(
-      backgroundColor: const Color(0xFF524B46),
-      child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-      onPressed: () => _showChatbotModal(context),
+    // Autres propriétés du Scaffold...
+    
+    floatingActionButton: Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        // Bouton de comparaison
+        if (_getActualPrestaireType() == 1) // Seulement pour les lieux (type 1)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 100),
+            child: FloatingActionButton(
+              heroTag: "btn_compare",
+              backgroundColor: const Color(0xFFF5F2EA),
+              foregroundColor: const Color(0xFF524B46),
+              child: Icon(
+                Provider.of<ComparisonProvider>(context).isInComparison(widget.prestataire['id'])
+                    ? Icons.compare_arrows
+                    : Icons.add_to_photos,
+              ),
+              onPressed: () => _handleComparisonButton(context),
+            ),
+          ),
+        
+        // Votre bouton de chatbot existant
+        if (!_isCheckingChatbot && _hasChatbotDocument)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 100), // Ajout d'un padding plus grand pour éviter de masquer les boutons
+            child: FloatingActionButton(
+              heroTag: "btn_chatbot",
+              backgroundColor: const Color(0xFF524B46),
+              child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
+              onPressed: () => _showChatbotModal(context),
+            ),
+          ),
+      ],
     ),
-  ) : null,
+    
+    bottomSheet: Container(
+      width: double.infinity,
+      height: 90, // Augmentez la hauteur pour ajouter de l'espace
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      //margin: const EdgeInsets.only(bottom: 20), // Ajoutez une marge en bas pour créer de l'espace
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(26),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Premier bouton - Contacter
+          Expanded(
+            child: OutlinedButton(
+              onPressed: _showAvailabilitySelector,
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF524B46)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text(
+                'Prendre RDV',
+                style: TextStyle(
+                  color: Color(0xFF524B46),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Deuxième bouton - Réserver
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => _showFormulaCalculator(widget.prestataire),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF524B46),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Text(
+                'Réserver',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
     extendBodyBehindAppBar: true,
     appBar: AppBar(
       backgroundColor: _isScrolled ? Colors.white : Colors.transparent,
@@ -959,73 +1050,11 @@ Widget build(BuildContext context) {
 
         // Espace pour ne pas que le bouton cache du contenu
         const SliverToBoxAdapter(
-          child: SizedBox(height: 80),
+          child: SizedBox(height: 100),
         ),
       ],
     ),
-    
-
-    // Bouton Réserver fixe en bas
-    bottomSheet: Container(
-      width: double.infinity,
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(26),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Premier bouton - Contacter
-          Expanded(
-            child: OutlinedButton(
-              onPressed: _showAvailabilitySelector,
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF524B46)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text(
-                'Prendre RDV',
-                style: TextStyle(
-                  color: Color(0xFF524B46),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Deuxième bouton - Réserver
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () => _showFormulaCalculator(widget.prestataire),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF524B46),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: const Text(
-                'Réserver',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
+  
   );
 }
 
@@ -2858,7 +2887,81 @@ Widget buildLocationWidget(String address) {
   );
 }
     
-
+// Méthode pour gérer le bouton de comparaison
+void _handleComparisonButton(BuildContext context) {
+  final comparisonProvider = Provider.of<ComparisonProvider>(context, listen: false);
+  
+  if (comparisonProvider.isInComparison(widget.prestataire['id'])) {
+    // Si déjà dans la comparaison, ouvrir l'écran de comparaison
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ComparisonScreen(),
+      ),
+    );
+  } else {
+    // Si pas encore dans la comparaison, l'ajouter
+    if (comparisonProvider.canAddMore) {
+      comparisonProvider.addToComparison(widget.prestataire);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Prestataire ajouté à la comparaison'),
+          duration: Duration(seconds: 2),
+          action: SnackBarAction(
+            label: 'Comparer',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ComparisonScreen(),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    } else {
+      // Déjà 2 prestataires dans la liste
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Comparaison limitée'),
+          content: Text('Vous ne pouvez comparer que 2 prestataires à la fois. Voulez-vous voir la comparaison actuelle ou la réinitialiser?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ComparisonScreen(),
+                  ),
+                );
+              },
+              child: Text('Voir la comparaison'),
+            ),
+            TextButton(
+              onPressed: () {
+                comparisonProvider.clearComparison();
+                comparisonProvider.addToComparison(widget.prestataire);
+                Navigator.pop(context);
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Comparaison réinitialisée avec ce prestataire'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: Text('Réinitialiser'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+}
 
 Widget _buildOptionCheckbox(
   String title,

@@ -9,6 +9,8 @@ import 'routes_partner_admin.dart';
 import 'Home/HomeScreen.dart';
 import 'Bouquet/bouquetHomeScreen.dart';  // Import de l'écran Bouquet
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
+import 'DetailsScreen/comparison_provider.dart';
 
 
 void main() async {
@@ -48,7 +50,14 @@ void main() async {
     AppLogger.error('Failed to initialize Supabase', e);
   }
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ComparisonProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

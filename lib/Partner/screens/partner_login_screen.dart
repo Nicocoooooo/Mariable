@@ -90,7 +90,7 @@ class _PartnerLoginScreenState extends State<PartnerLoginScreen> {
       body: _isLoading
           ? const LoadingIndicator(message: 'Connexion en cours...')
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -223,7 +223,7 @@ class _PartnerLoginScreenState extends State<PartnerLoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
 
                   // Bouton de connexion
                   ElevatedButton(
@@ -240,7 +240,7 @@ class _PartnerLoginScreenState extends State<PartnerLoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 10),
 
                   // Lien vers inscription
                   Row(
@@ -260,6 +260,19 @@ class _PartnerLoginScreenState extends State<PartnerLoginScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Ajoutez ce bouton de retour à l'accueil
+                  TextButton(
+                    onPressed: () {
+                      context.go('/');
+                    },
+                    child: const Text(
+                      'Retourner à l\'accueil',
+                      style: TextStyle(
+                        color: PartnerAdminStyles.textColor,
+                      ),
+                    ),
                   ),
                 ],
               ),

@@ -23,68 +23,91 @@ class ProfileSelectorScreen extends StatelessWidget {
           color: backgroundColor,
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(24.0),
-              child: Text(
-                'Choisissez votre espace',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 40),
-
-            // Grille de sélection de profil
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            // Section du haut (titre et options)
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Option Marié(e)
-                  _buildProfileOption(
-                    context: context,
-                    title: 'Marié(e)',
-                    icon: Icons.favorite,
-                    color: Colors.red.shade400,
-                    onTap: () {
-                      // Page non implémentée pour les mariés
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const PlaceholderUserLoginScreen(),
+                  const Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Text(
+                      'Choisissez votre espace',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Grille de sélection de profil
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Option Marié(e)
+                        _buildProfileOption(
+                          context: context,
+                          title: 'Marié(e)',
+                          icon: Icons.favorite,
+                          color: Colors.red.shade400,
+                          onTap: () {
+                            // Page non implémentée pour les mariés
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const PlaceholderUserLoginScreen(),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
 
-                  // Option Prestataire
-                  _buildProfileOption(
-                    context: context,
-                    title: 'Prestataire',
-                    icon: Icons.business,
-                    color: Colors.blue.shade400,
-                    onTap: () {
-                      context.go(PartnerAdminRoutes.partnerLogin);
-                    },
-                  ),
+                        // Option Prestataire
+                        _buildProfileOption(
+                          context: context,
+                          title: 'Prestataire',
+                          icon: Icons.business,
+                          color: Colors.blue.shade400,
+                          onTap: () {
+                            context.go(PartnerAdminRoutes.partnerLogin);
+                          },
+                        ),
 
-                  // Option Administrateur
-                  _buildProfileOption(
-                    context: context,
-                    title: 'Admin',
-                    icon: Icons.admin_panel_settings,
-                    color: Colors.purple.shade400,
-                    onTap: () {
-                      context.go(PartnerAdminRoutes.adminLogin);
-                    },
+                        // Option Administrateur
+                        _buildProfileOption(
+                          context: context,
+                          title: 'Admin',
+                          icon: Icons.admin_panel_settings,
+                          color: Colors.purple.shade400,
+                          onTap: () {
+                            context.go(PartnerAdminRoutes.adminLogin);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
+              ),
+            ),
+            
+            // Section du bas (bouton retour à l'accueil)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: TextButton(
+                  onPressed: () => context.go('/'),
+                  child: const Text(
+                    'Retourner à l\'accueil',
+                    style: TextStyle(
+                      color: accentColor,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
