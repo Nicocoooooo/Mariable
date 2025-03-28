@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'bouquet/bouquetHomeScreen.dart'; // Notez le nom du fichier avec des underscores
 // Importez vos écrans ici
 // import 'features/auth/presentation/screens/login_screen.dart';
 // import 'features/prestataires/presentation/screens/recherche_screen.dart';
@@ -16,7 +17,9 @@ class AppRouter {
       // Route pour l'écran Bouquet
       GoRoute(
         path: '/bouquet',
-        
+        builder: (BuildContext context, GoRouterState state) {
+          return const BouquetHomeScreen(); // Modifié ici
+        },
       ),
       // Ajoutez d'autres routes ici
     ],
