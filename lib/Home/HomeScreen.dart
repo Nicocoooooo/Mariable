@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../Bouquet2/bouquetHomeScreen.dart';
 import '../Filtre/prestataires_filter_screen.dart';  // Ajout de l'import pour la page des prestataires
 import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
@@ -524,7 +525,14 @@ class _HomePageState extends State<HomePage> {
           }),
           _buildNavItem(Icons.favorite_border, 'Favoris', grisTexte),
           _buildNavItem(Icons.home, 'Accueil', accentColor, isSelected: true),
-          _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte),
+          _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte, onTap: () {
+           Navigator.push(
+            context,
+           MaterialPageRoute(
+            builder: (context) => BouquetHomeScreen(), // Utilisez le nouvel écran
+           ),
+          );
+          }),
           _buildNavItem(
             Icons.person_outline,
             'Profil',

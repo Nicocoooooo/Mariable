@@ -416,8 +416,8 @@ class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
         
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
-          child: PrestaireCard(
-            prestataire: photographe.toMap(),
+          child: BouquetPrestaireCard(
+            prestataire: _createDetailedMap(photographe),
             isSelected: isSelected,
             onTap: () => _selectPhotographe(photographe),
             onDetailPressed: () => _openPhotographeDetails(photographe),
@@ -427,19 +427,47 @@ class _ChoixPhotographeScreenState extends State<ChoixPhotographeScreen> {
     );
   }
   
+  /// Crée une Map détaillée avec toutes les propriétés nécessaires pour l'affichage des détails
+  Map<String, dynamic> _createDetailedMap(PhotographeModel photographe) {
+    // Commencer avec les données de base
+    final Map<String, dynamic> detailedMap = photographe.toMap();
+    
+    // S'assurer que les champs spécifiques au photographe sont présents
+    if (!detailedMap.containsKey('style') || detailedMap['style'] == null) {
+      detailedMap['style'] = photographe.style;
+    }
+    if (!detailedMap.containsKey('options_duree') || detailedMap['options_duree'] == null) {
+      detailedMap['options_duree'] = photographe.optionsDuree;
+    }
+    if (!detailedMap.containsKey('drone') || detailedMap['drone'] == null) {
+      detailedMap['drone'] = photographe.drone;
+    }
+    
+    return detailedMap;
+  }
+  
   /// Ouvre la page de détails du photographe
   void _openPhotographeDetails(PhotographeModel photographe) {
+    // Créer une Map détaillée avec toutes les propriétés nécessaires
+    final Map<String, dynamic> detailedMap = _createDetailedMap(photographe);
+    
+    // Afficher les données pour le débogage
+    print('Données envoyées à PrestataireDetailScreen:');
+    detailedMap.forEach((key, value) {
+      print('$key: $value (${value?.runtimeType})');
+    });
+    
     Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PrestataireDetailScreen(
-          type: 'photographe',
-          prestataire: photographe.toMap(),
-          isSelected: widget.selectedPhotographe?.id == photographe.id,
-          onSelect: () => _selectPhotographe(photographe),
-        ),
-      ),
-    );
+  context,
+  MaterialPageRoute(
+    builder: (context) => BouquetPrestataireDetailScreen(
+      type: 'photographe',
+      prestataire: detailedMap,
+      isSelected: widget.selectedPhotographe?.id == photographe.id,
+      onSelect: () => _selectPhotographe(photographe),
+    ),
+  ),
+);
   }
   
   /// Sélectionne un photographe et le communique au parent

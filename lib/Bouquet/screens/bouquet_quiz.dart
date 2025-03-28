@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mariable/theme/app_theme.dart';
 import '../data/quiz_model.dart';
 
 class BouquetQuizScreen extends StatefulWidget {
@@ -110,6 +111,137 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
     }
   }
   
+  @override
+  Widget build(BuildContext context) {
+    final Color accentColor = AppTheme.accentColor;
+    final Color beige = AppTheme.beige;
+    
+    // Calcul de la progression
+    final double progress = (_currentQuestionIndex + 1) / _questions.length;
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Vos préférences'),
+        backgroundColor: accentColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Column(
+        children: [
+          // En-tête avec progression
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: beige,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Indicateur de progression textuel
+                Text(
+                  'Question ${_currentQuestionIndex + 1} sur ${_questions.length}',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: accentColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Barre de progression
+                LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                  minHeight: 6,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ],
+            ),
+          ),
+          
+          // Contenu principal
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Question
+                  Text(
+                    _getCurrentQuestion().question,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  
+                  // Options de réponse selon le type de question
+                  _buildQuestionContent(),
+                ],
+              ),
+            ),
+          ),
+          
+          // Boutons de navigation
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(26),
+                  offset: const Offset(0, -2),
+                  blurRadius: 5,
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Bouton Précédent
+                if (_currentQuestionIndex > 0)
+                  OutlinedButton.icon(
+                    onPressed: _previousQuestion,
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Précédent'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      foregroundColor: accentColor,
+                      side: BorderSide(color: accentColor),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  )
+                else
+                  const SizedBox.shrink(),
+                
+                // Bouton Suivant ou Terminer
+                ElevatedButton.icon(
+                  onPressed: _hasAnswer() ? _nextQuestion : null,
+                  icon: Icon(_currentQuestionIndex < _questions.length - 1 
+                      ? Icons.arrow_forward 
+                      : Icons.check),
+                  label: Text(_currentQuestionIndex < _questions.length - 1 
+                      ? 'Suivant' 
+                      : 'Terminer'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accentColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    disabledBackgroundColor: Colors.grey[300],
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
   /// Obtient la question actuelle
   QuizQuestion _getCurrentQuestion() {
     return _questions[_currentQuestionIndex];
@@ -198,125 +330,6 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
     return selectedOptions.contains(value);
   }
   
-  @override
-  Widget build(BuildContext context) {
-    final Color accentColor = Theme.of(context).colorScheme.primary;
-    final Color beige = Theme.of(context).colorScheme.secondary;
-    
-    // Calcul de la progression
-    final double progress = (_currentQuestionIndex + 1) / _questions.length;
-    
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Vos préférences'),
-        backgroundColor: accentColor,
-        foregroundColor: Colors.white,
-      ),
-      body: Column(
-        children: [
-          // En-tête avec progression
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: beige.withOpacity(0.2),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Indicateur de progression textuel
-                Text(
-                  'Question ${_currentQuestionIndex + 1} sur ${_questions.length}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: accentColor,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                
-                // Barre de progression
-                LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: Colors.grey[300],
-                  valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                ),
-              ],
-            ),
-          ),
-          
-          // Contenu principal
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Question
-                  Text(
-                    _getCurrentQuestion().question,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Options de réponse selon le type de question
-                  _buildQuestionContent(),
-                ],
-              ),
-            ),
-          ),
-          
-          // Boutons de navigation
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  offset: const Offset(0, -2),
-                  blurRadius: 5,
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // Bouton Précédent
-                if (_currentQuestionIndex > 0)
-                  OutlinedButton.icon(
-                    onPressed: _previousQuestion,
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('Précédent'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
-                  )
-                else
-                  const SizedBox.shrink(),
-                
-                // Bouton Suivant ou Terminer
-                ElevatedButton.icon(
-                  onPressed: _hasAnswer() ? _nextQuestion : null,
-                  icon: Icon(_currentQuestionIndex < _questions.length - 1 
-                      ? Icons.arrow_forward 
-                      : Icons.check),
-                  label: Text(_currentQuestionIndex < _questions.length - 1 
-                      ? 'Suivant' 
-                      : 'Terminer'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accentColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    disabledBackgroundColor: Colors.grey[300],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
   /// Construit le contenu de la question en fonction de son type
   Widget _buildQuestionContent() {
     final question = _getCurrentQuestion();
@@ -357,13 +370,13 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
           return Card(
             elevation: isSelected ? 4 : 1,
             color: isSelected 
-                ? Theme.of(context).colorScheme.primary.withOpacity(0.2) 
-                : Colors.white,
+                ? AppTheme.accentColor
+                : AppTheme.beige.withOpacity(0.3),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
               side: BorderSide(
                 color: isSelected 
-                    ? Theme.of(context).colorScheme.primary
+                    ? AppTheme.accentColor
                     : Colors.grey[300]!,
                 width: isSelected ? 2 : 1,
               ),
@@ -376,9 +389,7 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
                   option.label,
                   style: TextStyle(
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.black87,
+                    color: isSelected ? Colors.white : AppTheme.textColor,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -401,7 +412,7 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
             borderRadius: BorderRadius.circular(8),
             side: BorderSide(
               color: isSelected 
-                  ? Theme.of(context).colorScheme.primary 
+                  ? AppTheme.accentColor
                   : Colors.grey[300]!,
               width: isSelected ? 2 : 1,
             ),
@@ -421,7 +432,7 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
                         _selectSingleOption(value);
                       }
                     },
-                    activeColor: Theme.of(context).colorScheme.primary,
+                    activeColor: AppTheme.accentColor,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -429,6 +440,7 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
                       option.label,
                       style: TextStyle(
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: AppTheme.textColor,
                       ),
                     ),
                   ),
@@ -457,7 +469,7 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
             borderRadius: BorderRadius.circular(8),
             side: BorderSide(
               color: isSelected 
-                  ? Theme.of(context).colorScheme.primary 
+                  ? AppTheme.accentColor
                   : Colors.grey[300]!,
               width: isSelected ? 2 : 1,
             ),
@@ -474,7 +486,10 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
                     onChanged: (value) {
                       _toggleMultiOption(option.value);
                     },
-                    activeColor: Theme.of(context).colorScheme.primary,
+                    activeColor: AppTheme.accentColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -482,6 +497,7 @@ class _BouquetQuizScreenState extends State<BouquetQuizScreen> {
                       option.label,
                       style: TextStyle(
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        color: AppTheme.textColor,
                       ),
                     ),
                   ),

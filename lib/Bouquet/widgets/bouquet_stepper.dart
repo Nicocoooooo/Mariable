@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
-/// Widget qui affiche un stepper horizontal pour indiquer la progression
-/// dans le processus de création de bouquet
 class BouquetStepper extends StatelessWidget {
   final List<String> steps;
   final int currentStep;
@@ -14,107 +13,102 @@ class BouquetStepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Couleurs du thème pour harmoniser avec le reste de l'app
     final Color accentColor = Theme.of(context).colorScheme.primary;
     final Color beige = Theme.of(context).colorScheme.secondary;
     final Color textColor = Theme.of(context).colorScheme.onSurface;
 
     return Container(
-      height: 80,
-      color: beige.withOpacity(0.2),
-      child: Row(
-        children: List.generate(steps.length * 2 - 1, (index) {
-          // Éléments aux positions paires (0, 2, 4) sont des étapes
-          if (index % 2 == 0) {
-            final stepIndex = index ~/ 2;
-            final bool isActive = stepIndex == currentStep;
-            final bool isCompleted = stepIndex < currentStep;
-            
-            return Expanded(
-              child: _buildStep(
-                context: context,
-                label: steps[stepIndex],
-                stepNumber: stepIndex + 1,
-                isActive: isActive,
-                isCompleted: isCompleted,
-                accentColor: accentColor,
-                textColor: textColor,
-              ),
-            );
-          }
-          // Éléments aux positions impaires (1, 3) sont des connecteurs
-          else {
-            final beforeStepIndex = index ~/ 2;
-            final bool isCompleted = beforeStepIndex < currentStep;
-            
-            return _buildConnector(
-              isCompleted: isCompleted,
-              accentColor: accentColor,
-            );
-          }
-        }),
-      ),
-    );
-  }
-
-  /// Construit une étape du stepper
-  Widget _buildStep({
-    required BuildContext context,
-    required String label,
-    required int stepNumber,
-    required bool isActive,
-    required bool isCompleted,
-    required Color accentColor,
-    required Color textColor,
-  }) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Cercle avec numéro ou icône de validation
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive || isCompleted ? accentColor : Colors.grey[300],
-          ),
-          child: Center(
-            child: isCompleted
-                ? const Icon(Icons.check, color: Colors.white, size: 16)
-                : Text(
-                    stepNumber.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      child: Column(
+        children: [
+          // Rangée de fleurs et de symboles entre les étapes
+          Row(
+            children: List.generate(steps.length * 2 - 1, (index) {
+              // Pour les index pairs (0, 2, 4, ...), on affiche la fleur
+              if (index.isEven) {
+                final stepIndex = index ~/ 2;
+                final bool isCompleted = stepIndex < currentStep;
+                final bool isCurrent = stepIndex == currentStep;
+                final bool isLast = stepIndex == steps.length - 1;
+                
+                return Expanded(
+                  child: Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Cercle de background pour les étapes complétées uniquement
+                        if (isCompleted)
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              border: Border.all(
+                                color: accentColor,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          
+                        // SVG de fleur pour les étapes normales, bouquet pour la dernière
+                        SvgPicture.asset(
+                          isLast ? 'assets/images/12.svg' : 'assets/images/f.svg',
+                          width: 32,
+                          height: 32,
+                          colorFilter: isCompleted || isCurrent 
+                            ? ColorFilter.mode(accentColor, BlendMode.srcIn)
+                            : ColorFilter.mode(Colors.grey[400]!, BlendMode.srcIn),
+                        ),
+                      ],
                     ),
                   ),
+                );
+              } else {
+                // Pour les index impairs (1, 3, 5, ...), on affiche un symbole + ou =
+                final stepBeforeIndex = index ~/ 2;
+                final bool isCompleted = stepBeforeIndex < currentStep;
+                final bool isBeforeLast = stepBeforeIndex == steps.length - 2;
+                
+                return Center(
+                  child: Text(
+                    isBeforeLast ? '=' : '+',
+                    style: TextStyle(
+                      color: isCompleted ? accentColor : Colors.grey[400],
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                    ),
+                  ),
+                );
+              }
+            }),
           ),
-        ),
-        const SizedBox(height: 8),
-        // Libellé de l'étape
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            color: isActive ? accentColor : textColor.withOpacity(0.6),
+          
+          // Libellés des étapes
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: steps.asMap().entries.map((entry) {
+              final int idx = entry.key;
+              final String step = entry.value;
+              final bool isCompleted = idx < currentStep;
+              final bool isCurrent = idx == currentStep;
+              
+              return Expanded(
+                child: Text(
+                  step,
+                  style: TextStyle(
+                    color: isCompleted ? accentColor : (isCurrent ? accentColor : textColor.withOpacity(0.5)),
+                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            }).toList(),
           ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  /// Construit un connecteur entre deux étapes
-  Widget _buildConnector({
-    required bool isCompleted,
-    required Color accentColor,
-  }) {
-    return SizedBox(
-      width: 20,
-      child: Divider(
-        color: isCompleted ? accentColor : Colors.grey[300],
-        thickness: 1.5,
-        height: 1,
+        ],
       ),
     );
   }

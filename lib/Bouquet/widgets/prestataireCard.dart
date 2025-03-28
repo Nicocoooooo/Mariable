@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-class PrestaireCard extends StatelessWidget {
+class BouquetPrestaireCard extends StatelessWidget {
   final Map<String, dynamic> prestataire;
   final bool isSelected;
   final VoidCallback onTap;
@@ -10,7 +10,7 @@ class PrestaireCard extends StatelessWidget {
   final VoidCallback? onDetailPressed;
   final bool isFavorite;
 
-  const PrestaireCard({
+  const BouquetPrestaireCard({
     Key? key,
     required this.prestataire,
     this.isSelected = false,
@@ -26,10 +26,14 @@ class PrestaireCard extends StatelessWidget {
     final String nom = prestataire['nom_entreprise'] ?? 'Sans nom';
     final String description = prestataire['description'] ?? '';
     final double? prixBase = prestataire['prix_base'] != null
-        ? (prestataire['prix_base'] as num).toDouble()
+        ? (prestataire['prix_base'] is double 
+            ? prestataire['prix_base'] 
+            : double.tryParse(prestataire['prix_base'].toString()))
         : null;
     final double? noteAverage = prestataire['note_moyenne'] != null
-        ? (prestataire['note_moyenne'] as num).toDouble()
+        ? (prestataire['note_moyenne'] is double 
+            ? prestataire['note_moyenne'] 
+            : double.tryParse(prestataire['note_moyenne'].toString()))
         : null;
     final String? region = prestataire['region'];
     final String? photoUrl = prestataire['photo_url'] ?? prestataire['image_url'];
@@ -45,11 +49,17 @@ class PrestaireCard extends StatelessWidget {
     // Déterminer le type de prestataire pour l'icône
     IconData typeIcon = Icons.business;
     String typeText = '';
+    int? prestaTypeId = prestataire['presta_type_id'] is int 
+        ? prestataire['presta_type_id'] 
+        : int.tryParse(prestataire['presta_type_id'].toString());
     
-    if (prestataire.containsKey('type_lieu')) {
+    if (prestaTypeId == 1 || prestataire.containsKey('type_lieu')) {
       typeIcon = Icons.villa;
-      typeText = 'Lieu - ${prestataire['type_lieu'] ?? ''}';
-    } else if (prestataire.containsKey('type_cuisine')) {
+      typeText = 'Lieu';
+      if (prestataire['type_lieu'] != null) {
+        typeText += ' - ${prestataire['type_lieu']}';
+      }
+    } else if (prestaTypeId == 2 || prestataire.containsKey('type_cuisine')) {
       typeIcon = Icons.restaurant;
       typeText = 'Traiteur';
       if (prestataire['type_cuisine'] != null) {
@@ -59,7 +69,7 @@ class PrestaireCard extends StatelessWidget {
           typeText += ' - ${prestataire['type_cuisine']}';
         }
       }
-    } else if (prestataire.containsKey('style')) {
+    } else if (prestaTypeId == 3 || prestataire.containsKey('style')) {
       typeIcon = Icons.camera_alt;
       typeText = 'Photographe';
       if (prestataire['style'] != null) {
@@ -68,6 +78,21 @@ class PrestaireCard extends StatelessWidget {
         } else if (prestataire['style'] is String) {
           typeText += ' - ${prestataire['style']}';
         }
+      }
+    }
+    
+    // Information de capacité (pour les lieux)
+    int? capaciteMax;
+    if (prestaTypeId == 1) {
+      if (prestataire.containsKey('lieux')) {
+        var lieuxData = prestataire['lieux'];
+        if (lieuxData is List && lieuxData.isNotEmpty) {
+          capaciteMax = lieuxData[0]['capacite_max'];
+        } else if (lieuxData is Map) {
+          capaciteMax = lieuxData['capacite_max'];
+        }
+      } else {
+        capaciteMax = prestataire['capacite_max'];
       }
     }
     
@@ -114,7 +139,7 @@ class PrestaireCard extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: accentColor,
+                        color: Colors.green,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
@@ -134,7 +159,7 @@ class PrestaireCard extends StatelessWidget {
                           ),
                           SizedBox(width: 4),
                           Text(
-                            'Sélectionné',
+                            'SÉLECTIONNÉ',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -180,7 +205,7 @@ class PrestaireCard extends StatelessWidget {
                 if (onDetailPressed != null)
                   Positioned(
                     bottom: 12,
-                    left: 12,
+                    right: 12,
                     child: Container(
                       decoration: BoxDecoration(
                         color: accentColor,
@@ -211,13 +236,13 @@ class PrestaireCard extends StatelessWidget {
                 if (prixBase != null)
                   Positioned(
                     bottom: 0,
-                    right: 0,
+                    left: 0,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: accentColor,
                         borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
                         ),
                       ),
                       child: Text(
@@ -321,6 +346,25 @@ class PrestaireCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             region,
+                            style: TextStyle(
+                              color: textColor.withOpacity(0.7),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  
+                  // Capacité pour les lieux
+                  if (capaciteMax != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Row(
+                        children: [
+                          Icon(Icons.people, size: 14, color: accentColor),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$capaciteMax invités',
                             style: TextStyle(
                               color: textColor.withOpacity(0.7),
                               fontSize: 14,

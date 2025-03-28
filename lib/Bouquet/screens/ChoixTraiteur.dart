@@ -390,8 +390,8 @@ class _ChoixTraiteurScreenState extends State<ChoixTraiteurScreen> {
         
         return Padding(
           padding: const EdgeInsets.only(bottom: 16),
-          child: PrestaireCard(
-            prestataire: traiteur.toMap(),
+          child: BouquetPrestaireCard(
+            prestataire: _createDetailedMap(traiteur),
             isSelected: isSelected,
             onTap: () => _selectTraiteur(traiteur),
             onDetailPressed: () => _openTraiteurDetails(traiteur),
@@ -401,19 +401,50 @@ class _ChoixTraiteurScreenState extends State<ChoixTraiteurScreen> {
     );
   }
   
+  /// Crée une Map détaillée avec toutes les propriétés nécessaires pour l'affichage des détails
+  Map<String, dynamic> _createDetailedMap(TraiteurModel traiteur) {
+    // Commencer avec les données de base
+    final Map<String, dynamic> detailedMap = traiteur.toMap();
+    
+    // S'assurer que les champs spécifiques au traiteur sont présents
+    if (!detailedMap.containsKey('type_cuisine') || detailedMap['type_cuisine'] == null) {
+      detailedMap['type_cuisine'] = traiteur.typeCuisine;
+    }
+    if (!detailedMap.containsKey('max_invites') || detailedMap['max_invites'] == null) {
+      detailedMap['max_invites'] = traiteur.maxInvites;
+    }
+    if (!detailedMap.containsKey('equipements_inclus') || detailedMap['equipements_inclus'] == null) {
+      detailedMap['equipements_inclus'] = traiteur.equipementsInclus;
+    }
+    if (!detailedMap.containsKey('personnel_inclus') || detailedMap['personnel_inclus'] == null) {
+      detailedMap['personnel_inclus'] = traiteur.personnelInclus;
+    }
+    
+    return detailedMap;
+  }
+  
   /// Ouvre la page de détails du traiteur
   void _openTraiteurDetails(TraiteurModel traiteur) {
+    // Créer une Map détaillée avec toutes les propriétés nécessaires
+    final Map<String, dynamic> detailedMap = _createDetailedMap(traiteur);
+    
+    // Afficher les données pour le débogage
+    print('Données envoyées à PrestataireDetailScreen:');
+    detailedMap.forEach((key, value) {
+      print('$key: $value (${value?.runtimeType})');
+    });
+    
     Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PrestataireDetailScreen(
-          type: 'traiteur',
-          prestataire: traiteur.toMap(),
-          isSelected: widget.selectedTraiteur?.id == traiteur.id,
-          onSelect: () => _selectTraiteur(traiteur),
-        ),
-      ),
-    );
+  context,
+  MaterialPageRoute(
+    builder: (context) => BouquetPrestataireDetailScreen(
+      type: 'traiteur',
+      prestataire: detailedMap,
+      isSelected: widget.selectedTraiteur?.id == traiteur.id,
+      onSelect: () => _selectTraiteur(traiteur),
+    ),
+  ),
+);
   }
   
   /// Sélectionne un traiteur et le communique au parent
