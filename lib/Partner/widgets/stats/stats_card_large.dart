@@ -11,14 +11,14 @@ class StatsCardLarge extends StatelessWidget {
   final bool isLoading;
 
   const StatsCardLarge({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     this.subValue,
     required this.icon,
     this.color,
     this.isLoading = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

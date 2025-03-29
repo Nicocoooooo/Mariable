@@ -12,7 +12,7 @@ import '../widgets/partner_sidebar.dart';
 import '../widgets/stats_card.dart';
 
 class PartnerDashboardScreen extends StatefulWidget {
-  const PartnerDashboardScreen({Key? key}) : super(key: key);
+  const PartnerDashboardScreen({super.key});
 
   @override
   State<PartnerDashboardScreen> createState() => _PartnerDashboardScreenState();

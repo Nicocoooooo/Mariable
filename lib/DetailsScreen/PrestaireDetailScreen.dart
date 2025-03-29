@@ -16,6 +16,7 @@ import 'comparison_provider.dart';
 import 'comparison_screen.dart';
 import 'package:provider/provider.dart';
 
+import '../services/favorites_service.dart'; // Ajoutez cette ligne
 
 
 
@@ -23,9 +24,9 @@ class PrestaireDetailScreen extends StatefulWidget {
   final Map<String, dynamic> prestataire;
 
   const PrestaireDetailScreen({
-    Key? key,
+    super.key,
     required this.prestataire,
-  }) : super(key: key);
+  });
 
   @override
   State<PrestaireDetailScreen> createState() => _PrestaireDetailScreenState();
@@ -42,8 +43,9 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   List<Map<String, dynamic>> _formules = [];
   bool _hasChatbotDocument = false;
   bool _isCheckingChatbot = true;
+  bool _isInFavorites = false; // Ajoutez cette ligne
 
-  @override
+@override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
@@ -52,20 +54,43 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     _loadGalleryImages();
     _loadRecommendedPrestataires();
     _checkChatbotAvailability();
+    _checkFavoriteStatus(); // Ajoutez cette ligne
   
-  print('Prestataire complet: ${widget.prestataire}');
-  print('Type ID: ${widget.prestataire['presta_type_id']}');
-  _scrollController.addListener(_onScroll);
-  _loadFormules();
-  _loadAvis();
-  _loadGalleryImages();
+    print('Prestataire complet: ${widget.prestataire}');
+    print('Type ID: ${widget.prestataire['presta_type_id']}');
+    _scrollController.addListener(_onScroll);
+    _loadFormules();
+    _loadAvis();
+    _loadGalleryImages();
   }
 
-  @override
+@override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // Ajoutez cette méthode ici
+  Future<void> _checkFavoriteStatus() async {
+    if (!mounted) return;
+    
+    try {
+      // Vérifier si l'utilisateur est connecté
+      final bool isLoggedIn = FavoritesService().isUserLoggedIn();
+      
+      if (isLoggedIn && widget.prestataire['id'] != null) {
+        final bool isFavorite = await FavoritesService().isPrestaInFavorites(widget.prestataire['id']);
+        
+        if (mounted) {
+          setState(() {
+            _isInFavorites = isFavorite;
+          });
+        }
+      }
+    } catch (e) {
+      print('Erreur lors de la vérification du statut des favoris: $e');
+    }
   }
 
   void _onScroll() {
@@ -492,23 +517,53 @@ Widget build(BuildContext context) {
           },
         ),
         IconButton(
-        icon: CircleAvatar(
-          backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
-          child: Icon(
-            Icons.favorite_border,
-            color: _isScrolled ? Colors.black : Colors.white,
-          ),
-        ),
-        onPressed: () {
-          // Action lors du clic sur le cœur
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ajouté aux favoris'),
-              duration: Duration(seconds: 2),
+          icon: CircleAvatar(
+            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
+            child: Icon(
+              _isInFavorites ? Icons.favorite : Icons.favorite_border,
+              color: _isInFavorites ? Colors.red : (_isScrolled ? Colors.black : Colors.white),
             ),
-          );
-        },
-      ),
+          ),
+          onPressed: () async {
+            // Vérifier si l'utilisateur est connecté
+            if (!FavoritesService().isUserLoggedIn()) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Connectez-vous pour ajouter aux favoris'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+              return;
+            }
+            
+            // Basculer l'état du favori
+            if (widget.prestataire['id'] != null) {
+              final bool success = await FavoritesService().toggleFavorite(widget.prestataire['id']);
+              
+              if (success && mounted) {
+                setState(() {
+                  _isInFavorites = !_isInFavorites;
+                });
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(_isInFavorites ? 'Ajouté aux favoris' : 'Retiré des favoris'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: _isInFavorites ? Colors.green : Colors.grey,
+                  ),
+                );
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Une erreur est survenue'),
+                    duration: Duration(seconds: 2),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
         const SizedBox(width: 8),
       ],
       title: _isScrolled ? Text(
@@ -533,7 +588,7 @@ Widget build(BuildContext context) {
           child: Stack(
             children: [
               // Image principale prenant tout l'écran
-              Container(
+              SizedBox(
                 height: MediaQuery.of(context).size.height, // Pleine hauteur de l'écran
                 width: MediaQuery.of(context).size.width, // Pleine largeur de l'écran
                 child: CachedNetworkImage(
@@ -1210,8 +1265,8 @@ void _showChatbotModal(BuildContext context) {
 Widget _buildFeaturesAndServices() {
   // Récupérer proprement le type de prestataire
   var prestaTypeId = widget.prestataire['presta_type_id'];
-  final Logger _logger = Logger('PrestaireDetailScreen');
-  _logger.fine('Type original: $prestaTypeId');
+  final Logger logger = Logger('PrestaireDetailScreen');
+  logger.fine('Type original: $prestaTypeId');
 
 
   // Vérifier le nom pour corriger les traiteurs sans ID correct
@@ -1466,7 +1521,7 @@ else if (prestaTypeId == 2) {
               text: entry.key,
             );
           }
-        }).toList(),
+        }),
         
         // Bouton "Voir plus" si plus de 8 caractéristiques
         if (features.length > 8)
@@ -1513,7 +1568,7 @@ else if (prestaTypeId == 2) {
         // Limiter l'affichage à 8 services maximum initialement
         ...services.entries.take(8).map((entry) => 
           _buildFeatureItem(icon: entry.value, text: entry.key)
-        ).toList(),
+        ),
         
         // Bouton "Voir plus" si plus de 8 services
         if (services.length > 8)
@@ -1562,7 +1617,6 @@ else if (prestaTypeId == 2) {
           _avis = fakeAvis;
         });
       }
-    } catch (e) {
     } finally {
       setState(() => _isLoadingAvis = false);
     }
@@ -1914,7 +1968,7 @@ Future<void> _loadRecommendedPrestataires() async {
     final String currentId = widget.prestataire['id'] ?? '';
     
     // Construire la requête selon le type
-    var response;
+    PostgrestList response;
     if (currentPrestaType == 1) {
       // Pour les lieux, inclure les données de la table lieux
       response = await Supabase.instance.client

@@ -17,7 +17,7 @@ import 'partner_document_upload_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
 class PartnerDocumentsScreen extends StatefulWidget {
-  const PartnerDocumentsScreen({Key? key}) : super(key: key);
+  const PartnerDocumentsScreen({super.key});
 
   @override
   State<PartnerDocumentsScreen> createState() => _PartnerDocumentsScreenState();

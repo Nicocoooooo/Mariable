@@ -7,7 +7,7 @@ import '../../shared/constants/style_constants.dart';
 import '../../utils/logger.dart';
 
 class PartnerResetPasswordScreen extends StatefulWidget {
-  const PartnerResetPasswordScreen({Key? key}) : super(key: key);
+  const PartnerResetPasswordScreen({super.key});
 
   @override
   State<PartnerResetPasswordScreen> createState() =>

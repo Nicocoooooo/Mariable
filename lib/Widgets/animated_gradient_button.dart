@@ -8,12 +8,12 @@ class AnimatedGradientButton extends StatefulWidget {
   final double height;
 
   const AnimatedGradientButton({
-    Key? key,
+    super.key,
     required this.onPressed,
     required this.text,
     this.width = 200,
     this.height = 50,
-  }) : super(key: key);
+  });
 
   @override
   State<AnimatedGradientButton> createState() => _AnimatedGradientButtonState();

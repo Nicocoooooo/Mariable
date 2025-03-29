@@ -14,9 +14,9 @@ class PartnerDocumentViewScreen extends StatefulWidget {
   final String documentId;
 
   const PartnerDocumentViewScreen({
-    Key? key,
+    super.key,
     required this.documentId,
-  }) : super(key: key);
+  });
 
   @override
   State<PartnerDocumentViewScreen> createState() =>

@@ -6,11 +6,11 @@ class CategoryCard extends StatefulWidget {
   final VoidCallback onTap;
 
   const CategoryCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.icon,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<CategoryCard> createState() => _CategoryCardState();

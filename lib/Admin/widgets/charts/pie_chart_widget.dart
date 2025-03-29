@@ -12,7 +12,7 @@ class AdminPieChartWidget extends StatelessWidget {
   final double radius;
 
   const AdminPieChartWidget({
-    Key? key,
+    super.key,
     required this.title,
     required this.data,
     this.subtitle,
@@ -29,7 +29,7 @@ class AdminPieChartWidget extends StatelessWidget {
     this.showLegend = true,
     this.showValues = true,
     this.radius = 50,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

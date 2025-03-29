@@ -8,11 +8,11 @@ class PeriodSelector extends StatelessWidget {
   final List<String> periods;
 
   const PeriodSelector({
-    Key? key,
+    super.key,
     required this.selectedPeriod,
     required this.onPeriodChanged,
     this.periods = const ['7j', '14j', '30j', '90j', 'Tout'],
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

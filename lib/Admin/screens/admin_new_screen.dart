@@ -4,7 +4,7 @@ import '../../shared/constants/style_constants.dart';
 import '../../routes_partner_admin.dart';
 
 class AdminNewScreen extends StatefulWidget {
-  const AdminNewScreen({Key? key}) : super(key: key);
+  const AdminNewScreen({super.key});
 
   @override
   State<AdminNewScreen> createState() => _AdminNewScreenState();

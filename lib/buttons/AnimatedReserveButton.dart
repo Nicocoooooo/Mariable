@@ -7,12 +7,12 @@ class AnimatedReserveButton extends StatefulWidget {
   final Color textColor;
 
   const AnimatedReserveButton({
-    Key? key,
+    super.key,
     required this.onPressed,
     this.text = 'Réserver',
     this.color = const Color(0xFF524B46), // Couleur accent par défaut
     this.textColor = Colors.white,
-  }) : super(key: key);
+  });
 
   @override
   State<AnimatedReserveButton> createState() => _AnimatedReserveButtonState();

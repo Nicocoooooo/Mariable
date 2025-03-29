@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../routes_partner_admin.dart';
+import '../routes_user.dart';  // Ajout de l'import nécessaire
 
 class ProfileSelectorScreen extends StatelessWidget {
-  const ProfileSelectorScreen({Key? key}) : super(key: key);
+  const ProfileSelectorScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -66,6 +67,17 @@ class ProfileSelectorScreen extends StatelessWidget {
                             );
                           },
                         ),
+                  // Option Marié(e)
+                  _buildProfileOption(
+                    context: context,
+                    title: 'Marié(e)',
+                    icon: Icons.favorite,
+                    color: Colors.red.shade400,
+                    onTap: () {
+                      // Redirection vers l'espace utilisateur via go_router
+                      context.go(UserRoutes.userLogin);
+                    },
+                  ),
 
                         // Option Prestataire
                         _buildProfileOption(
@@ -188,3 +200,4 @@ class PlaceholderUserLoginScreen extends StatelessWidget {
     );
   }
 }
+// Note: La classe PlaceholderUserLoginScreen a été supprimée car elle n'est plus nécessaire

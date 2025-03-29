@@ -7,12 +7,12 @@ class ExportDataButton extends StatelessWidget {
   final VoidCallback onExport;
 
   const ExportDataButton({
-    Key? key,
+    super.key,
     required this.label,
     required this.icon,
     required this.color,
     required this.onExport,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

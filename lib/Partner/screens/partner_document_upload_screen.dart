@@ -14,13 +14,13 @@ class PartnerDocumentUploadScreen extends StatefulWidget {
   final VoidCallback onUploadComplete;
 
   const PartnerDocumentUploadScreen({
-    Key? key,
+    super.key,
     required this.fileName,
     required this.fileBytes,
     required this.fileType,
     required this.partnerId,
     required this.onUploadComplete,
-  }) : super(key: key);
+  });
 
   @override
   State<PartnerDocumentUploadScreen> createState() =>

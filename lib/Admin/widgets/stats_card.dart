@@ -9,13 +9,13 @@ class AdminStatsCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const AdminStatsCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.value,
     required this.icon,
     this.color = PartnerAdminStyles.accentColor,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

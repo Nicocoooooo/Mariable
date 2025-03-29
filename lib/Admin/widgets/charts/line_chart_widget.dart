@@ -13,7 +13,7 @@ class AdminLineChartWidget extends StatelessWidget {
   final bool filled;
 
   const AdminLineChartWidget({
-    Key? key,
+    super.key,
     required this.title,
     required this.data,
     this.subtitle,
@@ -22,7 +22,7 @@ class AdminLineChartWidget extends StatelessWidget {
     this.gradientColors = const [Color(0xFF524B46), Color(0xFF8B7E75)],
     this.curved = true,
     this.filled = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

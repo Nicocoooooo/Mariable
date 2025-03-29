@@ -6,9 +6,9 @@ class AvisCard extends StatelessWidget {
   final AvisModel avis;
 
   const AvisCard({
-    Key? key,
+    super.key,
     required this.avis,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

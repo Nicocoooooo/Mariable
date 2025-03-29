@@ -10,11 +10,11 @@ class PartnerCard extends StatelessWidget {
   final VoidCallback? onActiveToggle;
 
   const PartnerCard({
-    Key? key,
+    super.key,
     required this.partner,
     this.onVerifyToggle,
     this.onActiveToggle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

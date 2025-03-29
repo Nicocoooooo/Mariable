@@ -120,13 +120,11 @@ class _TestPageState extends State<TestPage> {
           .eq('id', _authService.currentUser!.id)
           .single();
 
-      if (response != null) {
-        setState(() {
-          _currentPartner = PartnerModel.fromMap(response);
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
+      setState(() {
+        _currentPartner = PartnerModel.fromMap(response);
+        _isLoading = false;
+      });
+        } catch (e) {
       setState(() {
         _errorMessage = 'Erreur de récupération des données: ${e.toString()}';
         _isLoading = false;

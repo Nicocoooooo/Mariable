@@ -62,15 +62,13 @@ class _LieuTypesScreenState extends State<LieuTypesScreen> {
       
       // Conversion explicite des éléments en Map<String, dynamic>
       for (var item in response) {
-        if (item is Map) {
-          // Convertir en Map<String, dynamic>
-          final Map<String, dynamic> typedItem = {};
-          item.forEach((key, value) {
-            typedItem[key.toString()] = value;
-          });
-          typedResponse.add(typedItem);
-        }
-      }
+        // Convertir en Map<String, dynamic>
+        final Map<String, dynamic> typedItem = {};
+        item.forEach((key, value) {
+          typedItem[key.toString()] = value;
+        });
+        typedResponse.add(typedItem);
+            }
 
       setState(() {
         _lieuTypes = typedResponse;

@@ -20,14 +20,14 @@ class PartnerConversationScreen extends StatefulWidget {
   final VoidCallback onConversationUpdated;
 
   const PartnerConversationScreen({
-    Key? key,
+    super.key,
     required this.conversationId,
     required this.clientId,
     required this.clientName,
     required this.partnerId,
     required this.partnerName,
     required this.onConversationUpdated,
-  }) : super(key: key);
+  });
 
   @override
   State<PartnerConversationScreen> createState() =>

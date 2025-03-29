@@ -7,12 +7,12 @@ class CircularNavButton extends StatefulWidget {
   final Color iconColor;
 
   const CircularNavButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.onPressed,
     this.backgroundColor = Colors.white,
     this.iconColor = const Color(0xFF524B46), // Couleur accent par défaut
-  }) : super(key: key);
+  });
 
   @override
   State<CircularNavButton> createState() => _CircularNavButtonState();

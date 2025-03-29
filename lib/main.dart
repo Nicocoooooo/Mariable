@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'utils/logger.dart';
 import 'utils/supabase_test.dart';
 import 'routes_partner_admin.dart';
+import 'routes_user.dart';
 // Import des écrans
 import 'Home/HomeScreen.dart';
 import 'Bouquet/bouquetHomeScreen.dart';  // Import de l'écran Bouquet
@@ -12,6 +13,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'DetailsScreen/comparison_provider.dart';
 
+// Ajout de l'import pour Provider si besoin pour vos écrans
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -168,6 +170,9 @@ final GoRouter _router = GoRouter(
       builder: (context, state) => const BouquetHomeScreen(),
     ),
     // Vous pourrez ajouter d'autres routes plus tard
+    // Intégration des routes utilisateur
+    ...UserRoutes.routes,
+    // Intégration des routes partenaire et admin
     ...PartnerAdminRoutes.routes,
   ],
 );

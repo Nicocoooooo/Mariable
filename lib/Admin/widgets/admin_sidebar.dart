@@ -10,11 +10,11 @@ class AdminSidebar extends StatelessWidget {
   final String adminEmail;
 
   const AdminSidebar({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.adminName,
     required this.adminEmail,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -3,7 +3,7 @@ import '../Filtre/data/repositories/presta_repository.dart';
 import '../widgets/empty_state.dart';
 
 class TraiteurTypesScreen extends StatefulWidget {
-  const TraiteurTypesScreen({Key? key}) : super(key: key);
+  const TraiteurTypesScreen({super.key});
 
   @override
   State<TraiteurTypesScreen> createState() => _TraiteurTypesScreenState();

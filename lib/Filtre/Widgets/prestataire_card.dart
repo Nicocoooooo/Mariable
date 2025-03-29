@@ -6,14 +6,16 @@ class PrestaireCard extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onFavoriteToggle;
   final bool isFavorite;
+  final bool isProcessing; // Nouvel attribut pour l'état de traitement des favoris
 
   const PrestaireCard({
-    Key? key,
+    super.key,
     required this.prestataire,
     this.onTap,
     this.onFavoriteToggle,
     this.isFavorite = false,
-  }) : super(key: key);
+    this.isProcessing = false, // Valeur par défaut
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -62,40 +64,50 @@ class PrestaireCard extends StatelessWidget {
               children: [
                 // Image principale
                 ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 200,
-                  child: _buildPrestaireImage(prestataire),
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 200,
+                    child: _buildPrestaireImage(prestataire),
+                  ),
                 ),
-              ),
                 
-                // Bouton favori
+                // Bouton favori - MODIFICATIONS ICI
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: GestureDetector(
-                    onTap: onFavoriteToggle,
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withAlpha(26),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Icon(
-                          isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorite ? Colors.red : grisTexte.withAlpha(179),
-                          size: 18,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: isProcessing ? null : onFavoriteToggle,
+                      customBorder: const CircleBorder(),
+                      child: Container(
+                        width: 40, // Légèrement plus grand
+                        height: 40, // Légèrement plus grand
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withAlpha(26),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
+                        child: isProcessing 
+                            ? const Padding(
+                                padding: EdgeInsets.all(10.0),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1A4D2E)),
+                                ),
+                              )
+                            : Icon(
+                                isFavorite ? Icons.favorite : Icons.favorite_border,
+                                color: isFavorite ? Colors.red : grisTexte.withAlpha(179),
+                                size: 20,
+                              ),
                       ),
                     ),
                   ),
@@ -227,8 +239,6 @@ class PrestaireCard extends StatelessWidget {
       ),
     );
   }
-  // Remplacez ce bloc de code dans la section "Image principale"
-
 
 // Et ajoutez cette fonction dans la classe PrestaireCard
 Widget _buildPrestaireImage(Map<String, dynamic> prestataire) {

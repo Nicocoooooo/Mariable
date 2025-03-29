@@ -9,10 +9,10 @@ class PartnerSidebar extends StatelessWidget {
   final PartnerModel? partner;
 
   const PartnerSidebar({
-    Key? key,
+    super.key,
     required this.selectedIndex,
     this.partner,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
