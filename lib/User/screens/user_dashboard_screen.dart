@@ -6,6 +6,7 @@ import '../services/user_auth_service.dart';
 import '../utils/logger.dart';
 import 'package:mariable/routes_user.dart';
 import 'package:go_router/go_router.dart';
+import '/Prestataires/PrestatairesScreen.dart';
 
 class UserDashboardScreen extends StatefulWidget {
   const UserDashboardScreen({super.key});
@@ -450,7 +451,12 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           const SizedBox(height: 16),
           OutlinedButton.icon(
             onPressed: () {
-              // Navigation vers la liste des prestataires
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PrestatairesScreen(),
+                ),
+              );
             },
             icon: const Icon(Icons.search),
             label: const Text('Explorer les prestataires'),
@@ -870,6 +876,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide.none,
                           ),
+
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: BorderSide(color: Colors.grey.shade300),
@@ -1218,6 +1225,68 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     }
   }
 
+  // Barre de navigation
+  Widget _buildBottomNavigationBar(Color grisTexte, Color accentColor) {
+    return Container(
+      height: 65,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildNavItem(Icons.search, 'Prestataires', grisTexte, onTap: () {
+           Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PrestatairesScreen(),
+            ),
+           );
+          }),
+          _buildNavItem(Icons.favorite_border, 'Favoris', grisTexte),
+          _buildNavItem(Icons.home, 'Accueil', grisTexte, onTap: () {
+            context.go('/');
+          }),
+          _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte),
+          _buildNavItem(Icons.person_outline, 'Profil', accentColor, isSelected: true),
+        ],
+      ),
+    );
+  }
+
+  // Élément de la barre de navigation
+  Widget _buildNavItem(IconData icon, String label, Color color, {bool isSelected = false, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? color : color.withOpacity(0.5),
+            size: 22,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? color : color.withOpacity(0.5),
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Couleurs selon la DA
@@ -1397,22 +1466,6 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                           
                           const SizedBox(height: 24),
                           
-                          // Section Prestataires
-                          Text(
-                            'Vos prestataires favoris',
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: accentColor,
-                            ),
-                          ),
-                          
-                          const SizedBox(height: 16),
-                          
-                          // Liste des prestataires favoris (vide pour le moment)
-                          _buildFavoritesList(),
-                          
-                          const SizedBox(height: 24),
                           
                           // Section Profil
                           Text(
@@ -1429,12 +1482,15 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                           // Informations du profil
                           _buildProfileSection(),
                           
-                          const SizedBox(height: 24),
+                          // Ajouter de l'espace en bas pour éviter que la navbar cache du contenu
+                          const SizedBox(height: 80),
                         ],
                       ),
                     ),
                   ),
                 ),
+      // Ajouter la barre de navigation
+      bottomNavigationBar: _buildBottomNavigationBar(grisTexte, accentColor),
     );
   }
 }

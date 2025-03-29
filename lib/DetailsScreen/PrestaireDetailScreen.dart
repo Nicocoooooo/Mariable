@@ -12,6 +12,7 @@ import 'ImageGalleryScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:mariable/Widgets/chatbot_widget.dart';
+import '../services/favorites_service.dart'; // Ajoutez cette ligne
 
 
 
@@ -38,8 +39,9 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
   List<Map<String, dynamic>> _formules = [];
   bool _hasChatbotDocument = false;
   bool _isCheckingChatbot = true;
+  bool _isInFavorites = false; // Ajoutez cette ligne
 
-  @override
+@override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
@@ -48,20 +50,43 @@ class _PrestaireDetailScreenState extends State<PrestaireDetailScreen> {
     _loadGalleryImages();
     _loadRecommendedPrestataires();
     _checkChatbotAvailability();
+    _checkFavoriteStatus(); // Ajoutez cette ligne
   
-  print('Prestataire complet: ${widget.prestataire}');
-  print('Type ID: ${widget.prestataire['presta_type_id']}');
-  _scrollController.addListener(_onScroll);
-  _loadFormules();
-  _loadAvis();
-  _loadGalleryImages();
+    print('Prestataire complet: ${widget.prestataire}');
+    print('Type ID: ${widget.prestataire['presta_type_id']}');
+    _scrollController.addListener(_onScroll);
+    _loadFormules();
+    _loadAvis();
+    _loadGalleryImages();
   }
 
-  @override
+@override
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // Ajoutez cette méthode ici
+  Future<void> _checkFavoriteStatus() async {
+    if (!mounted) return;
+    
+    try {
+      // Vérifier si l'utilisateur est connecté
+      final bool isLoggedIn = FavoritesService().isUserLoggedIn();
+      
+      if (isLoggedIn && widget.prestataire['id'] != null) {
+        final bool isFavorite = await FavoritesService().isPrestaInFavorites(widget.prestataire['id']);
+        
+        if (mounted) {
+          setState(() {
+            _isInFavorites = isFavorite;
+          });
+        }
+      }
+    } catch (e) {
+      print('Erreur lors de la vérification du statut des favoris: $e');
+    }
   }
 
   void _onScroll() {
@@ -401,23 +426,53 @@ Widget build(BuildContext context) {
           },
         ),
         IconButton(
-        icon: CircleAvatar(
-          backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
-          child: Icon(
-            Icons.favorite_border,
-            color: _isScrolled ? Colors.black : Colors.white,
-          ),
-        ),
-        onPressed: () {
-          // Action lors du clic sur le cœur
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ajouté aux favoris'),
-              duration: Duration(seconds: 2),
+          icon: CircleAvatar(
+            backgroundColor: _isScrolled ? Colors.transparent : Colors.black.withAlpha(128),
+            child: Icon(
+              _isInFavorites ? Icons.favorite : Icons.favorite_border,
+              color: _isInFavorites ? Colors.red : (_isScrolled ? Colors.black : Colors.white),
             ),
-          );
-        },
-      ),
+          ),
+          onPressed: () async {
+            // Vérifier si l'utilisateur est connecté
+            if (!FavoritesService().isUserLoggedIn()) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Connectez-vous pour ajouter aux favoris'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+              return;
+            }
+            
+            // Basculer l'état du favori
+            if (widget.prestataire['id'] != null) {
+              final bool success = await FavoritesService().toggleFavorite(widget.prestataire['id']);
+              
+              if (success && mounted) {
+                setState(() {
+                  _isInFavorites = !_isInFavorites;
+                });
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(_isInFavorites ? 'Ajouté aux favoris' : 'Retiré des favoris'),
+                    duration: const Duration(seconds: 2),
+                    backgroundColor: _isInFavorites ? Colors.green : Colors.grey,
+                  ),
+                );
+              } else if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Une erreur est survenue'),
+                    duration: Duration(seconds: 2),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
+        ),
         const SizedBox(width: 8),
       ],
       title: _isScrolled ? Text(

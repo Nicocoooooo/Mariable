@@ -4,6 +4,7 @@ import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/Widgets/prestataire_card.dart';
 import '../DetailsScreen/PrestaireDetailScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/favorites_service.dart';
 
 
 class PrestatairesListScreen extends StatefulWidget {
@@ -28,12 +29,17 @@ class PrestatairesListScreen extends StatefulWidget {
 
 class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
   final PrestaRepository _repository = PrestaRepository();
+  final FavoritesService _favoritesService = FavoritesService();
+  
   List<Map<String, dynamic>> _prestataires = [];
   bool _isLoading = true;
   List<String> _availableRegions = [];
   bool _isLoadingRegions = true;
   String _errorMessage = '';
-  final List<int> _favorites = []; // Pour simuler les favoris
+  
+  // État des favoris
+  Map<String, bool> _favoritesStatus = {};
+  Map<String, bool> _processingFavorites = {};
   
   // Filtres
   String? _regionFilter;
@@ -50,6 +56,35 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
       _regionFilter = widget.location;
     }
     _loadPrestataires();
+    
+    // S'abonner aux changements de favoris
+    _favoritesService.favoritesStream.listen((_) {
+      if (mounted) {
+        _loadFavoritesStatus();
+      }
+    });
+  }
+
+  Future<void> _loadFavoritesStatus() async {
+    if (!_favoritesService.isUserLoggedIn()) return;
+
+    try {
+      final List<String> currentFavorites = await _favoritesService.loadFavorites();
+      
+      if (mounted) {
+        setState(() {
+          for (var presta in _prestataires) {
+            if (presta['id'] != null) {
+              final String prestaId = presta['id'].toString();
+              _favoritesStatus[prestaId] = currentFavorites.contains(prestaId);
+              _processingFavorites[prestaId] ??= false;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      print('Erreur lors du chargement des statuts de favoris: $e');
+    }
   }
 
   Future<void> _loadAvailableRegions() async {
@@ -70,57 +105,60 @@ class _PrestatairesListScreenState extends State<PrestatairesListScreen> {
     }
   }
 
+  Future<void> _loadPrestataires() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = '';
+      });
 
-Future<void> _loadPrestataires() async {
-  try {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
+      List<Map<String, dynamic>> prestataires = [];
+      
+      // Récupérer le type principal de prestataire (Lieu, Traiteur, etc.)
+      final int prestaTypeId = widget.prestaType.id;
 
-    List<Map<String, dynamic>> prestataires = [];
-    
-    // Récupérer le type principal de prestataire (Lieu, Traiteur, etc.)
-    final int prestaTypeId = widget.prestaType.id;
+      
+      // Si c'est un lieu (type_id = 1) avec un sous-type spécifié
+      if (prestaTypeId == 1 && widget.subType != null) {
 
-    
-    // Si c'est un lieu (type_id = 1) avec un sous-type spécifié
-    if (prestaTypeId == 1 && widget.subType != null) {
-
-      final lieuTypeId = widget.subType!['id'];
-      // Charger les lieux par type
-      prestataires = await _repository.getLieuxByType(lieuTypeId);
+        final lieuTypeId = widget.subType!['id'];
+        // Charger les lieux par type
+        prestataires = await _repository.getLieuxByType(lieuTypeId);
+      }
+      // Si c'est un traiteur (type_id = 2) avec un sous-type spécifié
+      else if (prestaTypeId == 2 && widget.subType != null) {
+        final traiteurTypeId = widget.subType!['id'];
+        // Charger les traiteurs par type
+        prestataires = await _repository.getTraiteursByType(
+          traiteurTypeId, 
+          region: widget.location
+        );
+      }
+      // Pour tous les autres cas, utiliser la recherche générique
+      else {
+        prestataires = await _repository.searchPrestataires(
+          typeId: prestaTypeId,
+          region: widget.location,
+        );
+      }
+      
+     
+      setState(() {
+        _prestataires = prestataires;
+        _isLoading = false;
+      });
+      
+      // Charger les statuts des favoris après avoir chargé les prestataires
+      await _loadFavoritesStatus();
+      
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Erreur lors du chargement des prestataires: ${e.toString()}';
+        _isLoading = false;
+        _prestataires = [];
+      });
     }
-    // Si c'est un traiteur (type_id = 2) avec un sous-type spécifié
-    else if (prestaTypeId == 2 && widget.subType != null) {
-      final traiteurTypeId = widget.subType!['id'];
-      // Charger les traiteurs par type
-      prestataires = await _repository.getTraiteursByType(
-        traiteurTypeId, 
-        region: widget.location
-      );
-    }
-    // Pour tous les autres cas, utiliser la recherche générique
-    else {
-      prestataires = await _repository.searchPrestataires(
-        typeId: prestaTypeId,
-        region: widget.location,
-      );
-    }
-    
-   
-    setState(() {
-      _prestataires = prestataires;
-      _isLoading = false;
-    });
-  } catch (e) {
-    setState(() {
-      _errorMessage = 'Erreur lors du chargement des prestataires: ${e.toString()}';
-      _isLoading = false;
-      _prestataires = [];
-    });
   }
-}
   
   List<Map<String, dynamic>> get _filteredPrestataires {
     // Si aucun filtre n'est appliqué, retourner tous les prestataires
@@ -308,12 +346,14 @@ Future<void> _loadPrestataires() async {
                                   (context, index) {
                                     final prestataire = _filteredPrestataires[index];
                                     final prestaId = prestataire['id'];
+                                    final String prestaIdString = prestaId.toString();
                                     
                                     return PrestaireCard(
                                       prestataire: prestataire,
                                       onTap: () => _navigateToDetails(prestataire),
                                       onFavoriteToggle: () => _toggleFavorite(prestataire),
-                                      isFavorite: _favorites.contains(prestaId),
+                                      isFavorite: _favoritesStatus[prestaIdString] ?? false,
+                                      isProcessing: _processingFavorites[prestaIdString] ?? false,
                                     );
                                   },
                                   childCount: _filteredPrestataires.length,
@@ -389,29 +429,29 @@ Future<void> _loadPrestataires() async {
   }
   
   Future<List<String>> _fetchAvailableRegions() async {
-  try {
-    // Requête pour obtenir toutes les régions uniques des prestataires actifs
-    final response = await Supabase.instance.client
-        .from('presta')
-        .select('region')
-        .eq('actif', true)
-        .order('region');
-    
-    // Convertir la réponse en liste de régions uniques
-    final Set<String> uniqueRegions = {};
-    
-    for (var item in response) {
-      if (item['region'] != null && item['region'].toString().isNotEmpty) {
-        uniqueRegions.add(item['region'].toString());
+    try {
+      // Requête pour obtenir toutes les régions uniques des prestataires actifs
+      final response = await Supabase.instance.client
+          .from('presta')
+          .select('region')
+          .eq('actif', true)
+          .order('region');
+      
+      // Convertir la réponse en liste de régions uniques
+      final Set<String> uniqueRegions = {};
+      
+      for (var item in response) {
+        if (item['region'] != null && item['region'].toString().isNotEmpty) {
+          uniqueRegions.add(item['region'].toString());
+        }
       }
+      
+      return uniqueRegions.toList();
+    } catch (e) {
+      // Retourner une liste par défaut en cas d'erreur
+      return ['Paris', 'Lyon', 'Marseille', 'Bordeaux'];
     }
-    
-    return uniqueRegions.toList();
-  } catch (e) {
-    // Retourner une liste par défaut en cas d'erreur
-    return ['Paris', 'Lyon', 'Marseille', 'Bordeaux'];
   }
-}
 
   // Élément de statistique
   Widget _buildStatItem(
@@ -554,38 +594,79 @@ Future<void> _loadPrestataires() async {
   
   // Naviguer vers les détails d'un prestataire
   void _navigateToDetails(Map<String, dynamic> prestataire) {
-      Navigator.push(
-        context, 
-        MaterialPageRoute(
-          builder: (context) => PrestaireDetailScreen(
-            prestataire: prestataire,
-          ),
+    Navigator.push(
+      context, 
+      MaterialPageRoute(
+        builder: (context) => PrestaireDetailScreen(
+          prestataire: prestataire,
         ),
-      );
-    }
+      ),
+    );
+  }
   
   // Basculer l'état favori d'un prestataire
-  void _toggleFavorite(Map<String, dynamic> prestataire) {
-    final id = prestataire['id'];
+  Future<void> _toggleFavorite(Map<String, dynamic> prestataire) async {
+    final String prestaId = prestataire['id'].toString();
+    
+    // Éviter les traitements multiples
+    if (_processingFavorites[prestaId] == true) {
+      print("Traitement de favori $prestaId déjà en cours, ignoré");
+      return;
+    }
+    
     setState(() {
-      if (_favorites.contains(id)) {
-        _favorites.remove(id);
+      _processingFavorites[prestaId] = true;
+    });
+    
+    try {
+      print("Demande de basculement de favori pour $prestaId");
+      
+      if (!_favoritesService.isUserLoggedIn()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Connectez-vous pour ajouter aux favoris'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        
+        setState(() {
+          _processingFavorites[prestaId] = false;
+        });
+        return;
+      }
+      
+      final bool success = await _favoritesService.toggleFavorite(prestaId);
+      final bool currentStatus = _favoritesStatus[prestaId] ?? false;
+      
+      if (mounted && success) {
+        setState(() {
+          _favoritesStatus[prestaId] = !currentStatus;
+          _processingFavorites[prestaId] = false;
+        });
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Retiré des favoris: ${prestataire['nom_entreprise']}'),
-            duration: const Duration(seconds: 1),
+            content: Text(!currentStatus 
+              ? 'Ajouté aux favoris: ${prestataire['nom_entreprise']}' 
+              : 'Retiré des favoris: ${prestataire['nom_entreprise']}'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: !currentStatus ? Colors.green : Colors.blue,
           ),
         );
       } else {
-        _favorites.add(id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ajouté aux favoris: ${prestataire['nom_entreprise']}'),
-            duration: const Duration(seconds: 1),
-          ),
-        );
+        setState(() {
+          _processingFavorites[prestaId] = false;
+        });
       }
-    });
+    } catch (e) {
+      print('Erreur lors de la modification du favori: $e');
+      
+      if (mounted) {
+        setState(() {
+          _processingFavorites[prestaId] = false;
+        });
+      }
+    }
   }
   
   // Effacer un filtre spécifique
@@ -655,166 +736,170 @@ Future<void> _loadPrestataires() async {
   }
   
   // Afficher le modal des filtres
-// Ajoutez cette méthode à votre classe _PrestatairesListScreenState
-
-void _showFilterBottomSheet(BuildContext context) {
-  const Color accentColor = Color(0xFF524B46);
-  const Color grisTexte = Color(0xFF2B2B2B);
-  const Color beige = Color(0xFFFFF3E4);
-  
-  // Liste des régions disponibles (à remplacer par vos données réelles)
-  final List<String> availableRegions = _isLoadingRegions 
-    ? ['Chargement...'] 
-    : _availableRegions;
-  
-  // Variables temporaires pour les filtres
-  String? tempRegion = _regionFilter;
-  double? tempMinPrice = _minPriceFilter;
-  double? tempMaxPrice = _maxPriceFilter;
-  double tempMinRating = _minRatingFilter ?? 0;
-  
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-    ),
-    backgroundColor: Colors.white,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setModalState) {
-          return Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-            // Hauteur du modal: 80% de l'écran
-            height: MediaQuery.of(context).size.height * 0.8,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Barre et titre
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Barre d'indication
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withAlpha(77),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                
-                // Titre avec bouton fermer
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Filtres',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: grisTexte,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: grisTexte),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                  ],
-                ),
-                
-                // Contenu avec défilement
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 24),
-                        
-                        // Filtre par région
-                        const Text('Région', style: TextStyle(/*...*/)),
-                        const SizedBox(height: 16),
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: availableRegions.map((region) {
-                            final isSelected = tempRegion == region;
-                            return GestureDetector(
-                              onTap: () {
-                                if (region != 'Chargement...') {
-                                  setModalState(() {
-                                    tempRegion = isSelected ? null : region;
-                                  });
-                                }
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: isSelected ? accentColor : beige.withAlpha(102),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: isSelected ? accentColor : beige,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  region,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: isSelected ? Colors.white : grisTexte,
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
+  void _showFilterBottomSheet(BuildContext context) {
+    const Color accentColor = Color(0xFF524B46);
+    const Color grisTexte = Color(0xFF2B2B2B);
+    const Color beige = Color(0xFFFFF3E4);
+    
+    // Liste des régions disponibles (à remplacer par vos données réelles)
+    final List<String> availableRegions = _isLoadingRegions 
+      ? ['Chargement...'] 
+      : _availableRegions;
+    
+    // Variables temporaires pour les filtres
+    String? tempRegion = _regionFilter;
+    double? tempMinPrice = _minPriceFilter;
+    double? tempMaxPrice = _maxPriceFilter;
+    double tempMinRating = _minRatingFilter ?? 0;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+              // Hauteur du modal: 80% de l'écran
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Barre et titre
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Barre d'indication
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withAlpha(77),
+                          borderRadius: BorderRadius.circular(2),
                         ),
-                        
-                        const SizedBox(height: 32),
-                        
-                        // Filtre par prix
-                        const Text(
-                          'Fourchette de prix',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: grisTexte,
-                          ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Titre avec bouton fermer
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Filtres',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: grisTexte,
                         ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: beige.withAlpha(77),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: TextField(
-                                  decoration: const InputDecoration(
-                                    labelText: 'Min (€)',
-                                    border: InputBorder.none,
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                    labelStyle: TextStyle(color: grisTexte),
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                  controller: TextEditingController(
-                                    text: tempMinPrice?.toString() ?? '',
-                                  ),
-                                  onChanged: (value) {
-                                    setModalState(() {
-                                      tempMinPrice = value.isNotEmpty ? double.tryParse(value) : null;
-                                    });
-                                  },
-                                ),
-                              ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: grisTexte),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                  
+                  // Contenu avec défilement
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 24),
+                          
+                          // Filtre par région
+                          const Text(
+                            'Région', 
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: grisTexte,
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Container(
+                          ),
+                          const SizedBox(height: 16),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: availableRegions.map((region) {
+                              final isSelected = tempRegion == region;
+                              return GestureDetector(
+                                onTap: () {
+                                  if (region != 'Chargement...') {
+                                    setModalState(() {
+                                      tempRegion = isSelected ? null : region;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? accentColor : beige.withAlpha(102),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: isSelected ? accentColor : beige,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    region,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: isSelected ? Colors.white : grisTexte,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          
+                          const SizedBox(height: 32),
+                          
+                          // Filtre par prix
+                          const Text(
+                            'Fourchette de prix',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: grisTexte,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: beige.withAlpha(77),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: TextField(
+                                    decoration: const InputDecoration(
+                                      labelText: 'Min (€)',
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      labelStyle: TextStyle(color: grisTexte),
+                                    ),
+                                    keyboardType: TextInputType.number,
+                                    controller: TextEditingController(
+                                      text: tempMinPrice?.toString() ?? '',
+                                    ),
+                                    onChanged: (value) {
+                                      setModalState(() {
+                                        tempMinPrice = value.isNotEmpty ? double.tryParse(value) : null;
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(child: Container(
                                 decoration: BoxDecoration(
                                   color: beige.withAlpha(77),
                                   borderRadius: BorderRadius.circular(8),
@@ -977,7 +1062,4 @@ void _showFilterBottomSheet(BuildContext context) {
     },
   );
 }
-
-
-
 }

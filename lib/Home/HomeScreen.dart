@@ -5,8 +5,9 @@ import '../Filtre/data/models/presta_type_model.dart';
 import '../Filtre/PrestatairesListScreen.dart';
 import '../services/region_service.dart';
 import '../routes_partner_admin.dart';
-import '../Widgets/lieu_selector_dialog.dart';
 import '../Prestataires/PrestatairesScreen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../routes_user.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -304,7 +305,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   // Fonction pour sélectionner un lieu
-
   Future<void> _showLieuSelector(BuildContext context) async {
     final regionService = RegionService();
     List<String> regions = [];
@@ -355,9 +355,8 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-// Modification de la fonction _selectDate dans lib/Home/HomeScreen.dart
-  Future<void> _selectDate(BuildContext context,
-      {required bool isStartDate}) async {
+  // Modification de la fonction _selectDate
+  Future<void> _selectDate(BuildContext context, {required bool isStartDate}) async {
     final DateTime now = DateTime.now();
 
     // Définir la bonne date initiale pour chaque cas
@@ -524,14 +523,27 @@ class _HomePageState extends State<HomePage> {
            ),
           );
           }),
-          _buildNavItem(Icons.favorite_border, 'Favoris', grisTexte),
+          _buildNavItem(Icons.favorite_border, 'Favoris', grisTexte, onTap: () {
+          // Naviguer vers la page des favoris
+          context.go(UserRoutes.userFavorites);
+          }),
           _buildNavItem(Icons.home, 'Accueil', accentColor, isSelected: true),
           _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte),
           _buildNavItem(
             Icons.person_outline,
             'Profil',
             grisTexte,
-            onTap: () => context.go(PartnerAdminRoutes.profileSelector),
+            onTap: () {
+              // Vérifier si l'utilisateur est connecté
+              final user = Supabase.instance.client.auth.currentUser;
+              if (user != null) {
+                // L'utilisateur est connecté, naviguer vers le dashboard
+                context.go(UserRoutes.userDashboard);
+              } else {
+                // L'utilisateur n'est pas connecté, naviguer vers la sélection de profil
+                context.go(PartnerAdminRoutes.profileSelector);
+              }
+            },
           ),
         ],
       ),

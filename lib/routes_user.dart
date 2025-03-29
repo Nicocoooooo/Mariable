@@ -5,6 +5,7 @@ import 'User/screens/user_register_screen.dart';
 import 'User/screens/user_reset_password_screen.dart';
 import 'User/screens/user_registration_success_screen.dart';
 import 'User/screens/user_dashboard_screen.dart';
+import 'User/screens/user_favorites_screen.dart';
 
 class UserRoutes {
   // Routes pour les utilisateurs
@@ -51,13 +52,11 @@ class UserRoutes {
         return const UserDashboardScreen();
       },
     ),
-
+    // Route des favoris avec la nouvelle implémentation
     GoRoute(
       path: userFavorites,
       builder: (BuildContext context, GoRouterState state) {
-        return const Scaffold(
-          body: Center(child: Text('Mes favoris - À implémenter')),
-        );
+        return const UserFavoritesScreen();
       },
     ),
     GoRoute(

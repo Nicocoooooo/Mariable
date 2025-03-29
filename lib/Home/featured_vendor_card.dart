@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/favorites_service.dart';
 
 class FeaturedVendorCard extends StatefulWidget {
   final String imageUrl;
@@ -7,6 +9,7 @@ class FeaturedVendorCard extends StatefulWidget {
   final String subtitle;
   final double rating;
   final VoidCallback onTap;
+  final String prestaId; // Ajout de l'ID du prestataire
 
   const FeaturedVendorCard({
     super.key,
@@ -15,6 +18,7 @@ class FeaturedVendorCard extends StatefulWidget {
     required this.subtitle,
     required this.rating,
     required this.onTap,
+    required this.prestaId, // Nouveau paramètre requis
   });
 
   @override
@@ -23,8 +27,11 @@ class FeaturedVendorCard extends StatefulWidget {
 
 class _FeaturedVendorCardState extends State<FeaturedVendorCard> with SingleTickerProviderStateMixin {
   bool _isHovered = false;
+  bool _isFavorite = false;
+  bool _isProcessing = false;
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
+  final FavoritesService _favoritesService = FavoritesService();
 
   @override
   void initState() {
@@ -39,6 +46,79 @@ class _FeaturedVendorCardState extends State<FeaturedVendorCard> with SingleTick
         curve: Curves.easeInOut,
       ),
     );
+    
+    // Vérifier si ce prestataire est déjà en favoris
+    _checkIfFavorite();
+  }
+
+  // Vérifier si ce prestataire est dans les favoris
+  Future<void> _checkIfFavorite() async {
+    if (!_favoritesService.isUserLoggedIn()) return;
+    
+    try {
+      final isInFavorites = await _favoritesService.isPrestaInFavorites(widget.prestaId);
+      if (mounted) {
+        setState(() {
+          _isFavorite = isInFavorites;
+        });
+      }
+    } catch (e) {
+      // Ignorer les erreurs lors de la vérification
+    }
+  }
+
+  // Gérer le clic sur le bouton favoris
+  Future<void> _toggleFavorite() async {
+    // Si l'utilisateur n'est pas connecté, afficher un message
+    if (!_favoritesService.isUserLoggedIn()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connectez-vous pour ajouter des favoris'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    if (_isProcessing) return; // Éviter les doubles clics
+    
+    setState(() {
+      _isProcessing = true;
+    });
+    
+    try {
+      final success = await _favoritesService.toggleFavorite(widget.prestaId);
+      
+      if (mounted && success) {
+        setState(() {
+          _isFavorite = !_isFavorite;
+          _isProcessing = false;
+        });
+        
+        // Afficher un message de confirmation
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isFavorite 
+              ? 'Prestataire ajouté aux favoris' 
+              : 'Prestataire retiré des favoris'),
+            backgroundColor: _isFavorite ? Colors.green : Colors.blue,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Une erreur est survenue'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -167,30 +247,43 @@ class _FeaturedVendorCardState extends State<FeaturedVendorCard> with SingleTick
                             ),
                           ),
                           
-                          // Bouton "Favori"
+                          // Bouton "Favori" modifié pour fonctionner
                           Positioned(
                             top: 12,
                             left: 12,
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(18),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.favorite_border,
-                                color: _isHovered
-                                    ? const Color(0xFF1A4D2E)
-                                    : Colors.grey[600],
-                                size: 20,
+                            child: GestureDetector(
+                              onTap: _isProcessing ? null : _toggleFavorite,
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(18),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: _isProcessing
+                                    ? const Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1A4D2E)),
+                                        ),
+                                      )
+                                    : Icon(
+                                        _isFavorite ? Icons.favorite : Icons.favorite_border,
+                                        color: _isFavorite
+                                            ? Colors.red
+                                            : _isHovered
+                                                ? const Color(0xFF1A4D2E)
+                                                : Colors.grey[600],
+                                        size: 20,
+                                      ),
                               ),
                             ),
                           ),

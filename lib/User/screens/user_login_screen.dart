@@ -4,13 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../utils/logger.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/loading_indicator.dart';
-import 'user_register_screen.dart';
-import 'user_reset_password_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart' as flutter;
 import 'package:mariable/routes_user.dart';
 import 'package:go_router/go_router.dart';
-import 'user_dashboard_screen.dart';
 
 class UserLoginScreen extends StatefulWidget {
   const UserLoginScreen({super.key});
@@ -35,8 +32,8 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
-        AppLogger.info('Utilisateur déjà connecté, redirection automatique vers dashboard');
-        context.go(UserRoutes.userDashboard);
+        AppLogger.info('Utilisateur déjà connecté, redirection automatique vers l\'accueil');
+        context.go('/'); // Redirection vers l'accueil au lieu du dashboard
       }
     });
   }
@@ -73,16 +70,16 @@ class _UserLoginScreenState extends State<UserLoginScreen> {
       // Vérifier si le widget est toujours monté
       if (!mounted) return;
       
-      // Redirection explicite vers le dashboard si l'utilisateur est connecté
+      // Redirection vers la page d'accueil si l'utilisateur est connecté
       if (response.user != null) {
-        // Navigation directe vers le dashboard
-        AppLogger.info('Navigation vers le dashboard utilisateur');
+        // Navigation directe vers la page d'accueil au lieu du dashboard
+        AppLogger.info('Navigation vers la page d\'accueil');
         
         // Important: utiliser un délai pour éviter les conflits de navigation
         await Future.delayed(Duration.zero);
         
         if (mounted) {
-          context.go(UserRoutes.userDashboard);
+          context.go('/'); // Redirection vers la page d'accueil
         }
       }
     } catch (e) {

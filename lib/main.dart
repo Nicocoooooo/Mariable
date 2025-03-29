@@ -10,7 +10,6 @@ import 'routes_user.dart';
 import 'Home/HomeScreen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 // Ajout de l'import pour Provider si besoin pour vos écrans
-import 'package:supabase_flutter/supabase_flutter.dart' show Provider;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

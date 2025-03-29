@@ -166,14 +166,12 @@ class PrestaRepository {
       final List<Map<String, dynamic>> result = [];
       
       for (var item in response) {
-        if (item is Map) {
-          final Map<String, dynamic> typedItem = {};
-          item.forEach((key, value) {
-            typedItem[key.toString()] = value;
-          });
-          result.add(typedItem);
-        }
-      }
+        final Map<String, dynamic> typedItem = {};
+        item.forEach((key, value) {
+          typedItem[key.toString()] = value;
+        });
+        result.add(typedItem);
+            }
           
       _logger.d('Parsed ${result.length} prestataire types');
       return result;
