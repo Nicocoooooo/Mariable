@@ -15,6 +15,10 @@ import 'package:mariable/Widgets/chatbot_widget.dart';
 import 'comparison_provider.dart';
 import 'comparison_screen.dart';
 import 'package:provider/provider.dart';
+import '../User/data/models/appointment_model.dart';
+import '../User/services/appointment_service.dart';
+import '../User/widgets/appointments_widget.dart';
+import '../User/screens/user_appointments_screen.dart';
 
 import '../services/favorites_service.dart'; // Ajoutez cette ligne
 
@@ -212,7 +216,7 @@ int _getActualPrestaireType() {
   return 1;
 }
 
-  void _showAvailabilitySelector() {
+void _showAvailabilitySelector() {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -228,92 +232,178 @@ int _getActualPrestaireType() {
       );
     },
   );
-  }
+}
 
-  void _handleAppointmentConfirmation(DateTime date, String timeSlot) {
-    final DateFormat formatter = DateFormat('EEEE d MMMM yyyy à HH:mm', 'fr_FR');
-    final String formattedDate = formatter.format(
-      DateTime(
-        date.year,
-        date.month,
-        date.day,
-        int.parse(timeSlot.split(':')[0]),
-        int.parse(timeSlot.split(':')[1]),
-      ),
-    );
+// Voici la modification de la méthode _handleAppointmentConfirmation dans PrestaireDetailScreen.dart
+
+void _handleAppointmentConfirmation(DateTime date, String timeSlot) async {
+  // Créer l'heure du rendez-vous à partir du créneau sélectionné
+  final DateTime appointmentDateTime = DateTime(
+    date.year,
+    date.month,
+    date.day,
+    int.parse(timeSlot.split(':')[0]),
+    int.parse(timeSlot.split(':')[1]),
+  );
+  
+  // Formater la date pour l'affichage
+  final DateFormat formatter = DateFormat('EEEE d MMMM yyyy à HH:mm', 'fr_FR');
+  final String formattedDate = formatter.format(appointmentDateTime);
+  
+  // 1. ENREGISTRER LE RENDEZ-VOUS EN ARRIÈRE-PLAN
+  try {
+    // Récupérer l'ID utilisateur actuel
+    final currentUser = Supabase.instance.client.auth.currentUser;
     
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Rendez-vous confirmé'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Votre rendez-vous avec ${widget.prestataire['nom_entreprise']} est confirmé pour le :'),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.event,
-                    color: Color(0xFF1A4D2E),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      formattedDate,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+    if (currentUser == null) {
+      // Utilisateur non connecté - afficher un message mais montrer quand même le dialogue visuel
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connectez-vous pour enregistrer ce rendez-vous'),
+          duration: Duration(seconds: 3),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } else {
+      // Récupérer l'URL de l'image du prestataire s'il en a une
+      String imageUrl = '';
+      if (widget.prestataire['image_url'] != null && widget.prestataire['image_url'].toString().isNotEmpty) {
+        imageUrl = widget.prestataire['image_url'];
+      } else if (widget.prestataire.containsKey('lieux') && 
+                widget.prestataire['lieux'] is List && 
+                widget.prestataire['lieux'].isNotEmpty && 
+                widget.prestataire['lieux'][0].containsKey('image_url')) {
+        imageUrl = widget.prestataire['lieux'][0]['image_url'];
+      }
+      
+      // Créer un modèle de rendez-vous
+      final appointment = AppointmentModel(
+        id: '', // Sera généré par Supabase
+        userId: currentUser.id,
+        providerId: widget.prestataire['id'],
+        providerName: widget.prestataire['nom_entreprise'] ?? 'Prestataire',
+        providerType: _getActualPrestaireType().toString(),
+        appointmentDate: appointmentDateTime,
+        status: 'confirmé', // Statut initial
+        createdAt: DateTime.now(),
+        notes: 'Rendez-vous pris via l\'application',
+        timeSlot: timeSlot,
+        providerImageUrl: imageUrl,
+      );
+      
+      // Sauvegarder le rendez-vous en arrière-plan
+      AppointmentService().createAppointment(appointment).then((success) {
+        if (!success && mounted) {
+          // Informer l'utilisateur en cas d'échec
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Erreur lors de l\'enregistrement du rendez-vous'),
+              duration: Duration(seconds: 3),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      });
+    }
+  } catch (e) {
+    print('Erreur lors de la création du rendez-vous: $e');
+  }
+  
+  // 2. AFFICHER L'INTERFACE UTILISATEUR DE CONFIRMATION (comme avant)
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Rendez-vous confirmé'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Votre rendez-vous avec ${widget.prestataire['nom_entreprise']} est confirmé pour le :'),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.event,
+                  color: Color(0xFF1A4D2E),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    formattedDate,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            const Text(
-              'Un email de confirmation vous a été envoyé avec les détails du rendez-vous.',
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Vous recevrez également un rappel 24h avant le rendez-vous.',
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
           ),
-          TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF1A4D2E),
+          const SizedBox(height: 16),
+          const Text(
+            'Un email de confirmation vous a été envoyé avec les détails du rendez-vous.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
             ),
-            onPressed: () {
-              Navigator.pop(context);
-              // Ici, vous pourriez naviguer vers la page du calendrier ou des rendez-vous
-            },
-            child: const Text('Voir mes rendez-vous'),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Vous recevrez également un rappel 24h avant le rendez-vous.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+            ),
           ),
         ],
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('OK'),
+        ),
+        TextButton(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF1A4D2E),
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+            // Navigation vers l'écran des rendez-vous
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => UserAppointmentsScreen(),
+              ),
+            );
+          },
+          child: const Text('Voir mes rendez-vous'),
+        ),
+      ],
+    ),
+  );
+}
+
+Future<bool> _checkTimeSlotAvailability(DateTime date, String timeSlot) async {
+  try {
+    // Utiliser le service pour vérifier la disponibilité
+    final appointmentService = AppointmentService();
+    return await appointmentService.isTimeSlotAvailable(
+      widget.prestataire['id'],
+      date,
+      timeSlot,
     );
+  } catch (e) {
+    print('Erreur lors de la vérification de la disponibilité: $e');
+    // En cas d'erreur, supposer que le créneau est disponible
+    return true;
   }
+}
 
     // Ajoutez cette méthode
   Future<void> _loadFormules() async {

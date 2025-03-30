@@ -7,6 +7,12 @@ import '../utils/logger.dart';
 import 'package:mariable/routes_user.dart';
 import 'package:go_router/go_router.dart';
 import '/Prestataires/PrestatairesScreen.dart';
+// Nouveaux imports pour la messagerie
+import '../data/models/message_model.dart'; 
+import '../services/messages_service.dart';
+import '../screens/messages_list_screen.dart';
+import '../screens/chat_details_screen.dart';
+import '../widgets/appointments_widget.dart';
 
 class UserDashboardScreen extends StatefulWidget {
   const UserDashboardScreen({super.key});
@@ -45,12 +51,18 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   
   final UserAuthService _authService = UserAuthService();
   
+  // Nouvelles variables pour la messagerie
+  List<ChatThread> _recentMessages = [];
+  final MessagesService _messagesService = MessagesService();
+  bool _isLoadingMessages = false;
+  
   @override
   void initState() {
     super.initState();
     // Délai léger pour permettre à l'écran de se monter complètement
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserData();
+      _loadRecentMessages(); // Ajout de l'appel pour charger les messages
     });
   }
   
@@ -155,6 +167,31 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
       setState(() {
         _errorMessage = 'Erreur lors du chargement des données utilisateur: ${e.toString()}';
         _isLoading = false;
+      });
+    }
+  }
+  
+  // Méthode pour charger les messages récents
+  Future<void> _loadRecentMessages() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoadingMessages = true;
+    });
+    
+    try {
+      final messages = _messagesService.getMockThreads();
+      
+      if (!mounted) return;
+      
+      setState(() {
+        _recentMessages = messages.take(3).toList();
+        _isLoadingMessages = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingMessages = false;
       });
     }
   }
@@ -298,6 +335,224 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           ),
         ),
       ],
+    );
+  }
+  
+  // Widget pour la section messages
+  Widget _buildMessagesSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: _isLoadingMessages
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: CircularProgressIndicator(
+                  color: Color(0xFF524B46),
+                ),
+              ),
+            )
+          : _recentMessages.isEmpty
+              ? _buildEmptyMessagesView()
+              : Column(
+                  children: [
+                    for (var message in _recentMessages)
+                      _buildMessagePreview(message),
+                    
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.all(16),
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MessagesListScreen(),
+                            ),
+                          ).then((_) => _loadRecentMessages());
+                        },
+                        icon: const Icon(Icons.message),
+                        label: const Text('Voir tous vos messages'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF524B46),
+                          side: const BorderSide(color: Color(0xFF524B46)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+    );
+  }
+
+  // Aperçu d'un message
+  Widget _buildMessagePreview(ChatThread thread) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatDetailsScreen(
+              threadId: thread.id,
+              providerName: thread.providerName,
+              providerId: thread.providerId,
+            ),
+          ),
+        ).then((_) => _loadRecentMessages());
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.grey.shade200,
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: const Color(0xFF524B46).withOpacity(0.2),
+              child: Text(
+                thread.providerName.isNotEmpty
+                    ? thread.providerName.substring(0, 1).toUpperCase()
+                    : '?',
+                style: const TextStyle(
+                  color: Color(0xFF524B46),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        thread.providerName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        _formatMessageDate(thread.lastMessageTimestamp),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  
+                  Text(
+                    thread.providerType,
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  
+                  Text(
+                    thread.lastMessageContent.length > 60
+                        ? '${thread.lastMessageContent.substring(0, 60)}...'
+                        : thread.lastMessageContent,
+                    style: TextStyle(
+                      color: Colors.grey[800],
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            
+            if (thread.hasUnreadMessages)
+              Container(
+                width: 10,
+                height: 10,
+                margin: const EdgeInsets.only(left: 8),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF524B46),
+                  shape: BoxShape.circle,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Vue quand pas de messages
+  Widget _buildEmptyMessagesView() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.message_outlined,
+            size: 48,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Vous n\'avez pas encore de messages',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[700],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Contactez des prestataires pour commencer une conversation',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PrestatairesScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.search),
+            label: const Text('Explorer les prestataires'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF524B46),
+              side: const BorderSide(color: Color(0xFF524B46)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+        ],
+      ),
     );
   }
   
@@ -1159,6 +1414,22 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     );
   }
   
+  // Format de date pour messages
+  String _formatMessageDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inDays == 0) {
+      return DateFormat('HH:mm').format(date);
+    } else if (difference.inDays == 1) {
+      return 'Hier';
+    } else if (difference.inDays < 7) {
+      return DateFormat('EEEE', 'fr_FR').format(date);
+    } else {
+      return DateFormat('dd/MM').format(date);
+    }
+  }
+  
   // Méthode pour sélectionner la date du mariage
   Future<void> _selectWeddingDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -1254,7 +1525,14 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           _buildNavItem(Icons.home, 'Accueil', grisTexte, onTap: () {
             context.go('/');
           }),
-          _buildNavItem(Icons.shopping_bag_outlined, 'Bouquet', grisTexte),
+          _buildNavItem(Icons.message_outlined, 'Messages', grisTexte, onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MessagesListScreen(),
+              ),
+            ).then((_) => _loadRecentMessages());
+          }),
           _buildNavItem(Icons.person_outline, 'Profil', accentColor, isSelected: true),
         ],
       ),
@@ -1461,11 +1739,43 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                           
                           const SizedBox(height: 16),
                           
-                          // Liste des tâches
+                         // Liste des tâches
                           _buildTasksList(),
                           
                           const SizedBox(height: 24),
                           
+// Section Rendez-vous
+const SizedBox(height: 24),
+Text(
+  'Vos rendez-vous à venir',
+  style: GoogleFonts.playfairDisplay(
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    color: accentColor,
+  ),
+),
+const SizedBox(height: 16),
+const AppointmentsWidget(
+  maxToShow: 3, // Limite à 3 rendez-vous
+),
+
+
+                          // Section Messages
+                          Text(
+                            'Vos messages',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: accentColor,
+                            ),
+                          ),
+                          
+                          const SizedBox(height: 16),
+                          
+                          // Liste des messages récents
+                          _buildMessagesSection(),
+                          
+                          const SizedBox(height: 24),
                           
                           // Section Profil
                           Text(

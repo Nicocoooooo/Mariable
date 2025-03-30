@@ -57,27 +57,10 @@ class ProfileSelectorScreen extends StatelessWidget {
                           icon: Icons.favorite,
                           color: Colors.red.shade400,
                           onTap: () {
-                            // Page non implémentée pour les mariés
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const PlaceholderUserLoginScreen(),
-                              ),
-                            );
+                            // Redirection vers l'espace utilisateur via go_router
+                            context.go(UserRoutes.userLogin);
                           },
                         ),
-                  // Option Marié(e)
-                  _buildProfileOption(
-                    context: context,
-                    title: 'Marié(e)',
-                    icon: Icons.favorite,
-                    color: Colors.red.shade400,
-                    onTap: () {
-                      // Redirection vers l'espace utilisateur via go_router
-                      context.go(UserRoutes.userLogin);
-                    },
-                  ),
 
                         // Option Prestataire
                         _buildProfileOption(
@@ -175,29 +158,3 @@ class ProfileSelectorScreen extends StatelessWidget {
     );
   }
 }
-
-// Page d'espace utilisateur non implémentée
-class PlaceholderUserLoginScreen extends StatelessWidget {
-  const PlaceholderUserLoginScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Espace Utilisateur'),
-        backgroundColor: const Color(0xFF524B46),
-        foregroundColor: Colors.white,
-      ),
-      body: const Center(
-        child: Text(
-          'Futur page_login_utilisateur',
-          style: TextStyle(
-            fontSize: 20,
-            color: Color(0xFF2B2B2B),
-          ),
-        ),
-      ),
-    );
-  }
-}
-// Note: La classe PlaceholderUserLoginScreen a été supprimée car elle n'est plus nécessaire
