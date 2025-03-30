@@ -7,7 +7,8 @@ import 'utils/supabase_test.dart';
 import 'routes_partner_admin.dart';
 // Import des écrans
 import 'Home/HomeScreen.dart';
-import 'Bouquet/bouquetHomeScreen.dart';  // Import de l'écran Bouquet
+import 'Bouquet/bouquetHomeScreen.dart';
+import 'Acceuil/intro.dart';  // Import de l'écran Splash
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 
@@ -148,7 +149,12 @@ class MyApp extends StatelessWidget {
 
 // Configuration du routeur
 final GoRouter _router = GoRouter(
+  initialLocation: '/splash', // Commencer avec l'écran de splash
   routes: [
+    GoRoute(
+      path: '/splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
     GoRoute(
       path: '/',
       builder: (context, state) => const HomePage(),

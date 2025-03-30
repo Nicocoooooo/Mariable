@@ -7,6 +7,7 @@ import '../Filtre/PrestatairesListScreen.dart';
 import '../services/region_service.dart';
 import '../routes_partner_admin.dart';
 import '../Widgets/lieu_selector_dialog.dart';
+import '../Acceuil/intro.dart';
 import '../Prestataires/PrestatairesScreen.dart';
 
 class HomePage extends StatefulWidget {
@@ -529,7 +530,8 @@ class _HomePageState extends State<HomePage> {
            Navigator.push(
             context,
            MaterialPageRoute(
-            builder: (context) => BouquetHomeScreen(), // Utilisez le nouvel écran
+            //builder: (context) => BouquetHomeScreen(),
+            builder: (context) => BouquetHomeScreen(),  // Utilisez le nouvel écran
            ),
           );
           }),
